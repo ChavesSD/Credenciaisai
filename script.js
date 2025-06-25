@@ -1287,9 +1287,11 @@ class SistemaCadastro {
         // Adicionar worksheet ao workbook
         XLSX.utils.book_append_sheet(wb, ws, 'Credenciais');
 
-        // Gerar nome do arquivo com data atual
+        // Gerar nome do arquivo com unidade e data atual
         const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-        const nomeArquivo = `cadastro_credenciais_${dataAtual}.xlsx`;
+        const unidadeNome = this.unidadeCredenciais ? 
+            this.unidadeCredenciais.replace(/[<>:"/\\|?*]/g, '') : 'SemUnidade';
+        const nomeArquivo = `${unidadeNome}_credenciais_${dataAtual}.xlsx`;
 
         // Fazer download
         XLSX.writeFile(wb, nomeArquivo);
@@ -1342,9 +1344,11 @@ class SistemaCadastro {
         // Adicionar worksheet ao workbook
         XLSX.utils.book_append_sheet(wb, ws, 'Senhas do Totem');
 
-        // Gerar nome do arquivo com data atual
+        // Gerar nome do arquivo com unidade e data atual
         const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-        const nomeArquivo = `senhas_totem_${dataAtual}.xlsx`;
+        const unidadeNome = this.unidadeTotem ? 
+            this.unidadeTotem.replace(/[<>:"/\\|?*]/g, '') : 'SemUnidade';
+        const nomeArquivo = `${unidadeNome}_senhas_totem_${dataAtual}.xlsx`;
 
         // Fazer download
         XLSX.writeFile(wb, nomeArquivo);
@@ -1836,37 +1840,43 @@ class SistemaCadastro {
             this.arquivosParaEnvio = [];
             let nomeArquivos = [];
 
+            // Obter nome da unidade para usar nos arquivos
+            const unidade = this.unidadeCredenciais || this.unidadeTotem || 'SemUnidade';
+            const unidadeNome = unidade.replace(/[<>:"/\\|?*]/g, '');
+            const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
             if (temCredenciais) {
                 const workbookCredenciais = this.gerarExcelCredenciais();
+                const nomeArquivoCredenciais = `${unidadeNome}_credenciais_${dataAtual}.xlsx`;
                 this.arquivosParaEnvio.push({
-                    nome: 'credenciais.xlsx',
+                    nome: nomeArquivoCredenciais,
                     dados: workbookCredenciais,
                     tipo: 'Planilha de Credenciais',
                     tamanho: this.formatarTamanhoArquivo(workbookCredenciais.length || 0)
                 });
-                nomeArquivos.push('credenciais.xlsx');
+                nomeArquivos.push(nomeArquivoCredenciais);
             }
 
             if (temSenhasTotem) {
                 const workbookTotem = this.gerarExcelTotem();
+                const nomeArquivoTotem = `${unidadeNome}_senhas_totem_${dataAtual}.xlsx`;
                 this.arquivosParaEnvio.push({
-                    nome: 'senhas-totem.xlsx',
+                    nome: nomeArquivoTotem,
                     dados: workbookTotem,
                     tipo: 'Planilha de Senhas do Totem',
                     tamanho: this.formatarTamanhoArquivo(workbookTotem.length || 0)
                 });
-                nomeArquivos.push('senhas-totem.xlsx');
+                nomeArquivos.push(nomeArquivoTotem);
             }
 
             // Preparar conteúdo do email
-            const unidade = this.unidadeCredenciais || this.unidadeTotem || 'Não informada';
-            const dataAtual = new Date().toLocaleDateString('pt-BR');
+            const dataFormatada = new Date().toLocaleDateString('pt-BR');
             
-            const assunto = `Planilhas de Credenciais - ${unidade} - ${dataAtual}`;
+            const assunto = `Planilhas de Credenciais - ${unidade} - ${dataFormatada}`;
             
             const corpo = `Segue em anexo as planilhas de credenciais da unidade: ${unidade}
 
-Data de geração: ${dataAtual}
+Data de geração: ${dataFormatada}
 Total de credenciais: ${this.credenciais.length}
 Total de senhas do totem: ${this.senhasTotem.length}`;
 
