@@ -1645,15 +1645,14 @@ form {
 }
 
 .btn-success-animate {
-    animation: successPulse 0.6s ease;
+    animation: successPulse 0.6s ease-in-out;
 }
 
 /* Estilos para campos de informação da unidade */
 .info-fields {
-    background: var(--gray-25);
+    background: var(--gray-50);
     padding: var(--space-4);
     border-radius: var(--radius-lg);
-    border: 1px solid var(--gray-200);
     margin-top: var(--space-4);
 }
 
@@ -1675,11 +1674,11 @@ form {
     
     #modalEmail .form-group input,
     #modalEmail .form-group textarea {
-        font-size: 16px; /* Evita zoom no iOS */
+        font-size: 16px; /* Previne zoom no iOS */
     }
     
     #modalEmail .lista-anexos {
-        max-height: 120px;
+        font-size: 0.85rem;
     }
     
     #modalEmail .anexo-item {
@@ -1687,10 +1686,273 @@ form {
     }
     
     #modalEmail .anexo-detalhes h4 {
-        font-size: 0.8rem;
+        font-size: 0.9rem;
     }
     
     #modalEmail .anexo-detalhes p {
-        font-size: 0.7rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* ================================
+   ESTILOS DO TOUR GUIADO
+   ================================ */
+
+/* Overlay principal do tour */
+.tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+/* Spotlight para destacar elementos */
+.tour-spotlight {
+    position: absolute;
+    border: 3px solid var(--accent-500);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 10001;
+}
+
+/* Tooltip do tour */
+.tour-tooltip {
+    position: absolute;
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    max-width: 400px;
+    box-shadow: var(--shadow-xl);
+    z-index: 10002;
+    animation: tourSlideIn 0.3s ease-out;
+}
+
+.tour-tooltip-content h4 {
+    color: var(--primary-600);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.tour-tooltip-content p {
+    color: var(--gray-700);
+    line-height: 1.6;
+    margin-bottom: var(--space-4);
+    font-size: 0.95rem;
+}
+
+.tour-tooltip-actions {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: flex-end;
+}
+
+/* Animações do tour */
+@keyframes tourSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Efeito de pulso para elementos destacados */
+.tour-highlight {
+    animation: tourPulse 2s infinite;
+    position: relative;
+}
+
+@keyframes tourPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+    }
+}
+
+/* Modal do tour customizado */
+#modalTour .modal-content {
+    max-width: 600px;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+#modalTour .modal-header {
+    background: linear-gradient(135deg, var(--primary-600) 0%, var(--accent-500) 100%);
+    color: var(--white);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+#modalTour .modal-header h2 {
+    color: var(--white);
+    margin: 0;
+}
+
+#modalTour .close {
+    color: var(--white);
+    opacity: 0.8;
+}
+
+#modalTour .close:hover {
+    opacity: 1;
+    color: var(--white);
+}
+
+/* Conteúdo do tour */
+.tour-step {
+    text-align: center;
+    padding: var(--space-6);
+}
+
+.tour-step-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto var(--space-4);
+    background: linear-gradient(135deg, var(--primary-100) 0%, var(--accent-100) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-600);
+    font-size: 2rem;
+}
+
+.tour-step h3 {
+    color: var(--gray-900);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: var(--space-3);
+}
+
+.tour-step p {
+    color: var(--gray-600);
+    line-height: 1.6;
+    margin-bottom: var(--space-4);
+    font-size: 1rem;
+}
+
+.tour-features {
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin: var(--space-4) 0;
+}
+
+.tour-features ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tour-features li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    color: var(--gray-700);
+}
+
+.tour-features li::before {
+    content: "✅";
+    font-size: 1.1rem;
+}
+
+/* Indicador de progresso do tour */
+.tour-progress {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.tour-progress-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--gray-300);
+    transition: all 0.3s ease;
+}
+
+.tour-progress-dot.active {
+    background: var(--primary-600);
+    transform: scale(1.2);
+}
+
+.tour-progress-dot.completed {
+    background: var(--success-500);
+}
+
+/* Responsividade do tour */
+@media (max-width: 768px) {
+    .tour-tooltip {
+        max-width: 320px;
+        padding: var(--space-4);
+        margin: var(--space-4);
+    }
+    
+    .tour-tooltip-content h4 {
+        font-size: 1.1rem;
+    }
+    
+    .tour-tooltip-content p {
+        font-size: 0.9rem;
+    }
+    
+    .tour-tooltip-actions {
+        flex-direction: column-reverse;
+        gap: var(--space-2);
+    }
+    
+    .tour-tooltip-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    #modalTour .modal-content {
+        margin: var(--space-4);
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+    
+    .tour-step {
+        padding: var(--space-4);
+    }
+    
+    .tour-step-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .tour-step h3 {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .tour-tooltip {
+        max-width: calc(100vw - 2rem);
+        margin: var(--space-2);
+    }
+    
+    .tour-step-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
     }
 } 

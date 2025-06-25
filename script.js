@@ -2393,7 +2393,331 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+// ===========================
+// CLASSE TOUR GUIADO
+// ===========================
+
+class TourGuiado {
+    constructor() {
+        this.etapaAtual = 0;
+        this.totalEtapas = 0;
+        this.tourAtivo = false;
+        this.primeiroAcesso = this.verificarPrimeiroAcesso();
+        
+        this.etapas = [
+            {
+                tipo: 'modal',
+                titulo: '🚀 Bem-vindo ao Sistema de Credenciais!',
+                conteudo: `
+                    <div class="tour-step">
+                        <div class="tour-step-icon">👋</div>
+                        <h3>Olá! Seja bem-vindo!</h3>
+                        <p>Este é o Sistema de Cadastro de Credenciais. Aqui você pode gerenciar credenciais de funcionários e configurar senhas para o totem de atendimento.</p>
+                        <div class="tour-features">
+                            <ul>
+                                <li>Cadastre funcionários por área (Medicina, Odonto, Laboratório, etc.)</li>
+                                <li>Configure senhas personalizadas para o totem</li>
+                                <li>Exporte dados e envie por email</li>
+                                <li>Interface moderna e responsiva</li>
+                            </ul>
+                        </div>
+                        <p><strong>Vamos fazer um tour rápido para você conhecer as principais funcionalidades!</strong></p>
+                    </div>
+                `
+            },
+            {
+                tipo: 'spotlight',
+                elemento: '.nav-tabs',
+                titulo: '📋 Navegação Principal',
+                texto: 'Use essas abas para alternar entre o cadastro de credenciais de funcionários e a configuração das senhas do totem.',
+                posicao: 'bottom'
+            },
+            {
+                tipo: 'spotlight',
+                elemento: '#btnNovoCadastro',
+                titulo: '➕ Novo Cadastro',
+                texto: 'Clique aqui para adicionar novos funcionários ao sistema. Você pode cadastrar médicos, dentistas, recepcionistas e muito mais!',
+                posicao: 'bottom'
+            },
+            {
+                tipo: 'spotlight',
+                elemento: '#searchInput',
+                titulo: '🔍 Buscar Registros',
+                texto: 'Use este campo para encontrar rapidamente funcionários cadastrados. Você pode buscar por nome ou tipo de profissional.',
+                posicao: 'bottom'
+            },
+            {
+                tipo: 'spotlight',
+                elemento: '#btnEnviarEmail',
+                titulo: '📧 Enviar por Email',
+                texto: 'Exporte todos os dados em planilhas e envie por email. Perfeito para compartilhar informações ou fazer backup.',
+                posicao: 'bottom'
+            },
+            {
+                tipo: 'spotlight',
+                elemento: '#btnSenhasTotem',
+                titulo: '🖥️ Senhas do Totem',
+                texto: 'Clique aqui para configurar as senhas que aparecerão no totem de atendimento. Você pode personalizar cores e ordem.',
+                posicao: 'bottom',
+                acao: () => window.sistema.alternarSecao('totem')
+            },
+            {
+                tipo: 'modal',
+                titulo: '✅ Tour Concluído!',
+                conteudo: `
+                    <div class="tour-step">
+                        <div class="tour-step-icon">🎉</div>
+                        <h3>Parabéns! Você conhece o sistema!</h3>
+                        <p>Agora você está pronto para usar todas as funcionalidades do sistema.</p>
+                        <div class="tour-features">
+                            <ul>
+                                <li>Comece cadastrando seus funcionários</li>
+                                <li>Configure as senhas do totem conforme necessário</li>
+                                <li>Use o botão "Fazer Tour" se quiser ver novamente</li>
+                                <li>Aproveite a facilidade do sistema!</li>
+                            </ul>
+                        </div>
+                        <p><strong>Se precisar de ajuda, você pode refazer este tour a qualquer momento clicando no botão "Fazer Tour".</strong></p>
+                    </div>
+                `
+            }
+        ];
+        
+        this.totalEtapas = this.etapas.length;
+        this.configurarEventos();
+        
+        // Iniciar tour automático se for primeiro acesso
+        if (this.primeiroAcesso) {
+            setTimeout(() => this.iniciarTour(), 1000);
+        }
+    }
+    
+    verificarPrimeiroAcesso() {
+        const jaVisitou = localStorage.getItem('sistema_credenciais_visitado');
+        if (!jaVisitou) {
+            localStorage.setItem('sistema_credenciais_visitado', 'true');
+            return true;
+        }
+        return false;
+    }
+    
+    configurarEventos() {
+        // Botão do tour no header
+        document.getElementById('btnTour').addEventListener('click', () => this.iniciarTour());
+        
+        // Eventos do modal do tour
+        document.getElementById('btnProximoTour').addEventListener('click', () => this.proximaEtapa());
+        document.getElementById('btnAnteriorTour').addEventListener('click', () => this.etapaAnterior());
+        document.getElementById('btnFinalizarTour').addEventListener('click', () => this.finalizarTour());
+        document.getElementById('btnPularTour').addEventListener('click', () => this.finalizarTour());
+        document.getElementById('closeTour').addEventListener('click', () => this.finalizarTour());
+        
+        // Eventos do tooltip do tour
+        document.getElementById('btnProximoTooltip').addEventListener('click', () => this.proximaEtapa());
+        document.getElementById('btnAnteriorTooltip').addEventListener('click', () => this.etapaAnterior());
+        document.getElementById('btnPularTooltip').addEventListener('click', () => this.finalizarTour());
+    }
+    
+    iniciarTour() {
+        this.tourAtivo = true;
+        this.etapaAtual = 0;
+        this.mostrarEtapa();
+    }
+    
+    mostrarEtapa() {
+        const etapa = this.etapas[this.etapaAtual];
+        
+        if (etapa.tipo === 'modal') {
+            this.mostrarModalTour(etapa);
+        } else if (etapa.tipo === 'spotlight') {
+            this.mostrarSpotlight(etapa);
+        }
+        
+        this.atualizarProgresso();
+    }
+    
+    mostrarModalTour(etapa) {
+        // Ocultar overlay se estiver visível
+        document.getElementById('tourOverlay').style.display = 'none';
+        
+        // Configurar modal
+        document.getElementById('tourTitulo').textContent = etapa.titulo;
+        document.getElementById('tourConteudo').innerHTML = etapa.conteudo;
+        
+        // Mostrar/ocultar botões conforme a etapa
+        const btnAnterior = document.getElementById('btnAnteriorTour');
+        const btnProximo = document.getElementById('btnProximoTour');
+        const btnFinalizar = document.getElementById('btnFinalizarTour');
+        
+        btnAnterior.style.display = this.etapaAtual > 0 ? 'inline-flex' : 'none';
+        
+        if (this.etapaAtual === this.totalEtapas - 1) {
+            btnProximo.style.display = 'none';
+            btnFinalizar.style.display = 'inline-flex';
+        } else {
+            btnProximo.style.display = 'inline-flex';
+            btnFinalizar.style.display = 'none';
+        }
+        
+        // Mostrar modal
+        document.getElementById('modalTour').style.display = 'block';
+    }
+    
+    mostrarSpotlight(etapa) {
+        // Ocultar modal se estiver visível
+        document.getElementById('modalTour').style.display = 'none';
+        
+        const elemento = document.querySelector(etapa.elemento);
+        if (!elemento) {
+            this.proximaEtapa();
+            return;
+        }
+        
+        // Executar ação se houver
+        if (etapa.acao) {
+            etapa.acao();
+            setTimeout(() => this.continuarSpotlight(etapa, elemento), 300);
+        } else {
+            this.continuarSpotlight(etapa, elemento);
+        }
+    }
+    
+    continuarSpotlight(etapa, elemento) {
+        const rect = elemento.getBoundingClientRect();
+        const overlay = document.getElementById('tourOverlay');
+        const spotlight = overlay.querySelector('.tour-spotlight');
+        const tooltip = overlay.querySelector('.tour-tooltip');
+        
+        // Posicionar spotlight
+        spotlight.style.left = (rect.left - 10) + 'px';
+        spotlight.style.top = (rect.top - 10) + 'px';
+        spotlight.style.width = (rect.width + 20) + 'px';
+        spotlight.style.height = (rect.height + 20) + 'px';
+        
+        // Configurar tooltip
+        document.getElementById('tourTooltipTitulo').textContent = etapa.titulo;
+        document.getElementById('tourTooltipTexto').textContent = etapa.texto;
+        
+        // Posicionar tooltip
+        this.posicionarTooltip(tooltip, rect, etapa.posicao);
+        
+        // Mostrar/ocultar botões do tooltip
+        const btnAnteriorTooltip = document.getElementById('btnAnteriorTooltip');
+        btnAnteriorTooltip.style.display = this.etapaAtual > 0 ? 'inline-flex' : 'none';
+        
+        // Mostrar overlay
+        overlay.style.display = 'flex';
+        
+        // Adicionar highlight ao elemento
+        elemento.classList.add('tour-highlight');
+        setTimeout(() => elemento.classList.remove('tour-highlight'), 3000);
+    }
+    
+    posicionarTooltip(tooltip, rect, posicao) {
+        const margemSeguranca = 20;
+        
+        switch (posicao) {
+            case 'top':
+                tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+                tooltip.style.top = (rect.top - 200 - margemSeguranca) + 'px';
+                tooltip.style.transform = 'translateX(-50%)';
+                break;
+            case 'bottom':
+                tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+                tooltip.style.top = (rect.bottom + margemSeguranca) + 'px';
+                tooltip.style.transform = 'translateX(-50%)';
+                break;
+            case 'left':
+                tooltip.style.left = (rect.left - 420 - margemSeguranca) + 'px';
+                tooltip.style.top = (rect.top + rect.height / 2) + 'px';
+                tooltip.style.transform = 'translateY(-50%)';
+                break;
+            case 'right':
+                tooltip.style.left = (rect.right + margemSeguranca) + 'px';
+                tooltip.style.top = (rect.top + rect.height / 2) + 'px';
+                tooltip.style.transform = 'translateY(-50%)';
+                break;
+            default:
+                tooltip.style.left = '50%';
+                tooltip.style.top = '50%';
+                tooltip.style.transform = 'translate(-50%, -50%)';
+        }
+        
+        // Ajustar se sair da tela
+        const tooltipRect = tooltip.getBoundingClientRect();
+        if (tooltipRect.right > window.innerWidth) {
+            tooltip.style.left = (window.innerWidth - tooltipRect.width - margemSeguranca) + 'px';
+            tooltip.style.transform = 'none';
+        }
+        if (tooltipRect.left < 0) {
+            tooltip.style.left = margemSeguranca + 'px';
+            tooltip.style.transform = 'none';
+        }
+    }
+    
+    proximaEtapa() {
+        if (this.etapaAtual < this.totalEtapas - 1) {
+            this.etapaAtual++;
+            this.mostrarEtapa();
+        } else {
+            this.finalizarTour();
+        }
+    }
+    
+    etapaAnterior() {
+        if (this.etapaAtual > 0) {
+            this.etapaAtual--;
+            this.mostrarEtapa();
+        }
+    }
+    
+    finalizarTour() {
+        this.tourAtivo = false;
+        
+        // Ocultar modais e overlays
+        document.getElementById('modalTour').style.display = 'none';
+        document.getElementById('tourOverlay').style.display = 'none';
+        
+        // Remover highlights
+        document.querySelectorAll('.tour-highlight').forEach(el => {
+            el.classList.remove('tour-highlight');
+        });
+        
+        // Voltar para a seção de credenciais
+        window.sistema.alternarSecao('credenciais');
+        
+        // Mostrar notificação
+        window.sistema.mostrarNotificacao('Tour finalizado! Explore o sistema à vontade.', 'success');
+    }
+    
+    atualizarProgresso() {
+        // Atualizar indicadores de progresso se existirem
+        const progressContainer = document.querySelector('.tour-progress');
+        if (progressContainer) {
+            progressContainer.innerHTML = '';
+            
+            for (let i = 0; i < this.totalEtapas; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'tour-progress-dot';
+                
+                if (i < this.etapaAtual) {
+                    dot.classList.add('completed');
+                } else if (i === this.etapaAtual) {
+                    dot.classList.add('active');
+                }
+                
+                progressContainer.appendChild(dot);
+            }
+        }
+    }
+}
+
 // Inicializar sistema quando DOM estiver carregado
 document.addEventListener('DOMContentLoaded', () => {
     window.sistema = new SistemaCadastro();
+    
+    // Inicializar tour após o sistema estar pronto
+    setTimeout(() => {
+        window.tourGuiado = new TourGuiado();
+    }, 500);
 }); 

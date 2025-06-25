@@ -63,6 +63,22 @@
                         </svg>
                         <span>Enviar por Email</span>
                     </button>
+                    <button id="btnTour" class="btn btn-accent">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                            <path d="M12 17h.01"/>
+                        </svg>
+                        <span>Fazer Tour</span>
+                    </button>
+                    <button id="btnTour" class="btn btn-accent">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                            <path d="M12 17h.01"/>
+                        </svg>
+                        <span>Fazer Tour</span>
+                    </button>
                 </div>
             </div>
         </header>
@@ -486,6 +502,45 @@
             </div>
             <div class="form-actions">
                 <button type="button" class="btn btn-primary" id="btnEntendido">Entendi!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Tour Guiado -->
+    <div id="modalTour" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="tourTitulo">🚀 Bem-vindo ao Sistema de Credenciais!</h2>
+                <span class="close" id="closeTour">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div id="tourConteudo">
+                    <!-- Conteúdo do tour será inserido dinamicamente aqui -->
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="btnPularTour">Pular Tour</button>
+                <button type="button" class="btn btn-accent" id="btnAnteriorTour" style="display: none;">Anterior</button>
+                <button type="button" class="btn btn-primary" id="btnProximoTour">Próximo</button>
+                <button type="button" class="btn btn-primary" id="btnFinalizarTour" style="display: none;">Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay do Tour para destacar elementos -->
+    <div id="tourOverlay" class="tour-overlay" style="display: none;">
+        <div class="tour-spotlight"></div>
+        <div class="tour-tooltip">
+            <div class="tour-tooltip-content">
+                <h4 id="tourTooltipTitulo"></h4>
+                <p id="tourTooltipTexto"></p>
+                <div class="tour-tooltip-actions">
+                    <button type="button" class="btn btn-sm btn-secondary" id="btnPularTooltip">Pular</button>
+                    <button type="button" class="btn btn-sm btn-accent" id="btnAnteriorTooltip" style="display: none;">Anterior</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="btnProximoTooltip">Próximo</button>
+                </div>
             </div>
         </div>
     </div>
