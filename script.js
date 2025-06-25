@@ -5,6 +5,7 @@ class SistemaCadastro {
         this.senhasTotem = this.carregarSenhasTotem();
         this.unidadeTotem = this.carregarUnidadeTotem();
         this.unidadeCredenciais = this.carregarUnidadeCredenciais();
+        this.tiposPersonalizados = this.carregarTiposPersonalizados();
         this.credencialEditando = null;
         this.senhaTotemEditando = null;
         this.secaoAtual = 'credenciais';
@@ -17,6 +18,7 @@ class SistemaCadastro {
         this.atualizarTabelaTotem();
         this.atualizarUnidadeAtual();
         this.atualizarUnidadeAtualCredenciais();
+        this.carregarTiposNoSelect();
     }
 
     configurarEventos() {
@@ -481,25 +483,33 @@ class SistemaCadastro {
     alterarTipo(tipo) {
         const camposRecepcao = document.getElementById('camposRecepcao');
         const camposMedOdonto = document.getElementById('camposMedOdonto');
+        const campoNovoTipo = document.getElementById('campoNovoTipo');
 
         // Esconder todos os campos específicos
         camposRecepcao.style.display = 'none';
         camposMedOdonto.style.display = 'none';
+        campoNovoTipo.style.display = 'none';
+
+        // Verificar se é um tipo personalizado
+        const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === tipo);
 
         // Mostrar campos específicos baseado no tipo
-        switch (tipo) {
-            case 'recepcao':
-            case 'recepcao-odonto':
-            case 'laboratorio':
-            case 'pos-consulta':
-                camposRecepcao.style.display = 'block';
-                this.inicializarTabelaFuncionarios();
-                break;
-            case 'medicina':
-            case 'odonto':
-                camposMedOdonto.style.display = 'block';
-                this.inicializarTabelaProfissionais();
-                break;
+        if (tipo === 'novo-tipo') {
+            // Mostrar campo para criar novo tipo
+            campoNovoTipo.style.display = 'block';
+            document.getElementById('novoTipoNome').required = true;
+        } else if (tipoPersonalizado || ['recepcao', 'recepcao-odonto', 'laboratorio', 'pos-consulta'].includes(tipo)) {
+            // Para tipos personalizados ou tipos de funcionários padrão
+            camposRecepcao.style.display = 'block';
+            this.inicializarTabelaFuncionarios();
+            document.getElementById('novoTipoNome').required = false;
+        } else if (tipo === 'medicina' || tipo === 'odonto') {
+            // Para medicina/odonto (sempre usar tabela de profissionais)
+            camposMedOdonto.style.display = 'block';
+            this.inicializarTabelaProfissionais();
+            document.getElementById('novoTipoNome').required = false;
+        } else {
+            document.getElementById('novoTipoNome').required = false;
         }
     }
 
@@ -681,6 +691,16 @@ class SistemaCadastro {
         const form = e.target;
         const formData = new FormData(form);
         
+        // Processar tipo personalizado se necessário
+        let tipoSelecionado = formData.get('tipo');
+        if (tipoSelecionado === 'novo-tipo') {
+            const novoTipoValor = this.processarNovoTipo(formData);
+            if (!novoTipoValor) {
+                return; // Erro no processamento do novo tipo
+            }
+            tipoSelecionado = novoTipoValor;
+        }
+        
         // Verificar e salvar unidade se fornecida
         const campoUnidadeVisivel = document.getElementById('campoUnidadeCredenciais');
         const inputUnidade = document.getElementById('unidadeCredenciais');
@@ -700,13 +720,16 @@ class SistemaCadastro {
         
         const credencial = {
             id: this.credencialEditando ? this.credencialEditando.id : Date.now(),
-            tipo: formData.get('tipo'),
+            tipo: tipoSelecionado,
             unidade: this.unidadeCredenciais,
             dataInclusao: this.credencialEditando ? this.credencialEditando.dataInclusao : new Date().toISOString()
         };
 
+        // Verificar se é um tipo personalizado
+        const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === tipoSelecionado);
+
         // Adicionar campos específicos baseado no tipo
-        if (['recepcao', 'recepcao-odonto', 'laboratorio', 'pos-consulta'].includes(credencial.tipo)) {
+        if (tipoPersonalizado || ['recepcao', 'recepcao-odonto', 'laboratorio', 'pos-consulta'].includes(credencial.tipo)) {
             credencial.funcionarios = this.coletarDadosFuncionarios(formData);
         } else if (credencial.tipo === 'medicina' || credencial.tipo === 'odonto') {
             credencial.profissionais = this.coletarDadosProfissionais(formData);
@@ -747,8 +770,11 @@ class SistemaCadastro {
             return false;
         }
 
+        // Verificar se é um tipo personalizado
+        const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === credencial.tipo);
+
         // Validação específica por tipo
-        if (['recepcao', 'recepcao-odonto', 'laboratorio', 'pos-consulta'].includes(credencial.tipo)) {
+        if (tipoPersonalizado || ['recepcao', 'recepcao-odonto', 'laboratorio', 'pos-consulta'].includes(credencial.tipo)) {
             if (!credencial.funcionarios || credencial.funcionarios.length === 0) {
                 this.mostrarNotificacao('Pelo menos um funcionário deve ser cadastrado!', 'error');
                 return false;
@@ -1284,6 +1310,13 @@ class SistemaCadastro {
             'pos-consulta': 'PÓS CONSULTA',
             'totem': 'TOTEM'
         };
+        
+        // Verificar se é um tipo personalizado
+        const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === tipo);
+        if (tipoPersonalizado) {
+            return tipoPersonalizado.nome.toUpperCase();
+        }
+        
         return tipos[tipo] || tipo.toUpperCase();
     }
 
@@ -1553,6 +1586,151 @@ class SistemaCadastro {
             this.atualizarUnidadeAtualCredenciais();
             this.mostrarNotificacao('Unidade atualizada com sucesso!', 'success');
         }
+    }
+
+    // Funções para gerenciar tipos personalizados
+    carregarTiposPersonalizados() {
+        try {
+            const tipos = localStorage.getItem('tiposPersonalizados');
+            return tipos ? JSON.parse(tipos) : [];
+        } catch (error) {
+            console.error('Erro ao carregar tipos personalizados:', error);
+            return [];
+        }
+    }
+
+    salvarTiposPersonalizados() {
+        try {
+            localStorage.setItem('tiposPersonalizados', JSON.stringify(this.tiposPersonalizados));
+        } catch (error) {
+            console.error('Erro ao salvar tipos personalizados:', error);
+            this.mostrarNotificacao('Erro ao salvar tipo personalizado!', 'error');
+        }
+    }
+
+    carregarTiposNoSelect() {
+        const selectTipo = document.getElementById('tipo');
+        if (!selectTipo) return;
+        
+        // Salvar opções padrão se não existirem
+        if (!this.optionsPadraoSelect) {
+            this.optionsPadraoSelect = [
+                { value: '', text: 'Selecione o tipo' },
+                { value: 'recepcao', text: 'Recepção Médica' },
+                { value: 'recepcao-odonto', text: 'Recepção Odonto' },
+                { value: 'medicina', text: 'Medicina' },
+                { value: 'odonto', text: 'Odontologia' },
+                { value: 'laboratorio', text: 'Laboratório' },
+                { value: 'pos-consulta', text: 'Pós Consulta' }
+            ];
+        }
+
+        // Limpar select e recriar com opções padrão
+        selectTipo.innerHTML = '';
+        
+        // Adicionar opções padrão
+        this.optionsPadraoSelect.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.text;
+            selectTipo.appendChild(option);
+        });
+
+        // Adicionar tipos personalizados
+        this.tiposPersonalizados.forEach(tipo => {
+            const option = document.createElement('option');
+            option.value = tipo.valor;
+            option.textContent = tipo.nome;
+            option.style.color = '#28a745';
+            option.style.fontStyle = 'italic';
+            selectTipo.appendChild(option);
+        });
+
+        // Adicionar opção "Novo Tipo" no final
+        const novoTipoOption = document.createElement('option');
+        novoTipoOption.value = 'novo-tipo';
+        novoTipoOption.textContent = '+ Novo Tipo';
+        novoTipoOption.style.color = '#007bff';
+        novoTipoOption.style.fontWeight = 'bold';
+        selectTipo.appendChild(novoTipoOption);
+    }
+
+    criarNovoTipo(nomeNovoTipo) {
+        // Gerar valor único baseado no nome
+        const valorTipo = this.gerarValorTipo(nomeNovoTipo);
+        
+        // Verificar se já existe
+        const jaExiste = this.tiposPersonalizados.some(t => t.valor === valorTipo);
+        if (jaExiste) {
+            this.mostrarNotificacao('Este tipo já existe!', 'error');
+            return null;
+        }
+
+        // Criar novo tipo
+        const novoTipo = {
+            valor: valorTipo,
+            nome: nomeNovoTipo.trim(),
+            dataCriacao: new Date().toISOString(),
+            ehPersonalizado: true
+        };
+
+        // Adicionar à lista
+        this.tiposPersonalizados.push(novoTipo);
+        this.salvarTiposPersonalizados();
+        this.carregarTiposNoSelect();
+
+        return novoTipo;
+    }
+
+    gerarValorTipo(nome) {
+        // Converter nome para valor único
+        return nome.toLowerCase()
+            .trim()
+            .replace(/[áàãâä]/g, 'a')
+            .replace(/[éèêë]/g, 'e')
+            .replace(/[íìîï]/g, 'i')
+            .replace(/[óòõôö]/g, 'o')
+            .replace(/[úùûü]/g, 'u')
+            .replace(/[ç]/g, 'c')
+            .replace(/[^a-z0-9]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+    }
+
+    processarNovoTipo(formData) {
+        const novoTipoNome = formData.get('novoTipoNome')?.trim();
+        
+        if (!novoTipoNome) {
+            this.mostrarNotificacao('Digite o nome do novo tipo!', 'error');
+            return null;
+        }
+
+        if (novoTipoNome.length < 2) {
+            this.mostrarNotificacao('O nome do tipo deve ter pelo menos 2 caracteres!', 'error');
+            return null;
+        }
+
+        if (novoTipoNome.length > 50) {
+            this.mostrarNotificacao('O nome do tipo deve ter no máximo 50 caracteres!', 'error');
+            return null;
+        }
+
+        // Criar o novo tipo
+        const novoTipo = this.criarNovoTipo(novoTipoNome);
+        if (novoTipo) {
+            this.mostrarNotificacao(`Tipo "${novoTipo.nome}" criado com sucesso!`, 'success');
+            
+            // Limpar campo e selecionar o novo tipo
+            document.getElementById('novoTipoNome').value = '';
+            document.getElementById('tipo').value = novoTipo.valor;
+            
+            // Atualizar interface para o novo tipo
+            this.alterarTipo(novoTipo.valor);
+            
+            return novoTipo.valor;
+        }
+        
+        return null;
     }
 
     // Métodos para editar por ID
