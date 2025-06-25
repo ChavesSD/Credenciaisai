@@ -175,10 +175,62 @@ class SistemaCadastro {
             senhasParaExibir = senhasFixas;
         }
         
-        // Renderizar as senhas no totem (sobre o background fixo)
-        totemOptions.innerHTML = senhasParaExibir.map(senha => `
-            <div class="totem-option-dynamic ${senha.classe}" style="background-color: ${senha.cor};">
-                ${senha.nome}
+        // Calcular altura dinâmica baseada na quantidade de senhas e tamanho da tela
+        const quantidadeSenhas = senhasParaExibir.length;
+        
+        // Ajustar altura disponível baseado no tamanho da tela
+        let alturaDisponivelPixels = 320; // Desktop padrão
+        const larguraTela = window.innerWidth;
+        
+        if (larguraTela <= 480) {
+            alturaDisponivelPixels = 280; // Mobile
+        } else if (larguraTela <= 768) {
+            alturaDisponivelPixels = 300; // Tablet
+        }
+        
+        const espacoEntreItens = 2; // Gap entre os itens
+        const espacoTotalGaps = (quantidadeSenhas - 1) * espacoEntreItens;
+        const alturaItem = Math.floor((alturaDisponivelPixels - espacoTotalGaps) / quantidadeSenhas);
+        
+        // Garantir altura mínima para legibilidade baseada no tamanho da tela
+        let alturaMinima = 25;
+        if (larguraTela <= 480) {
+            alturaMinima = 20;
+        } else if (larguraTela <= 768) {
+            alturaMinima = 22;
+        }
+        
+        const alturaCalculada = Math.max(alturaItem, alturaMinima);
+        
+        // Calcular tamanho da fonte baseado na altura e tamanho da tela
+        let fatorFonte = 0.35;
+        let fonteMinima = 10;
+        let fonteMaxima = 16;
+        
+        if (larguraTela <= 480) {
+            fatorFonte = 0.3;
+            fonteMinima = 8;
+            fonteMaxima = 12;
+        } else if (larguraTela <= 768) {
+            fatorFonte = 0.32;
+            fonteMinima = 9;
+            fonteMaxima = 14;
+        }
+        
+        const tamanhoFonte = Math.min(Math.max(alturaCalculada * fatorFonte, fonteMinima), fonteMaxima);
+        
+        // Renderizar as senhas no totem com altura dinâmica
+        totemOptions.innerHTML = senhasParaExibir.map((senha, index) => `
+            <div class="totem-option-dynamic ${senha.classe}" 
+                 style="background-color: ${senha.cor}; 
+                        height: ${alturaCalculada}px; 
+                        font-size: ${tamanhoFonte}px; 
+                        padding: ${Math.max(5, alturaCalculada * 0.15)}px 8px;
+                        line-height: ${alturaCalculada * 0.7}px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;">
+                <span style="display: block; text-align: center; width: 100%;">${senha.nome}</span>
             </div>
         `).join('');
         

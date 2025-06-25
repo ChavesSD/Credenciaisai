@@ -1368,8 +1368,6 @@ form {
 .totem-option-dynamic {
     background: #48c9b0;
     color: white;
-    padding: 15px 8px;
-    font-size: 14px;
     font-weight: bold;
     text-align: center;
     text-transform: uppercase;
@@ -1382,6 +1380,7 @@ form {
     text-overflow: ellipsis;
     position: relative;
     z-index: 3;
+    /* Altura, padding e font-size serão definidos dinamicamente via JavaScript */
 }
 
 .totem-option-dynamic:first-child {
@@ -1442,8 +1441,7 @@ form {
     }
     
     .totem-option-dynamic {
-        padding: 12px 6px;
-        font-size: 12px;
+        /* Altura, padding e font-size serão definidos dinamicamente via JavaScript */
     }
 }
 
@@ -1466,8 +1464,7 @@ form {
     }
     
     .totem-option-dynamic {
-        padding: 10px 4px;
-        font-size: 10px;
+        /* Altura, padding e font-size serão definidos dinamicamente via JavaScript */
     }
 }
 
