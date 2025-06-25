@@ -160,11 +160,18 @@
                     </div>
                 </div>
 
+                <!-- Campo de Empresa (aparece quando não definida) -->
+                <div id="campoEmpresaCredenciais" class="form-group">
+                    <label for="empresaCredenciais">Empresa *</label>
+                    <input type="text" id="empresaCredenciais" name="empresaCredenciais" placeholder="Ex: Intelite Tecnologia" required>
+                    <small>Nome da empresa/organização</small>
+                </div>
+
                 <!-- Campo de Unidade (aparece quando não definida) -->
                 <div id="campoUnidadeCredenciais" class="form-group">
                     <label for="unidadeCredenciais">Unidade *</label>
-                    <input type="text" id="unidadeCredenciais" name="unidadeCredenciais" placeholder="Digite a unidade/empresa" required>
-                    <small>Esta unidade será aplicada a todos os cadastros de credenciais</small>
+                    <input type="text" id="unidadeCredenciais" name="unidadeCredenciais" placeholder="Ex: João Pessoa, Campina Grande" required>
+                    <small>Nome da unidade/filial específica</small>
                 </div>
 
                 <div class="form-group">
@@ -257,9 +264,15 @@
             
             <form id="formSenhaTotem">
                 <div class="form-group">
+                    <label for="empresaTotem">Empresa *</label>
+                    <input type="text" id="empresaTotem" name="empresaTotem" placeholder="Ex: Intelite Tecnologia" required>
+                    <small>Nome da empresa/organização</small>
+                </div>
+                
+                <div class="form-group">
                     <label for="unidadeTotem">Unidade *</label>
-                    <input type="text" id="unidadeTotem" name="unidadeTotem" placeholder="Digite a unidade/empresa" required>
-                    <small>Esta unidade será aplicada a todas as senhas do totem</small>
+                    <input type="text" id="unidadeTotem" name="unidadeTotem" placeholder="Ex: João Pessoa, Campina Grande" required>
+                    <small>Nome da unidade/filial específica</small>
                 </div>
                 
                 <div class="form-group">
@@ -400,6 +413,11 @@
                     </div>
                     
                     <div class="info-fields">
+                        <div class="form-group">
+                            <label for="empresaInfo">Informações da Empresa</label>
+                            <input type="text" id="empresaInfo" name="empresa" readonly>
+                        </div>
+                        
                         <div class="form-group">
                             <label for="unidadeInfo">Informações da Unidade</label>
                             <input type="text" id="unidadeInfo" name="unidade" readonly>
