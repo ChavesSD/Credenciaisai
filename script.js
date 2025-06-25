@@ -3,9 +3,7 @@ class SistemaCadastro {
     constructor() {
         this.credenciais = this.carregarDados();
         this.senhasTotem = this.carregarSenhasTotem();
-        this.empresaTotem = this.carregarEmpresaTotem();
         this.unidadeTotem = this.carregarUnidadeTotem();
-        this.empresaCredenciais = this.carregarEmpresaCredenciais();
         this.unidadeCredenciais = this.carregarUnidadeCredenciais();
         this.tiposPersonalizados = this.carregarTiposPersonalizados();
         this.credencialEditando = null;
@@ -19,7 +17,6 @@ class SistemaCadastro {
         this.atualizarTabela();
         this.atualizarTabelaTotem();
         this.atualizarUnidadeAtual();
-        this.atualizarEmpresaAtualCredenciais();
         this.atualizarUnidadeAtualCredenciais();
         this.carregarTiposNoSelect();
     }
@@ -291,23 +288,7 @@ class SistemaCadastro {
         }
     }
 
-    carregarEmpresaTotem() {
-        try {
-            return localStorage.getItem('empresaTotem') || '';
-        } catch (error) {
-            console.error('Erro ao carregar empresa do totem:', error);
-            return '';
-        }
-    }
 
-    salvarEmpresaTotem() {
-        try {
-            localStorage.setItem('empresaTotem', this.empresaTotem);
-        } catch (error) {
-            console.error('Erro ao salvar empresa do totem:', error);
-            this.mostrarNotificacao('Erro ao salvar empresa do totem!', 'error');
-        }
-    }
 
     carregarUnidadeTotem() {
         try {
@@ -774,22 +755,7 @@ class SistemaCadastro {
             tipoSelecionado = novoTipoValor;
         }
         
-        // Verificar e salvar empresa se fornecida
-        const campoEmpresaVisivel = document.getElementById('campoEmpresaCredenciais');
-        const inputEmpresa = document.getElementById('empresaCredenciais');
-        
-        if (campoEmpresaVisivel && 
-            campoEmpresaVisivel.style.display !== 'none' && 
-            inputEmpresa && 
-            !inputEmpresa.disabled) {
-            
-            const empresaInput = inputEmpresa.value || formData.get('empresaCredenciais');
-            if (empresaInput && empresaInput.trim()) {
-                this.empresaCredenciais = empresaInput.trim();
-                this.salvarEmpresaCredenciais();
-                this.atualizarEmpresaAtualCredenciais();
-            }
-        }
+
 
         // Verificar e salvar unidade se fornecida
         const campoUnidadeVisivel = document.getElementById('campoUnidadeCredenciais');
@@ -855,11 +821,7 @@ class SistemaCadastro {
             return false;
         }
 
-        // Verificar se a empresa está definida
-        if (!this.empresaCredenciais) {
-            this.mostrarNotificacao('Empresa é obrigatória!', 'error');
-            return false;
-        }
+
 
         // Verificar se a unidade está definida (globalmente ou no cadastro)
         if (!this.unidadeCredenciais && !credencial.unidade) {
@@ -1332,13 +1294,11 @@ class SistemaCadastro {
         // Adicionar worksheet ao workbook
         XLSX.utils.book_append_sheet(wb, ws, 'Credenciais');
 
-        // Gerar nome do arquivo com empresa, unidade e data atual
+        // Gerar nome do arquivo com unidade e data atual
         const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-        const empresaNome = this.empresaCredenciais ? 
-            this.empresaCredenciais.replace(/[<>:"/\\|?*]/g, '') : 'SemEmpresa';
         const unidadeNome = this.unidadeCredenciais ? 
             this.unidadeCredenciais.replace(/[<>:"/\\|?*]/g, '') : 'SemUnidade';
-        const nomeArquivo = `${empresaNome}_${unidadeNome}_credenciais_${dataAtual}.xlsx`;
+        const nomeArquivo = `${unidadeNome}_credenciais_${dataAtual}.xlsx`;
 
         // Fazer download
         XLSX.writeFile(wb, nomeArquivo);
@@ -1391,13 +1351,11 @@ class SistemaCadastro {
         // Adicionar worksheet ao workbook
         XLSX.utils.book_append_sheet(wb, ws, 'Senhas do Totem');
 
-        // Gerar nome do arquivo com empresa, unidade e data atual
+        // Gerar nome do arquivo com unidade e data atual
         const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-        const empresaNome = this.empresaTotem ? 
-            this.empresaTotem.replace(/[<>:"/\\|?*]/g, '') : 'SemEmpresa';
         const unidadeNome = this.unidadeTotem ? 
             this.unidadeTotem.replace(/[<>:"/\\|?*]/g, '') : 'SemUnidade';
-        const nomeArquivo = `${empresaNome}_${unidadeNome}_senhas_totem_${dataAtual}.xlsx`;
+        const nomeArquivo = `${unidadeNome}_senhas_totem_${dataAtual}.xlsx`;
 
         // Fazer download
         XLSX.writeFile(wb, nomeArquivo);
@@ -1522,12 +1480,7 @@ class SistemaCadastro {
         const form = e.target;
         const formData = new FormData(form);
         
-        // Verificar se existe campo de empresa no formulário (primeira vez) 
-        const empresaFormulario = formData.get('empresaTotem');
-        if (empresaFormulario && empresaFormulario.trim()) {
-            this.empresaTotem = empresaFormulario.trim();
-            this.salvarEmpresaTotem();
-        }
+
 
         // Verificar se existe campo de unidade no formulário (primeira vez) 
         const unidadeFormulario = formData.get('unidadeTotem');
@@ -1641,24 +1594,7 @@ class SistemaCadastro {
         }
     }
 
-    // Métodos para gerenciar empresa de credenciais
-    carregarEmpresaCredenciais() {
-        try {
-            return localStorage.getItem('empresaCredenciais') || '';
-        } catch (error) {
-            console.error('Erro ao carregar empresa de credenciais:', error);
-            return '';
-        }
-    }
 
-    salvarEmpresaCredenciais() {
-        try {
-            localStorage.setItem('empresaCredenciais', this.empresaCredenciais);
-        } catch (error) {
-            console.error('Erro ao salvar empresa de credenciais:', error);
-            this.mostrarNotificacao('Erro ao salvar empresa de credenciais!', 'error');
-        }
-    }
 
     // Métodos para gerenciar unidade de credenciais
     carregarUnidadeCredenciais() {
@@ -1679,30 +1615,7 @@ class SistemaCadastro {
         }
     }
 
-    atualizarEmpresaAtualCredenciais() {
-        const campoEmpresa = document.getElementById('campoEmpresaCredenciais');
-        const inputEmpresa = document.getElementById('empresaCredenciais');
-        
-        console.log('Atualizando empresa. Empresa atual:', this.empresaCredenciais);
-        
-        if (this.empresaCredenciais && this.empresaCredenciais.trim() !== '') {
-            // Ocultar campo de entrada se empresa já definida
-            if (campoEmpresa) campoEmpresa.style.display = 'none';
-            if (inputEmpresa) {
-                inputEmpresa.removeAttribute('required');
-                inputEmpresa.value = '';
-            }
-            console.log('Empresa já definida:', this.empresaCredenciais);
-        } else {
-            // Mostrar campo de entrada
-            if (campoEmpresa) campoEmpresa.style.display = 'block';
-            if (inputEmpresa) {
-                inputEmpresa.setAttribute('required', 'required');
-                inputEmpresa.value = '';
-            }
-            console.log('Exibindo campo de entrada da empresa');
-        }
-    }
+
 
     atualizarUnidadeAtualCredenciais() {
         const containerAtual = document.getElementById('unidadeAtualCredenciais');
@@ -1940,16 +1853,14 @@ class SistemaCadastro {
             this.arquivosParaEnvio = [];
             let nomeArquivos = [];
 
-            // Obter nome da empresa e unidade para usar nos arquivos
-            const empresa = this.empresaCredenciais || this.empresaTotem || 'SemEmpresa';
+            // Obter nome da unidade para usar nos arquivos
             const unidade = this.unidadeCredenciais || this.unidadeTotem || 'SemUnidade';
-            const empresaNome = empresa.replace(/[<>:"/\\|?*]/g, '');
             const unidadeNome = unidade.replace(/[<>:"/\\|?*]/g, '');
             const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
 
             if (temCredenciais) {
                 const workbookCredenciais = this.gerarExcelCredenciais();
-                const nomeArquivoCredenciais = `${empresaNome}_${unidadeNome}_credenciais_${dataAtual}.xlsx`;
+                const nomeArquivoCredenciais = `${unidadeNome}_credenciais_${dataAtual}.xlsx`;
                 this.arquivosParaEnvio.push({
                     nome: nomeArquivoCredenciais,
                     dados: workbookCredenciais,
@@ -1961,7 +1872,7 @@ class SistemaCadastro {
 
             if (temSenhasTotem) {
                 const workbookTotem = this.gerarExcelTotem();
-                const nomeArquivoTotem = `${empresaNome}_${unidadeNome}_senhas_totem_${dataAtual}.xlsx`;
+                const nomeArquivoTotem = `${unidadeNome}_senhas_totem_${dataAtual}.xlsx`;
                 this.arquivosParaEnvio.push({
                     nome: nomeArquivoTotem,
                     dados: workbookTotem,
@@ -1974,11 +1885,10 @@ class SistemaCadastro {
             // Preparar conteúdo do email
             const dataFormatada = new Date().toLocaleDateString('pt-BR');
             
-            const assunto = `Planilhas de Credenciais - ${empresa} - ${unidade} - ${dataFormatada}`;
+            const assunto = `Planilhas de Credenciais - ${unidade} - ${dataFormatada}`;
             
             const corpo = `Segue em anexo as planilhas de credenciais:
 
-Empresa: ${empresa}
 Unidade: ${unidade}
 Data de geração: ${dataFormatada}
 
@@ -1988,7 +1898,6 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             // Preencher campos do modal
             document.getElementById('assuntoEmail').value = assunto;
             document.getElementById('corpoEmail').value = corpo;
-            document.getElementById('empresaInfo').value = empresa;
             document.getElementById('unidadeInfo').value = unidade;
             document.getElementById('totalCredenciais').value = `${this.credenciais.length} credenciais, ${this.senhasTotem.length} senhas do totem`;
 
