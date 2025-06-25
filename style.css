@@ -109,7 +109,6 @@ header {
     align-items: center;
     justify-content: center;
     width: 100%;
-    position: relative;
 }
 
 .brand-logo {
@@ -119,42 +118,50 @@ header {
     filter: brightness(0) invert(1);
 }
 
-/* Botão discreto do tour */
-.btn-tour-discreto {
-    position: absolute;
-    top: var(--space-2);
+/* Botão de Tour Fixo no Canto Superior Direito */
+.btn-tour-fixo {
+    position: fixed;
+    top: var(--space-4);
     right: var(--space-4);
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    color: var(--white);
-    cursor: pointer;
+    z-index: 1000;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-2xl);
+    color: var(--gray-700);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
     transition: all 0.3s ease;
-    opacity: 0.7;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-md);
 }
 
-.btn-tour-discreto:hover {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.btn-tour-fixo:hover {
+    background: var(--white);
+    color: var(--primary-600);
+    border-color: var(--primary-200);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
 }
 
-.btn-tour-discreto svg {
-    width: 18px;
-    height: 18px;
-    stroke-width: 2.5;
+.btn-tour-fixo:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-md);
 }
 
-.btn-tour-discreto:active {
-    transform: scale(0.95);
+.tour-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.tour-text {
+    white-space: nowrap;
+    user-select: none;
 }
 
 /* Navigation Tabs */
@@ -1133,16 +1140,16 @@ form {
         height: 60px;
     }
     
-    .btn-tour-discreto {
-        width: 28px;
-        height: 28px;
-        top: var(--space-1);
+    .btn-tour-fixo {
+        top: var(--space-3);
         right: var(--space-3);
+        padding: var(--space-2);
+        font-size: 0.8rem;
     }
     
-    .btn-tour-discreto svg {
-        width: 16px;
-        height: 16px;
+    .tour-icon {
+        width: 14px;
+        height: 14px;
     }
     
     .nav-tab {
@@ -1266,16 +1273,16 @@ form {
         height: 50px;
     }
     
-    .btn-tour-discreto {
-        width: 26px;
-        height: 26px;
-        top: var(--space-1);
+    .btn-tour-fixo {
+        top: var(--space-2);
         right: var(--space-2);
+        padding: var(--space-1) var(--space-2);
+        font-size: 0.75rem;
     }
     
-    .btn-tour-discreto svg {
-        width: 14px;
-        height: 14px;
+    .tour-icon {
+        width: 12px;
+        height: 12px;
     }
     
     .lista-container {
