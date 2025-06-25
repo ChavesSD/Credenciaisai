@@ -507,17 +507,15 @@ class SistemaCadastro {
         const tbody = document.getElementById('profissionaisTableBody');
         tbody.innerHTML = '';
         
-        // Gerar 10 linhas iniciais
-        for (let i = 0; i < 10; i++) {
+        // Gerar 3 linhas iniciais ao invés de 10
+        for (let i = 0; i < 3; i++) {
             this.adicionarLinhaProfissional();
         }
 
-        // Configurar botão para mais linhas
+        // Configurar botão para mais linhas - adicionar apenas 1 linha
         const btnMaisLinhas = document.getElementById('btnMaisLinhas');
         btnMaisLinhas.onclick = () => {
-            for (let i = 0; i < 10; i++) {
-                this.adicionarLinhaProfissional();
-            }
+            this.adicionarLinhaProfissional();
         };
     }
 
@@ -528,17 +526,21 @@ class SistemaCadastro {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
-                <select name="tratamento_${index}">
-                    <option value="">-</option>
+                <select name="tratamento_${index}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">Selecione...</option>
                     <option value="Dr.">Dr.</option>
                     <option value="Dra.">Dra.</option>
+                    <option value="Prof.">Prof.</option>
+                    <option value="Prof.ª">Prof.ª</option>
+                    <option value="Sr.">Sr.</option>
+                    <option value="Sra.">Sra.</option>
                 </select>
             </td>
             <td>
-                <input type="text" name="nome_${index}" placeholder="Nome do profissional">
+                <input type="text" name="nome_${index}" placeholder="Nome do profissional" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
             </td>
             <td>
-                <input type="text" name="especialidade_${index}" placeholder="Especialidade">
+                <input type="text" name="especialidade_${index}" placeholder="Especialidade" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
             </td>
         `;
         
@@ -549,17 +551,15 @@ class SistemaCadastro {
         const tbody = document.getElementById('funcionariosTableBody');
         tbody.innerHTML = '';
         
-        // Gerar 10 linhas iniciais
-        for (let i = 0; i < 10; i++) {
+        // Gerar 3 linhas iniciais ao invés de 10
+        for (let i = 0; i < 3; i++) {
             this.adicionarLinhaFuncionario();
         }
 
-        // Configurar botão para mais linhas
+        // Configurar botão para mais linhas - adicionar apenas 1 linha
         const btnMaisLinhas = document.getElementById('btnMaisLinhasFuncionarios');
         btnMaisLinhas.onclick = () => {
-            for (let i = 0; i < 10; i++) {
-                this.adicionarLinhaFuncionario();
-            }
+            this.adicionarLinhaFuncionario();
         };
     }
 
@@ -570,10 +570,10 @@ class SistemaCadastro {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
-                <input type="text" name="nome_funcionario_${index}" placeholder="Nome do funcionário">
+                <input type="text" name="nome_funcionario_${index}" placeholder="Nome do funcionário" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
             </td>
             <td>
-                <input type="text" name="senhas_funcionario_${index}" placeholder="Ex: Medicina Geral, Cardiologia...">
+                <input type="text" name="senhas_funcionario_${index}" placeholder="Ex: Medicina Geral, Cardiologia..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
             </td>
         `;
         
