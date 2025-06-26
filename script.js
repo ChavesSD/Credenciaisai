@@ -88,6 +88,36 @@ class SistemaCadastro {
                 this.fecharModal(e.target);
             }
         });
+
+        // Eventos das opções de tour
+        document.querySelectorAll('.tour-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const tipoTour = option.dataset.tour;
+                this.iniciarTour(tipoTour);
+            });
+        });
+        
+        // Eventos do modal do tour
+        document.getElementById('btnProximoTour').addEventListener('click', () => this.proximaEtapa());
+        document.getElementById('btnAnteriorTour').addEventListener('click', () => this.etapaAnterior());
+        document.getElementById('btnFinalizarTour').addEventListener('click', () => this.finalizarTour());
+        document.getElementById('btnPularTour').addEventListener('click', () => this.finalizarTour());
+        document.getElementById('closeTour').addEventListener('click', () => this.finalizarTour());
+        
+        // Eventos do tooltip do tour
+        document.getElementById('btnProximoTooltip').addEventListener('click', () => this.proximaEtapa());
+        document.getElementById('btnAnteriorTooltip').addEventListener('click', () => this.etapaAnterior());
+        document.getElementById('btnPularTooltip').addEventListener('click', () => this.finalizarTour());
+    }
+    
+    iniciarTour(tipoTour = 'geral') {
+        this.tipoTourAtual = tipoTour;
+        this.etapas = this.tours[tipoTour] || this.tours.geral;
+        this.totalEtapas = this.etapas.length;
+        this.tourAtivo = true;
+        this.etapaAtual = 0;
+        this.mostrarEtapa();
     }
 
     alternarSecao(secao) {
@@ -2311,93 +2341,258 @@ class TourGuiado {
         this.etapaAtual = 0;
         this.totalEtapas = 0;
         this.tourAtivo = false;
+        this.tipoTourAtual = 'geral';
         this.primeiroAcesso = this.verificarPrimeiroAcesso();
         
-        this.etapas = [
-            {
-                tipo: 'modal',
-                titulo: '🚀 Bem-vindo ao Sistema de Credenciais!',
-                conteudo: `
-                    <div class="tour-step">
-                        <div class="tour-step-icon">👋</div>
-                        <h3>Olá! Seja bem-vindo!</h3>
-                        <p>Este é o Sistema de Cadastro de Credenciais. Aqui você pode gerenciar credenciais de funcionários e configurar senhas para o totem de atendimento.</p>
-                        <div class="tour-features">
-                            <ul>
-                                <li>Cadastre funcionários por área (Medicina, Odonto, Laboratório, etc.)</li>
-                                <li>Configure senhas personalizadas para o totem</li>
-                                <li>Exporte dados e envie por email</li>
-                                <li>Interface moderna e responsiva</li>
-                            </ul>
+        this.tours = {
+            geral: [
+                {
+                    tipo: 'modal',
+                    titulo: '🚀 Bem-vindo ao Sistema de Credenciais!',
+                    conteudo: `
+                        <div class="tour-step">
+                            <div class="tour-step-icon">👋</div>
+                            <h3>Olá! Seja bem-vindo!</h3>
+                            <p>Este é o Sistema de Cadastro de Credenciais. Aqui você pode gerenciar credenciais de funcionários e configurar senhas para o totem de atendimento.</p>
+                            <div class="tour-features">
+                                <ul>
+                                    <li>Cadastre funcionários por área (Medicina, Odonto, Laboratório, etc.)</li>
+                                    <li>Configure senhas personalizadas para o totem</li>
+                                    <li>Exporte dados e envie por email</li>
+                                    <li>Interface moderna e responsiva</li>
+                                </ul>
+                            </div>
+                            <p><strong>Vamos fazer um tour rápido para você conhecer as principais funcionalidades!</strong></p>
                         </div>
-                        <p><strong>Vamos fazer um tour rápido para você conhecer as principais funcionalidades!</strong></p>
-                    </div>
-                `
-            },
-            {
-                tipo: 'spotlight',
-                elemento: '.nav-tabs',
-                titulo: '📋 Navegação Principal',
-                texto: 'Use essas abas para alternar entre o cadastro de credenciais de funcionários e a configuração das senhas do totem.',
-                posicao: 'bottom'
-            },
-            {
-                tipo: 'spotlight',
-                elemento: '#btnNovoCadastro',
-                titulo: '➕ Novo Cadastro',
-                texto: 'Clique aqui para adicionar novos funcionários ao sistema. Você pode cadastrar médicos, dentistas, recepcionistas e muito mais!',
-                posicao: 'bottom'
-            },
-            {
-                tipo: 'spotlight',
-                elemento: '#searchInput',
-                titulo: '🔍 Buscar Registros',
-                texto: 'Use este campo para encontrar rapidamente funcionários cadastrados. Você pode buscar por nome ou tipo de profissional.',
-                posicao: 'bottom'
-            },
-            {
-                tipo: 'spotlight',
-                elemento: '#btnEnviarEmail',
-                titulo: '📧 Enviar por Email',
-                texto: 'Exporte todos os dados em planilhas e envie por email. Perfeito para compartilhar informações ou fazer backup.',
-                posicao: 'bottom'
-            },
-            {
-                tipo: 'spotlight',
-                elemento: '#btnSenhasTotem',
-                titulo: '🖥️ Senhas do Totem',
-                texto: 'Clique aqui para configurar as senhas que aparecerão no totem de atendimento. Você pode personalizar cores e ordem.',
-                posicao: 'bottom',
-                acao: () => window.sistema.alternarSecao('totem')
-            },
-            {
-                tipo: 'modal',
-                titulo: '✅ Tour Concluído!',
-                conteudo: `
-                    <div class="tour-step">
-                        <div class="tour-step-icon">🎉</div>
-                        <h3>Parabéns! Você conhece o sistema!</h3>
-                        <p>Agora você está pronto para usar todas as funcionalidades do sistema.</p>
-                        <div class="tour-features">
-                            <ul>
-                                <li>Comece cadastrando seus funcionários</li>
-                                <li>Configure as senhas do totem conforme necessário</li>
-                                <li>Use o botão "Fazer Tour" se quiser ver novamente</li>
-                                <li>Aproveite a facilidade do sistema!</li>
-                            </ul>
+                    `
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '.nav-tabs',
+                    titulo: '📋 Navegação Principal',
+                    texto: 'Use essas abas para alternar entre o cadastro de credenciais de funcionários e a configuração das senhas do totem.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#btnNovoCadastro',
+                    titulo: '➕ Novo Cadastro',
+                    texto: 'Clique aqui para adicionar novos funcionários ao sistema. Você pode cadastrar médicos, dentistas, recepcionistas e muito mais!',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#searchInput',
+                    titulo: '🔍 Buscar Registros',
+                    texto: 'Use este campo para encontrar rapidamente funcionários cadastrados. Você pode buscar por nome ou tipo de profissional.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#btnEnviarEmail',
+                    titulo: '📧 Enviar por Email',
+                    texto: 'Exporte todos os dados em planilhas e envie por email. Perfeito para compartilhar informações ou fazer backup.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#btnSenhasTotem',
+                    titulo: '🖥️ Senhas do Totem',
+                    texto: 'Clique aqui para configurar as senhas que aparecerão no totem de atendimento. Você pode personalizar cores e ordem.',
+                    posicao: 'bottom',
+                    acao: () => window.sistema.alternarSecao('totem')
+                },
+                {
+                    tipo: 'modal',
+                    titulo: '✅ Tour Geral Concluído!',
+                    conteudo: `
+                        <div class="tour-step">
+                            <div class="tour-step-icon">🎉</div>
+                            <h3>Parabéns! Você conhece o sistema!</h3>
+                            <p>Agora você está pronto para usar todas as funcionalidades do sistema.</p>
+                            <div class="tour-features">
+                                <ul>
+                                    <li>Comece cadastrando seus funcionários</li>
+                                    <li>Configure as senhas do totem conforme necessário</li>
+                                    <li>Use o botão "Tours" para acessar tours específicos</li>
+                                    <li>Aproveite a facilidade do sistema!</li>
+                                </ul>
+                            </div>
+                            <p><strong>Se precisar de ajuda, você pode refazer os tours a qualquer momento clicando no botão "Tours".</strong></p>
                         </div>
-                        <p><strong>Se precisar de ajuda, você pode refazer este tour a qualquer momento clicando no botão "Fazer Tour".</strong></p>
-                    </div>
-                `
-            }
-        ];
+                    `
+                }
+            ],
+            credenciais: [
+                {
+                    tipo: 'modal',
+                    titulo: '👥 Tour: Cadastro de Credenciais',
+                    conteudo: `
+                        <div class="tour-step">
+                            <div class="tour-step-icon">👥</div>
+                            <h3>Cadastro de Credenciais de Funcionários</h3>
+                            <p>Vamos aprender como cadastrar e gerenciar funcionários no sistema.</p>
+                            <div class="tour-features">
+                                <ul>
+                                    <li>Cadastre médicos, dentistas, recepcionistas</li>
+                                    <li>Organize por unidade e especialidade</li>
+                                    <li>Gerencie múltiplos profissionais por cadastro</li>
+                                    <li>Exporte e compartilhe os dados</li>
+                                </ul>
+                            </div>
+                            <p><strong>Vamos começar!</strong></p>
+                        </div>
+                    `,
+                    acao: () => window.sistema.alternarSecao('credenciais')
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#btnNovoCadastro',
+                    titulo: '➕ Adicionar Novo Funcionário',
+                    texto: 'Clique aqui para abrir o formulário de cadastro. Você pode adicionar médicos, dentistas, recepcionistas, laboratório e pós-consulta.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#campoUnidadeCredenciais, #unidadeAtualCredenciais',
+                    titulo: '🏢 Definir Unidade',
+                    texto: 'Primeiro, defina a unidade (ex: João Pessoa, Campina Grande). Todos os funcionários serão cadastrados para esta unidade.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#tipo',
+                    titulo: '📋 Selecionar Tipo de Funcionário',
+                    texto: 'Escolha o tipo: Medicina, Odontologia, Recepção, Laboratório, Pós-Consulta. Você também pode criar tipos personalizados.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#searchInput',
+                    titulo: '🔍 Buscar Funcionários',
+                    texto: 'Use esta busca para encontrar rapidamente funcionários cadastrados. Você pode buscar por nome ou tipo.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#tabelaCredenciais',
+                    titulo: '📊 Visualizar Cadastros',
+                    texto: 'Aqui aparecem todos os funcionários cadastrados. Você pode editar ou excluir cada registro usando os botões de ação.',
+                    posicao: 'top'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#btnEnviarEmail',
+                    titulo: '📧 Exportar e Enviar',
+                    texto: 'Exporte todos os dados em planilhas Excel organizadas por tipo e envie por email. Ideal para backup ou compartilhamento.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'modal',
+                    titulo: '✅ Tour de Credenciais Concluído!',
+                    conteudo: `
+                        <div class="tour-step">
+                            <div class="tour-step-icon">🎯</div>
+                            <h3>Agora você domina o cadastro de credenciais!</h3>
+                            <p>Você aprendeu todas as funcionalidades para gerenciar funcionários.</p>
+                            <div class="tour-features">
+                                <ul>
+                                    <li>Cadastrar novos funcionários por tipo</li>
+                                    <li>Organizar por unidade e especialidade</li>
+                                    <li>Buscar e editar registros existentes</li>
+                                    <li>Exportar dados para planilhas</li>
+                                </ul>
+                            </div>
+                            <p><strong>Comece cadastrando seus funcionários!</strong></p>
+                        </div>
+                    `
+                }
+            ],
+            totem: [
+                {
+                    tipo: 'modal',
+                    titulo: '🖥️ Tour: Senhas do Totem',
+                    conteudo: `
+                        <div class="tour-step">
+                            <div class="tour-step-icon">🖥️</div>
+                            <h3>Configuração das Senhas do Totem</h3>
+                            <p>Vamos aprender como configurar as senhas que aparecerão no totem de atendimento.</p>
+                            <div class="tour-features">
+                                <ul>
+                                    <li>Crie senhas personalizadas com cores</li>
+                                    <li>Defina a ordem de exibição</li>
+                                    <li>Visualize como ficará no totem</li>
+                                    <li>Limite de 12 senhas por totem</li>
+                                </ul>
+                            </div>
+                            <p><strong>Vamos configurar seu totem!</strong></p>
+                        </div>
+                    `,
+                    acao: () => window.sistema.alternarSecao('totem')
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#btnVerTotem',
+                    titulo: '🆕 Nova Senha do Totem',
+                    texto: 'Clique aqui para adicionar uma nova senha ao totem. Você pode personalizar o nome, cor e ordem de exibição.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#unidadeAtualContainer',
+                    titulo: '🏢 Unidade do Totem',
+                    texto: 'As senhas do totem são organizadas por unidade. Certifique-se de que a unidade está correta antes de adicionar senhas.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#searchInputTotem',
+                    titulo: '🔍 Buscar Senhas',
+                    texto: 'Use esta busca para encontrar senhas específicas do totem. Útil quando você tem muitas senhas cadastradas.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#tabelaSenhasTotem',
+                    titulo: '📊 Gerenciar Senhas',
+                    texto: 'Aqui você vê todas as senhas cadastradas com ordem, cor e pré-visualização. Use os botões para editar ou excluir senhas.',
+                    posicao: 'top'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '.totem-contador, #mensagemVaziaTotem',
+                    titulo: '📊 Contador de Senhas',
+                    texto: 'Quando você cadastrar senhas, aqui aparecerá o contador. O limite máximo é 12 senhas por totem para melhor visualização.',
+                    posicao: 'top'
+                },
+                {
+                    tipo: 'modal',
+                    titulo: '✅ Tour do Totem Concluído!',
+                    conteudo: `
+                        <div class="tour-step">
+                            <div class="tour-step-icon">🎯</div>
+                            <h3>Agora você domina a configuração do totem!</h3>
+                            <p>Você aprendeu todas as funcionalidades para configurar as senhas do totem.</p>
+                            <div class="tour-features">
+                                <ul>
+                                    <li>Criar senhas personalizadas com cores</li>
+                                    <li>Definir ordem de exibição</li>
+                                    <li>Gerenciar até 12 senhas por totem</li>
+                                    <li>Visualizar como ficará para os pacientes</li>
+                                </ul>
+                            </div>
+                            <p><strong>Configure suas senhas e melhore o atendimento!</strong></p>
+                        </div>
+                    `
+                }
+            ]
+        };
         
-        this.totalEtapas = this.etapas.length;
         this.configurarEventos();
         
         // Iniciar tour automático se for primeiro acesso
         if (this.primeiroAcesso) {
-            setTimeout(() => this.iniciarTour(), 1000);
+            setTimeout(() => this.iniciarTour('geral'), 1000);
         }
     }
     
@@ -2411,8 +2606,14 @@ class TourGuiado {
     }
     
     configurarEventos() {
-        // Botão do tour no header
-        document.getElementById('btnTour').addEventListener('click', () => this.iniciarTour());
+        // Eventos das opções de tour
+        document.querySelectorAll('.tour-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const tipoTour = option.dataset.tour;
+                this.iniciarTour(tipoTour);
+            });
+        });
         
         // Eventos do modal do tour
         document.getElementById('btnProximoTour').addEventListener('click', () => this.proximaEtapa());
@@ -2427,7 +2628,10 @@ class TourGuiado {
         document.getElementById('btnPularTooltip').addEventListener('click', () => this.finalizarTour());
     }
     
-    iniciarTour() {
+    iniciarTour(tipoTour = 'geral') {
+        this.tipoTourAtual = tipoTour;
+        this.etapas = this.tours[tipoTour] || this.tours.geral;
+        this.totalEtapas = this.etapas.length;
         this.tourAtivo = true;
         this.etapaAtual = 0;
         this.mostrarEtapa();
@@ -2476,7 +2680,18 @@ class TourGuiado {
         // Ocultar modal se estiver visível
         document.getElementById('modalTour').style.display = 'none';
         
-        const elemento = document.querySelector(etapa.elemento);
+        // Tentar encontrar elemento - pode ter múltiplos seletores separados por vírgula
+        const seletores = etapa.elemento.split(',');
+        let elemento = null;
+        
+        for (const seletor of seletores) {
+            elemento = document.querySelector(seletor.trim());
+            if (elemento && elemento.offsetParent !== null) {
+                // Elemento encontrado e visível
+                break;
+            }
+        }
+        
         if (!elemento) {
             this.proximaEtapa();
             return;
@@ -2592,11 +2807,25 @@ class TourGuiado {
             el.classList.remove('tour-highlight');
         });
         
-        // Voltar para a seção de credenciais
-        window.sistema.alternarSecao('credenciais');
+        // Navegar para a seção apropriada conforme o tipo de tour
+        if (this.tipoTourAtual === 'totem') {
+            window.sistema.alternarSecao('totem');
+        } else if (this.tipoTourAtual === 'credenciais') {
+            window.sistema.alternarSecao('credenciais');
+        } else {
+            // Tour geral - voltar para credenciais
+            window.sistema.alternarSecao('credenciais');
+        }
         
-        // Mostrar notificação
-        window.sistema.mostrarNotificacao('Tour finalizado! Explore o sistema à vontade.', 'success');
+        // Mostrar notificação personalizada
+        let mensagem = 'Tour finalizado! Explore o sistema à vontade.';
+        if (this.tipoTourAtual === 'credenciais') {
+            mensagem = 'Tour de credenciais finalizado! Comece cadastrando seus funcionários.';
+        } else if (this.tipoTourAtual === 'totem') {
+            mensagem = 'Tour do totem finalizado! Configure suas senhas personalizadas.';
+        }
+        
+        window.sistema.mostrarNotificacao(mensagem, 'success');
     }
     
     atualizarProgresso() {

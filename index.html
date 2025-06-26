@@ -9,14 +9,53 @@
 </head>
 <body>
     <!-- Botão de Tour Fixo -->
-    <button id="btnTour" class="btn-tour-fixo">
-        <svg class="tour-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <path d="M12 17h.01"/>
-        </svg>
-        <span class="tour-text">Fazer Tour</span>
-    </button>
+    <div class="btn-tour-container">
+        <button id="btnTour" class="btn-tour-fixo">
+            <svg class="tour-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <path d="M12 17h.01"/>
+            </svg>
+            <span class="tour-text">Tours</span>
+            <svg class="tour-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+        </button>
+        
+        <div class="tour-dropdown" id="tourDropdown">
+            <button class="tour-option" data-tour="geral">
+                <svg class="tour-option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <path d="M12 17h.01"/>
+                </svg>
+                <div>
+                    <span class="tour-option-title">Tour Geral</span>
+                    <span class="tour-option-desc">Visão completa do sistema</span>
+                </div>
+            </button>
+            
+            <button class="tour-option" data-tour="credenciais">
+                <svg class="tour-option-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                <div>
+                    <span class="tour-option-title">Tour Credenciais</span>
+                    <span class="tour-option-desc">Foco em cadastro de funcionários</span>
+                </div>
+            </button>
+            
+            <button class="tour-option" data-tour="totem">
+                <svg class="tour-option-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <span class="tour-option-title">Tour Senhas Totem</span>
+                    <span class="tour-option-desc">Foco em configuração do totem</span>
+                </div>
+            </button>
+        </div>
+    </div>
 
     <div class="container">
         <header>
