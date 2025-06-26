@@ -117,7 +117,18 @@ class SistemaCadastro {
         this.totalEtapas = this.etapas.length;
         this.tourAtivo = true;
         this.etapaAtual = 0;
-        this.mostrarEtapa();
+        
+        // Navegar para a aba correspondente antes de iniciar o tour
+        if (tipoTour === 'credenciais') {
+            window.sistema.alternarSecao('credenciais');
+        } else if (tipoTour === 'totem') {
+            window.sistema.alternarSecao('totem');
+        }
+        
+        // Aguardar um pequeno delay para a transição da aba e então iniciar o tour
+        setTimeout(() => {
+            this.mostrarEtapa();
+        }, 200);
     }
 
     alternarSecao(secao) {
@@ -2399,8 +2410,7 @@ class TourGuiado {
                     elemento: '#btnSenhasTotem',
                     titulo: '🖥️ Senhas do Totem',
                     texto: 'Clique aqui para configurar as senhas que aparecerão no totem de atendimento. Você pode personalizar cores e ordem.',
-                    posicao: 'bottom',
-                    acao: () => window.sistema.alternarSecao('totem')
+                    posicao: 'bottom'
                 },
                 {
                     tipo: 'modal',
@@ -2442,8 +2452,7 @@ class TourGuiado {
                             </div>
                             <p><strong>Vamos começar!</strong></p>
                         </div>
-                    `,
-                    acao: () => window.sistema.alternarSecao('credenciais')
+                    `
                 },
                 {
                     tipo: 'spotlight',
@@ -2527,8 +2536,7 @@ class TourGuiado {
                             </div>
                             <p><strong>Vamos configurar seu totem!</strong></p>
                         </div>
-                    `,
-                    acao: () => window.sistema.alternarSecao('totem')
+                    `
                 },
                 {
                     tipo: 'spotlight',
@@ -2634,7 +2642,18 @@ class TourGuiado {
         this.totalEtapas = this.etapas.length;
         this.tourAtivo = true;
         this.etapaAtual = 0;
-        this.mostrarEtapa();
+        
+        // Navegar para a aba correspondente antes de iniciar o tour
+        if (tipoTour === 'credenciais') {
+            window.sistema.alternarSecao('credenciais');
+        } else if (tipoTour === 'totem') {
+            window.sistema.alternarSecao('totem');
+        }
+        
+        // Aguardar um pequeno delay para a transição da aba e então iniciar o tour
+        setTimeout(() => {
+            this.mostrarEtapa();
+        }, 200);
     }
     
     mostrarEtapa() {
