@@ -2381,7 +2381,11 @@ class TourGuiado {
                     elemento: '#btnNovoCadastro',
                     titulo: '➕ Adicionar Novo Funcionário',
                     texto: 'Clique aqui para abrir o formulário de cadastro. Você pode adicionar médicos, dentistas, recepcionistas, laboratório e pós-consulta.',
-                    posicao: 'bottom'
+                    posicao: 'bottom',
+                    acao: () => {
+                        // Abrir modal de cadastro
+                        window.sistema.abrirModal();
+                    }
                 },
                 {
                     tipo: 'spotlight',
@@ -2396,6 +2400,17 @@ class TourGuiado {
                     titulo: '📋 Selecionar Tipo de Funcionário',
                     texto: 'Escolha o tipo: Medicina, Odontologia, Recepção, Laboratório, Pós-Consulta. Você também pode criar tipos personalizados.',
                     posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#modalCadastro .close',
+                    titulo: '❌ Fechar Modal',
+                    texto: 'Agora vamos fechar o modal para continuar o tour pelas outras funcionalidades.',
+                    posicao: 'left',
+                    acao: () => {
+                        // Fechar modal de cadastro
+                        window.sistema.fecharModal();
+                    }
                 },
                 {
                     tipo: 'spotlight',
@@ -2462,10 +2477,53 @@ class TourGuiado {
                 },
                 {
                     tipo: 'spotlight',
-                    elemento: '#btnVerTotem',
+                    elemento: '#btnNovoCadastro',
                     titulo: '🆕 Nova Senha do Totem',
                     texto: 'Clique aqui para adicionar uma nova senha ao totem. Você pode personalizar o nome, cor e ordem de exibição.',
+                    posicao: 'bottom',
+                    acao: () => {
+                        // Abrir modal de senha do totem
+                        window.sistema.abrirModalTotem();
+                    }
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#unidadeTotem',
+                    titulo: '🏢 Unidade do Totem',
+                    texto: 'Defina a unidade para a qual esta senha será configurada.',
                     posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#nomeSenhaTotem',
+                    titulo: '📝 Nome da Senha',
+                    texto: 'Digite o nome da senha que aparecerá no totem (ex: MEDICINA GERAL, CARDIOLOGIA).',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#ordemTotem',
+                    titulo: '📊 Ordem de Exibição',
+                    texto: 'Escolha em qual posição esta senha aparecerá no totem.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#corFundoTotem',
+                    titulo: '🎨 Cor da Senha',
+                    texto: 'Escolha a cor de fundo que a senha terá no totem.',
+                    posicao: 'bottom'
+                },
+                {
+                    tipo: 'spotlight',
+                    elemento: '#modalSenhaTotem .close',
+                    titulo: '❌ Fechar Modal',
+                    texto: 'Agora vamos fechar o modal para continuar o tour.',
+                    posicao: 'left',
+                    acao: () => {
+                        // Fechar modal de senha do totem
+                        window.sistema.fecharModal(document.getElementById('modalSenhaTotem'));
+                    }
                 },
                 {
                     tipo: 'spotlight',
@@ -2627,7 +2685,40 @@ class TourGuiado {
         // Executar ação se houver
         if (etapa.acao) {
             etapa.acao();
-            setTimeout(() => this.continuarSpotlight(etapa, elemento), 300);
+            // Aguardar mais tempo para modais abrirem
+            setTimeout(() => {
+                // Re-buscar elemento após ação, caso ele tenha mudado
+                const seletores = etapa.elemento.split(',');
+                let elementoAtualizado = null;
+                
+                for (const seletor of seletores) {
+                    elementoAtualizado = document.querySelector(seletor.trim());
+                    if (elementoAtualizado && elementoAtualizado.offsetParent !== null) {
+                        break;
+                    }
+                }
+                
+                if (elementoAtualizado) {
+                    this.continuarSpotlight(etapa, elementoAtualizado);
+                } else {
+                    // Se elemento ainda não estiver visível, aguardar mais um pouco
+                    setTimeout(() => {
+                        for (const seletor of seletores) {
+                            elementoAtualizado = document.querySelector(seletor.trim());
+                            if (elementoAtualizado && elementoAtualizado.offsetParent !== null) {
+                                break;
+                            }
+                        }
+                        
+                        if (elementoAtualizado) {
+                            this.continuarSpotlight(etapa, elementoAtualizado);
+                        } else {
+                            // Se ainda assim não encontrar, pular para próxima etapa
+                            this.proximaEtapa();
+                        }
+                    }, 500);
+                }
+            }, 500);
         } else {
             this.continuarSpotlight(etapa, elemento);
         }
@@ -2725,9 +2816,18 @@ class TourGuiado {
     finalizarTour() {
         this.tourAtivo = false;
         
-        // Ocultar modais e overlays
+        // Ocultar modais e overlays do tour
         document.getElementById('modalTour').style.display = 'none';
         document.getElementById('tourOverlay').style.display = 'none';
+        
+        // Fechar quaisquer modais que possam ter sido abertos durante o tour
+        const modalsParaFechar = ['modalCadastro', 'modalSenhaTotem'];
+        modalsParaFechar.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal && modal.style.display === 'block') {
+                modal.style.display = 'none';
+            }
+        });
         
         // Remover highlights
         document.querySelectorAll('.tour-highlight').forEach(el => {
