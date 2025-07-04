@@ -16,12 +16,7 @@ Sistema moderno e intuitivo para gerenciar credenciais de funcionários e config
 - Preview em tempo real do totem
 - Até 12 senhas diferentes
 
-### 🎯 Tour Guiado
-- **Novo!** Tour interativo para novos usuários
-- Aparece automaticamente no primeiro acesso
-- Botão "Fazer Tour" disponível sempre
-- Sistema de spotlight para destacar funcionalidades
-- Navegação fluída e responsiva
+
 
 ## 🌟 Características Técnicas
 
@@ -43,8 +38,8 @@ Sistema moderno e intuitivo para gerenciar credenciais de funcionários e config
 
 ### Primeiro Acesso
 1. Acesse o sistema
-2. O tour guiado iniciará automaticamente
-3. Siga as instruções para conhecer todas as funcionalidades
+2. Comece cadastrando funcionários ou configurando senhas do totem
+3. Use a busca e filtros para localizar rapidamente registros
 
 ### Cadastrando Funcionários
 1. Clique em "Novo Cadastro"

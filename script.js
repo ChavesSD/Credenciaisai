@@ -89,26 +89,7 @@ class SistemaCadastro {
             }
         });
 
-        // Eventos das opções de tour
-        document.querySelectorAll('.tour-option').forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const tipoTour = option.dataset.tour;
-                this.iniciarTour(tipoTour);
-            });
-        });
-        
-        // Eventos do modal do tour
-        document.getElementById('btnProximoTour').addEventListener('click', () => this.proximaEtapa());
-        document.getElementById('btnAnteriorTour').addEventListener('click', () => this.etapaAnterior());
-        document.getElementById('btnFinalizarTour').addEventListener('click', () => this.finalizarTour());
-        document.getElementById('btnPularTour').addEventListener('click', () => this.finalizarTour());
-        document.getElementById('closeTour').addEventListener('click', () => this.finalizarTour());
-        
-        // Eventos do tooltip do tour
-        document.getElementById('btnProximoTooltip').addEventListener('click', () => this.proximaEtapa());
-        document.getElementById('btnAnteriorTooltip').addEventListener('click', () => this.etapaAnterior());
-        document.getElementById('btnPularTooltip').addEventListener('click', () => this.finalizarTour());
+
     }
 
     alternarSecao(secao) {
