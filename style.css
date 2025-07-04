@@ -1069,7 +1069,11 @@ form {
     color: var(--gray-300);
 }
 
-/* Responsividade */
+/* ===========================
+   RESPONSIVIDADE OTIMIZADA
+   ========================== */
+
+/* Tablet Landscape (1024px) */
 @media (max-width: 1024px) {
     .container {
         padding: var(--space-4);
@@ -1082,21 +1086,33 @@ form {
     }
     
     .header-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-3);
         justify-content: center;
     }
     
     .page-info {
         text-align: center;
     }
+    
+    /* Tabelas com scroll em tablets */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 700px;
+    }
 }
 
+/* Mobile Large / Tablet Portrait (768px) */
 @media (max-width: 768px) {
     .brand-logo {
         width: 150px;
         height: 60px;
     }
-    
-
     
     .nav-tab {
         font-size: 0.75rem;
@@ -1115,17 +1131,26 @@ form {
     }
     
     .header-content {
-        padding: var(--space-4) var(--space-6);
+        padding: var(--space-4) var(--space-4);
     }
     
     .header-actions {
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-3);
         width: 100%;
     }
     
     .btn {
         width: 100%;
         justify-content: center;
+        font-size: 0.8rem;
+        padding: var(--space-3) var(--space-2);
+    }
+    
+    .btn-icon {
+        width: 1rem;
+        height: 1rem;
     }
     
     .lista-container {
@@ -1205,13 +1230,14 @@ form {
     }
 }
 
+/* Mobile (480px) */
 @media (max-width: 480px) {
     .container {
-        padding: var(--space-3);
+        padding: var(--space-2);
     }
     
     .header-brand {
-        padding: var(--space-4) var(--space-6);
+        padding: var(--space-3) var(--space-4);
     }
     
     .brand-logo {
@@ -1219,10 +1245,27 @@ form {
         height: 50px;
     }
     
-
+    .header-actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+    
+    .btn {
+        width: 100%;
+        font-size: 0.75rem;
+        padding: var(--space-3);
+    }
     
     .lista-container {
-        padding: var(--space-4);
+        padding: var(--space-3);
+        margin: var(--space-2) 0;
+    }
+    
+    /* Search bar */
+    .search-bar input {
+        font-size: 1rem;
+        padding: var(--space-3);
     }
     
     .modal-header,
@@ -1741,5 +1784,780 @@ form {
     
     .footer p {
         font-size: 13px;
+    }
+}
+
+/* ===========================
+   RESPONSIVIDADE APRIMORADA
+   ========================== */
+
+/* Desktop Large (>= 1200px) - Já está otimizado no CSS base */
+
+/* Laptop / Desktop Small (1024px - 1199px) */
+@media (max-width: 1199px) and (min-width: 1024px) {
+    .container {
+        padding: var(--space-6);
+    }
+    
+    .header-actions {
+        gap: var(--space-3);
+    }
+    
+    .btn {
+        font-size: 0.875rem;
+        padding: var(--space-3) var(--space-5);
+    }
+}
+
+/* Tablet (768px - 1023px) */
+@media (max-width: 1023px) and (min-width: 768px) {
+    .container {
+        padding: var(--space-4);
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: var(--space-4);
+        align-items: stretch;
+    }
+    
+    .header-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-3);
+        justify-content: center;
+    }
+    
+    .page-info {
+        text-align: center;
+    }
+    
+    .page-info h2 {
+        font-size: 1.5rem;
+    }
+    
+    .page-info p {
+        font-size: 0.9rem;
+    }
+    
+    /* Tabelas em tablet com scroll horizontal */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 700px;
+        font-size: 0.875rem;
+    }
+    
+    /* Modais em tablet */
+    .modal-content {
+        margin: 3% auto;
+        width: 90%;
+        max-width: 700px;
+    }
+}
+
+/* Mobile (480px - 767px) */
+@media (max-width: 767px) {
+    .container {
+        padding: var(--space-3);
+    }
+    
+    /* Header responsivo */
+    .header-brand {
+        padding: var(--space-3) var(--space-4);
+    }
+    
+    .brand-logo {
+        width: 140px;
+        height: 56px;
+    }
+    
+    .nav-tabs {
+        padding: 0 var(--space-4);
+    }
+    
+    .nav-tab {
+        font-size: 0.75rem;
+        padding: var(--space-3) var(--space-4);
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+    
+    .nav-tab span {
+        font-size: 0.75rem;
+    }
+    
+    .nav-icon {
+        width: 1rem;
+        height: 1rem;
+    }
+    
+    .header-content {
+        padding: var(--space-4) var(--space-4);
+    }
+    
+    .page-info h2 {
+        font-size: 1.25rem;
+    }
+    
+    .page-info p {
+        font-size: 0.85rem;
+    }
+    
+    /* Botões em mobile - layout em grid 2x2 */
+    .header-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-3);
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+        padding: var(--space-3) var(--space-4);
+        font-size: 0.8rem;
+    }
+    
+    .btn span {
+        display: block;
+        text-align: center;
+    }
+    
+    .btn-icon {
+        width: 1rem;
+        height: 1rem;
+        margin-bottom: var(--space-1);
+    }
+    
+    /* Container principal */
+    .lista-container {
+        padding: var(--space-4);
+        margin: var(--space-3) 0;
+    }
+    
+    /* Busca */
+    .search-bar input {
+        font-size: 1rem;
+        padding: var(--space-3);
+    }
+    
+    /* Tabelas em mobile - scroll horizontal obrigatório */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: var(--space-4) -var(--space-4);
+        padding: 0 var(--space-4);
+    }
+    
+    table {
+        min-width: 600px;
+        font-size: 0.75rem;
+    }
+    
+    th, td {
+        padding: var(--space-2) var(--space-3);
+        white-space: nowrap;
+    }
+    
+    /* Botões de ação da tabela */
+    .acoes-btn {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+    
+    .acoes-btn .btn-sm {
+        font-size: 0.7rem;
+        padding: var(--space-1) var(--space-2);
+    }
+    
+    /* Unidade atual */
+    .unidade-atual {
+        flex-direction: column;
+        gap: var(--space-3);
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .unidade-atual button {
+        align-self: flex-start;
+        margin-top: var(--space-2);
+    }
+    
+    /* Modais em mobile */
+    .modal-content {
+        width: 95%;
+        max-width: none;
+        margin: 5% auto;
+        max-height: 90vh;
+    }
+    
+    .modal-header,
+    .modal-body,
+    form {
+        padding: var(--space-4);
+    }
+    
+    .modal-header h2 {
+        font-size: 1.1rem;
+    }
+    
+    /* Formulários */
+    .form-group {
+        margin-bottom: var(--space-4);
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+        margin-bottom: var(--space-2);
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 1rem;
+        padding: var(--space-3);
+        border-radius: var(--radius-lg);
+    }
+    
+    .form-group small {
+        font-size: 0.75rem;
+    }
+    
+    /* Tabelas de profissionais dentro dos modais */
+    .profissionais-table {
+        font-size: 0.75rem;
+    }
+    
+    .profissionais-table th,
+    .profissionais-table td {
+        padding: var(--space-2);
+    }
+    
+    .profissionais-table select,
+    .profissionais-table input {
+        font-size: 0.75rem;
+        padding: var(--space-2);
+    }
+    
+    /* Ajustes específicos para colunas */
+    .profissionais-container .profissionais-table th:first-child,
+    .profissionais-container .profissionais-table td:first-child {
+        min-width: 80px;
+    }
+    
+    .profissionais-container .profissionais-table th:nth-child(2),
+    .profissionais-container .profissionais-table td:nth-child(2) {
+        min-width: 120px;
+    }
+    
+    .profissionais-container .profissionais-table th:last-child,
+    .profissionais-container .profissionais-table td:last-child {
+        min-width: 100px;
+    }
+    
+    .funcionarios-container .profissionais-table th:first-child,
+    .funcionarios-container .profissionais-table td:first-child {
+        min-width: 120px;
+    }
+    
+    .funcionarios-container .profissionais-table th:last-child,
+    .funcionarios-container .profissionais-table td:last-child {
+        min-width: 150px;
+    }
+    
+    /* Ações do formulário */
+    .form-actions {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Mobile Pequeno (< 480px) */
+@media (max-width: 479px) {
+    .container {
+        padding: var(--space-2);
+    }
+    
+    /* Header ultra compacto */
+    .header-brand {
+        padding: var(--space-2) var(--space-3);
+    }
+    
+    .brand-logo {
+        width: 120px;
+        height: 48px;
+    }
+    
+    .nav-tabs {
+        padding: 0 var(--space-3);
+    }
+    
+    .nav-tab {
+        font-size: 0.7rem;
+        padding: var(--space-2) var(--space-3);
+        min-height: 50px;
+    }
+    
+    .nav-tab span {
+        font-size: 0.7rem;
+    }
+    
+    .nav-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+    
+    .header-content {
+        padding: var(--space-3);
+    }
+    
+    .page-info h2 {
+        font-size: 1.1rem;
+        line-height: 1.3;
+    }
+    
+    .page-info p {
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+    
+    /* Botões - layout vertical para mobile pequeno */
+    .header-actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        padding: var(--space-3);
+        font-size: 0.75rem;
+        flex-direction: row;
+        gap: var(--space-2);
+    }
+    
+    .btn-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+        margin-bottom: 0;
+    }
+    
+    /* Container principal ainda mais compacto */
+    .lista-container {
+        padding: var(--space-3);
+        margin: var(--space-2) 0;
+    }
+    
+    /* Busca */
+    .search-bar {
+        margin-bottom: var(--space-3);
+    }
+    
+    .search-bar input {
+        font-size: 0.9rem;
+        padding: var(--space-3);
+    }
+    
+    /* Tabelas - scroll horizontal mais otimizado */
+    .table-container {
+        margin: var(--space-3) -var(--space-3);
+        padding: 0 var(--space-3);
+    }
+    
+    table {
+        min-width: 550px;
+        font-size: 0.7rem;
+    }
+    
+    th, td {
+        padding: var(--space-1) var(--space-2);
+    }
+    
+    /* Modais ultra responsivos */
+    .modal-content {
+        width: 98%;
+        margin: 2% auto;
+        max-height: 95vh;
+    }
+    
+    .modal-header,
+    .modal-body,
+    form {
+        padding: var(--space-3);
+    }
+    
+    .modal-header h2 {
+        font-size: 1rem;
+    }
+    
+    .close {
+        font-size: 1.5rem;
+        width: 24px;
+        height: 24px;
+    }
+    
+    /* Formulários ultra compactos */
+    .form-group {
+        margin-bottom: var(--space-3);
+    }
+    
+    .form-group label {
+        font-size: 0.85rem;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 0.9rem;
+        padding: var(--space-2);
+    }
+    
+    /* Tabelas de profissionais ainda menores */
+    .profissionais-table {
+        font-size: 0.7rem;
+    }
+    
+    .profissionais-table th,
+    .profissionais-table td {
+        padding: var(--space-1);
+    }
+    
+    .profissionais-table select,
+    .profissionais-table input {
+        font-size: 0.7rem;
+        padding: var(--space-1);
+    }
+    
+    /* Colunas ainda mais compactas */
+    .profissionais-container .profissionais-table th:first-child,
+    .profissionais-container .profissionais-table td:first-child {
+        min-width: 70px;
+    }
+    
+    .profissionais-container .profissionais-table th:nth-child(2),
+    .profissionais-container .profissionais-table td:nth-child(2) {
+        min-width: 100px;
+    }
+    
+    .profissionais-container .profissionais-table th:last-child,
+    .profissionais-container .profissionais-table td:last-child {
+        min-width: 90px;
+    }
+    
+    .funcionarios-container .profissionais-table th:first-child,
+    .funcionarios-container .profissionais-table td:first-child {
+        min-width: 100px;
+    }
+    
+    .funcionarios-container .profissionais-table th:last-child,
+    .funcionarios-container .profissionais-table td:last-child {
+        min-width: 120px;
+    }
+}
+
+/* Totem - Responsividade específica */
+@media (max-width: 768px) {
+    .modal-totem-content {
+        width: 95%;
+        max-width: none;
+        margin: 2% auto;
+    }
+    
+    .totem-overlay {
+        padding: var(--space-3);
+    }
+    
+    .totem-options-dynamic {
+        max-height: 300px;
+        gap: var(--space-1);
+    }
+    
+    .totem-option-dynamic {
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.8rem;
+    }
+    
+    .totem-welcome h1 {
+        font-size: clamp(1.2rem, 4vw, 1.6rem);
+    }
+    
+    .totem-welcome {
+        padding: var(--space-3);
+    }
+    
+    .totem-header {
+        padding: var(--space-3) var(--space-4);
+    }
+    
+    .totem-footer {
+        padding: var(--space-2) var(--space-4);
+        font-size: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-totem-content {
+        width: 98%;
+        margin: 1% auto;
+        max-height: 98vh;
+    }
+    
+    .totem-overlay {
+        padding: var(--space-2);
+    }
+    
+    .totem-options-dynamic {
+        max-height: 250px;
+        gap: 1px;
+    }
+    
+    .totem-option-dynamic {
+        padding: var(--space-1) var(--space-2);
+        font-size: 0.7rem;
+        min-height: 30px;
+    }
+    
+    .totem-welcome h1 {
+        font-size: clamp(1rem, 3.5vw, 1.3rem);
+    }
+    
+    .totem-header {
+        padding: var(--space-2) var(--space-3);
+    }
+    
+    .totem-footer {
+        padding: var(--space-1) var(--space-3);
+        font-size: 0.55rem;
+    }
+}
+
+/* Modal de Email - Responsividade específica */
+@media (max-width: 768px) {
+    #modalEmail .modal-content {
+        width: 95%;
+        max-width: none;
+    }
+    
+    #modalEmail .form-group input,
+    #modalEmail .form-group textarea {
+        font-size: 1rem;
+        padding: var(--space-3);
+    }
+    
+    #modalEmail .lista-anexos {
+        margin: var(--space-3) -var(--space-4);
+        padding: 0 var(--space-4);
+    }
+    
+    #modalEmail .anexo-item {
+        padding: var(--space-3);
+    }
+    
+    #modalEmail .anexo-detalhes h4 {
+        font-size: 0.9rem;
+    }
+    
+    #modalEmail .anexo-detalhes p {
+        font-size: 0.8rem;
+    }
+}
+
+/* Footer - Responsividade */
+@media (max-width: 768px) {
+    .footer {
+        padding: var(--space-4) 0;
+    }
+    
+    .footer p {
+        font-size: 0.8rem;
+    }
+}
+
+/* Notificações - Responsividade */
+@media (max-width: 768px) {
+    .notificacao {
+        right: var(--space-3) !important;
+        left: var(--space-3) !important;
+        top: var(--space-3) !important;
+        max-width: none !important;
+        width: auto !important;
+        font-size: 0.85rem !important;
+        padding: var(--space-3) var(--space-4) !important;
+    }
+}
+
+/* Otimizações de performance para mobile */
+@media (max-width: 768px) {
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    button, .btn {
+        touch-action: manipulation;
+    }
+    
+    input, select, textarea {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+    
+    /* Suavizar scrolling em mobile */
+    .table-container {
+        scroll-behavior: smooth;
+    }
+}
+
+/* ===========================
+   OTIMIZAÇÕES MOBILE & TOUCH
+   ========================== */
+
+/* Otimizações universais para touch devices */
+@media (max-width: 768px) {
+    /* Remove destaque azul no toque */
+    * {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    
+    /* Permite seleção em inputs e textos */
+    input, textarea, [contenteditable] {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+    }
+    
+    /* Melhora a responsividade dos botões */
+    button, .btn, [role="button"] {
+        touch-action: manipulation;
+        cursor: pointer;
+    }
+    
+    /* Melhora inputs nativos do mobile */
+    input, select, textarea {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        border-radius: var(--radius-lg);
+    }
+    
+    /* Scroll suave em containers */
+    .table-container, .modal-content {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Notificações responsivas */
+    .notificacao {
+        right: var(--space-3) !important;
+        left: var(--space-3) !important;
+        top: var(--space-3) !important;
+        max-width: none !important;
+        width: auto !important;
+        font-size: 0.85rem !important;
+        padding: var(--space-3) var(--space-4) !important;
+    }
+    
+    /* Melhora a área de toque dos botões pequenos */
+    .btn-sm {
+        min-height: 44px;
+        padding: var(--space-2) var(--space-3);
+    }
+    
+    /* Otimiza o modal para mobile */
+    .modal {
+        padding: var(--space-2);
+    }
+    
+    .modal-content {
+        border-radius: var(--radius-xl);
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+    
+    /* Melhora a visualização das tabelas */
+    .table-container {
+        border-radius: var(--radius-lg);
+        box-shadow: inset 0 0 0 1px var(--gray-200);
+    }
+    
+    /* Otimiza o header para não sobrepor conteúdo */
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* Ajustes específicos para iPhone e dispositivos com notch */
+@media (max-width: 768px) and (orientation: portrait) {
+    .container {
+        padding-top: max(var(--space-4), env(safe-area-inset-top));
+        padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+    }
+    
+    .header-brand {
+        padding-top: max(var(--space-3), env(safe-area-inset-top));
+    }
+}
+
+/* Otimizações para landscape em mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .header-content {
+        padding: var(--space-2) var(--space-4);
+    }
+    
+    .page-info h2 {
+        font-size: 1.1rem;
+    }
+    
+    .page-info p {
+        font-size: 0.8rem;
+    }
+    
+    .lista-container {
+        padding: var(--space-3);
+    }
+    
+    .modal-content {
+        margin: 2% auto;
+        max-height: 96vh;
+    }
+}
+
+/* Melhorias para acessibilidade em mobile */
+@media (max-width: 768px) {
+    /* Aumenta contraste em telas pequenas */
+    .btn {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    /* Melhora a legibilidade */
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Otimiza o foco para navegação por teclado */
+    .btn:focus,
+    input:focus,
+    select:focus,
+    textarea:focus {
+        outline: 2px solid var(--accent-500);
+        outline-offset: 2px;
     }
 } 
