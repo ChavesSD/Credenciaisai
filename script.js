@@ -29,6 +29,7 @@ class SistemaCadastro {
         // Botões principais
         document.getElementById('btnNovoCadastro').addEventListener('click', () => this.abrirModal());
         document.getElementById('btnVerTotem').addEventListener('click', () => this.abrirModalTotemVisualizacao());
+        document.getElementById('btnExportarExcel').addEventListener('click', () => this.exportarDados());
         // Botão de exportar removido
         document.getElementById('btnEnviarEmail').addEventListener('click', () => this.enviarPorEmail());
 
@@ -1363,6 +1364,83 @@ class SistemaCadastro {
         XLSX.writeFile(wb, nomeArquivo);
         
         this.mostrarNotificacao('Arquivo Excel de senhas do totem exportado com sucesso!', 'success');
+    }
+
+    async exportarDados() {
+        try {
+            const temCredenciais = this.credenciais.length > 0;
+            const temSenhasTotem = this.senhasTotem.length > 0;
+
+            if (!temCredenciais && !temSenhasTotem) {
+                this.mostrarNotificacao('Não há dados para exportar!', 'error');
+                return;
+            }
+
+            this.mostrarNotificacao('Preparando arquivos para download...', 'info');
+
+            // Gerar e baixar arquivo de credenciais se existir dados
+            if (temCredenciais) {
+                const workbookCredenciais = this.gerarExcelCredenciais();
+                const blobCredenciais = new Blob([workbookCredenciais], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                });
+                
+                const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+                const unidadeNome = this.unidadeCredenciais ? 
+                    this.unidadeCredenciais.replace(/[<>:"/\\|?*]/g, '') : 'SemUnidade';
+                const nomeArquivoCredenciais = `${unidadeNome}_credenciais_${dataAtual}.xlsx`;
+                
+                const urlCredenciais = URL.createObjectURL(blobCredenciais);
+                const aCredenciais = document.createElement('a');
+                aCredenciais.href = urlCredenciais;
+                aCredenciais.download = nomeArquivoCredenciais;
+                document.body.appendChild(aCredenciais);
+                aCredenciais.click();
+                document.body.removeChild(aCredenciais);
+                URL.revokeObjectURL(urlCredenciais);
+                
+                // Pequeno delay entre downloads
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            // Gerar e baixar arquivo de senhas do totem se existir dados
+            if (temSenhasTotem) {
+                const workbookTotem = this.gerarExcelTotem();
+                const blobTotem = new Blob([workbookTotem], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                });
+                
+                const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+                const unidadeNome = this.unidadeTotem ? 
+                    this.unidadeTotem.replace(/[<>:"/\\|?*]/g, '') : 'SemUnidade';
+                const nomeArquivoTotem = `${unidadeNome}_senhas_totem_${dataAtual}.xlsx`;
+                
+                const urlTotem = URL.createObjectURL(blobTotem);
+                const aTotem = document.createElement('a');
+                aTotem.href = urlTotem;
+                aTotem.download = nomeArquivoTotem;
+                document.body.appendChild(aTotem);
+                aTotem.click();
+                document.body.removeChild(aTotem);
+                URL.revokeObjectURL(urlTotem);
+            }
+
+            // Mensagem de sucesso específica
+            let mensagem = 'Arquivos exportados com sucesso!';
+            if (temCredenciais && temSenhasTotem) {
+                mensagem = 'Arquivos de credenciais e senhas do totem exportados com sucesso!';
+            } else if (temCredenciais) {
+                mensagem = 'Arquivo de credenciais exportado com sucesso!';
+            } else if (temSenhasTotem) {
+                mensagem = 'Arquivo de senhas do totem exportado com sucesso!';
+            }
+
+            this.mostrarNotificacao(mensagem, 'success');
+
+        } catch (error) {
+            console.error('Erro ao exportar dados:', error);
+            this.mostrarNotificacao('Erro ao exportar arquivos. Tente novamente.', 'error');
+        }
     }
 
     obterTipoTexto(tipo) {
