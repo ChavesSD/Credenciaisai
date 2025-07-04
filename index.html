@@ -504,20 +504,30 @@
         </div>
     </footer>
 
-    <!-- Botões de Tour -->
-    <div class="tour-start-buttons" id="tourStartButtons">
-        <button class="tour-start-btn" id="btnTourCredenciais" onclick="iniciarTourCredenciais()">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+    <!-- Botão de Tour -->
+    <div class="tour-menu" id="tourMenu">
+        <button class="tour-btn-main" id="tourBtnMain" onclick="toggleTourMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6"/>
+                <path d="M21 12h-6m-6 0H3"/>
             </svg>
-            <span>Tour Credenciais</span>
+            <span>Tour</span>
         </button>
-        <button class="tour-start-btn" id="btnTourTotem" onclick="iniciarTourTotem()">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span>Tour Totem</span>
-        </button>
+        <div class="tour-dropdown" id="tourDropdown">
+            <button class="tour-option" onclick="iniciarTourCredenciais()">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                <span>Tour Credenciais</span>
+            </button>
+            <button class="tour-option" onclick="iniciarTourTotem()">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Tour Totem</span>
+            </button>
+        </div>
     </div>
 
     <!-- Overlay e Tooltip do Tour -->

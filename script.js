@@ -2412,7 +2412,7 @@ class TourGuiado {
         this.btnPrev = document.getElementById('tourBtnPrev');
         this.btnNext = document.getElementById('tourBtnNext');
         this.btnFinish = document.getElementById('tourBtnFinish');
-        this.startButtons = document.getElementById('tourStartButtons');
+        this.startButtons = document.getElementById('tourMenu');
     }
 
     // Configurações dos tours
@@ -2508,12 +2508,22 @@ class TourGuiado {
 
         // Garantir que estamos na aba correta
         if (tipo === 'credenciais') {
-            sistema.mostrarSecao('credenciais');
+            if (sistema && typeof sistema.mostrarSecao === 'function') {
+                sistema.mostrarSecao('credenciais');
+            } else {
+                // Fallback: clicar na aba credenciais
+                document.getElementById('btnCredenciais')?.click();
+            }
         } else {
-            sistema.mostrarSecao('senhasTotem');
+            if (sistema && typeof sistema.mostrarSecao === 'function') {
+                sistema.mostrarSecao('senhasTotem');
+            } else {
+                // Fallback: clicar na aba totem
+                document.getElementById('btnSenhasTotem')?.click();
+            }
         }
 
-        // Ocultar botões de tour
+        // Ocultar menu de tour
         this.startButtons.style.display = 'none';
 
         // Criar indicadores de passo
@@ -2579,7 +2589,12 @@ class TourGuiado {
         switch (acao) {
             case 'abrirModalCredenciais':
                 // Abrir modal de credenciais
-                sistema.abrirModalCadastro();
+                if (sistema && typeof sistema.abrirModalCadastro === 'function') {
+                    sistema.abrirModalCadastro();
+                } else {
+                    // Fallback: clicar no botão de novo cadastro
+                    document.getElementById('btnNovoCadastro')?.click();
+                }
                 setTimeout(() => {
                     const modal = document.getElementById('modalCadastro');
                     this.elementoDestacado = modal;
@@ -2590,7 +2605,15 @@ class TourGuiado {
                 break;
             case 'abrirModalTotem':
                 // Abrir modal de senha do totem
-                sistema.abrirModalSenhaTotem();
+                if (sistema && typeof sistema.abrirModalSenhaTotem === 'function') {
+                    sistema.abrirModalSenhaTotem();
+                } else {
+                    // Fallback: clicar na aba do totem e depois no botão
+                    document.getElementById('btnSenhasTotem')?.click();
+                    setTimeout(() => {
+                        document.getElementById('btnNovoCadastro')?.click();
+                    }, 100);
+                }
                 setTimeout(() => {
                     const modal = document.getElementById('modalSenhaTotem');
                     this.elementoDestacado = modal;
@@ -2709,7 +2732,14 @@ class TourGuiado {
             
             // Fechar modal se estiver no último passo
             if (this.passoAtual === this.passos.length - 1) {
-                sistema.fecharModal();
+                if (sistema && typeof sistema.fecharModal === 'function') {
+                    sistema.fecharModal();
+                } else {
+                    // Fallback: fechar modais manualmente
+                    document.querySelectorAll('.modal').forEach(modal => {
+                        modal.style.display = 'none';
+                    });
+                }
             }
             
             setTimeout(() => {
@@ -2731,7 +2761,14 @@ class TourGuiado {
         }
 
         // Fechar modal se estiver aberto
-        sistema.fecharModal();
+        if (sistema && typeof sistema.fecharModal === 'function') {
+            sistema.fecharModal();
+        } else {
+            // Fallback: fechar modais manualmente
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+        }
 
         // Ocultar tooltip e overlay
         this.tooltip.classList.remove('active');
@@ -2739,26 +2776,49 @@ class TourGuiado {
 
         // Mostrar botões de tour novamente
         setTimeout(() => {
-            this.startButtons.style.display = 'flex';
+            this.startButtons.style.display = 'block';
         }, 300);
 
         // Mostrar notificação de conclusão
-        sistema.mostrarNotificacao(
-            `Tour ${this.tourType === 'credenciais' ? 'Credenciais' : 'Totem'} concluído!`,
-            'success'
-        );
+        if (sistema && typeof sistema.mostrarNotificacao === 'function') {
+            sistema.mostrarNotificacao(
+                `Tour ${this.tourType === 'credenciais' ? 'Credenciais' : 'Totem'} concluído!`,
+                'success'
+            );
+        } else {
+            // Fallback: alert simples
+            alert(`Tour ${this.tourType === 'credenciais' ? 'Credenciais' : 'Totem'} concluído!`);
+        }
     }
 }
 
 // Instância global do tour
 const tourGuiado = new TourGuiado();
 
+// Função para alternar o menu de tour
+function toggleTourMenu() {
+    const dropdown = document.getElementById('tourDropdown');
+    dropdown.classList.toggle('active');
+    
+    // Fechar ao clicar fora
+    document.addEventListener('click', function(event) {
+        const tourMenu = document.getElementById('tourMenu');
+        if (!tourMenu.contains(event.target)) {
+            dropdown.classList.remove('active');
+        }
+    });
+}
+
 // Funções globais para os botões
 function iniciarTourCredenciais() {
+    // Fechar dropdown
+    document.getElementById('tourDropdown').classList.remove('active');
     tourGuiado.iniciarTour('credenciais');
 }
 
 function iniciarTourTotem() {
+    // Fechar dropdown
+    document.getElementById('tourDropdown').classList.remove('active');
     tourGuiado.iniciarTour('totem');
 }
 
@@ -2782,7 +2842,12 @@ function finalizarTour() {
 if (typeof sistema !== 'undefined') {
     sistema.abrirModalSenhaTotem = function() {
         // Garantir que estamos na aba do totem
-        this.mostrarSecao('senhasTotem');
+        if (this && typeof this.mostrarSecao === 'function') {
+            this.mostrarSecao('senhasTotem');
+        } else {
+            // Fallback: clicar na aba totem
+            document.getElementById('btnSenhasTotem')?.click();
+        }
         
         // Simular clique no botão de novo cadastro (que vira nova senha na aba totem)
         const btnNovo = document.getElementById('btnNovoCadastro');
