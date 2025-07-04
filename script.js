@@ -2381,13 +2381,6 @@ class TourGuiado {
                     elemento: '#btnNovoCadastro',
                     titulo: '➕ Adicionar Novo Funcionário',
                     texto: 'Clique aqui para abrir o formulário de cadastro. Você pode adicionar médicos, dentistas, recepcionistas, laboratório e pós-consulta.',
-                    posicao: 'bottom'
-                },
-                {
-                    tipo: 'spotlight',
-                    elemento: '#btnNovoCadastro',
-                    titulo: '📝 Vamos Abrir o Formulário',
-                    texto: 'Agora vamos abrir o modal de cadastro para conhecer os campos internos.',
                     posicao: 'bottom',
                     acao: () => {
                         // Abrir modal de cadastro
@@ -2487,13 +2480,6 @@ class TourGuiado {
                     elemento: '#btnNovoCadastro',
                     titulo: '🆕 Nova Senha do Totem',
                     texto: 'Este botão muda para "Nova Senha" quando você está na aba do totem. Clique aqui para adicionar senhas personalizadas.',
-                    posicao: 'bottom'
-                },
-                {
-                    tipo: 'spotlight',
-                    elemento: '#btnNovoCadastro',
-                    titulo: '📝 Vamos Abrir o Formulário',
-                    texto: 'Agora vamos abrir o modal para conhecer os campos de configuração da senha.',
                     posicao: 'bottom',
                     acao: () => {
                         // Abrir modal de senha do totem
