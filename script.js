@@ -2399,16 +2399,9 @@ class TourGuiado {
                     elemento: '#tipo',
                     titulo: '📋 Selecionar Tipo de Funcionário',
                     texto: 'Escolha o tipo: Medicina, Odontologia, Recepção, Laboratório, Pós-Consulta. Você também pode criar tipos personalizados.',
-                    posicao: 'bottom'
-                },
-                {
-                    tipo: 'spotlight',
-                    elemento: '#modalCadastro .close',
-                    titulo: '❌ Fechar Modal',
-                    texto: 'Agora vamos fechar o modal para continuar o tour pelas outras funcionalidades.',
-                    posicao: 'left',
+                    posicao: 'bottom',
                     acao: () => {
-                        // Fechar modal de cadastro
+                        // Fechar modal de cadastro automaticamente
                         window.sistema.fecharModal();
                     }
                 },
@@ -2512,16 +2505,9 @@ class TourGuiado {
                     elemento: '#corFundoTotem',
                     titulo: '🎨 Cor da Senha',
                     texto: 'Escolha a cor de fundo que a senha terá no totem.',
-                    posicao: 'bottom'
-                },
-                {
-                    tipo: 'spotlight',
-                    elemento: '#modalSenhaTotem .close',
-                    titulo: '❌ Fechar Modal',
-                    texto: 'Agora vamos fechar o modal para continuar o tour.',
-                    posicao: 'left',
+                    posicao: 'bottom',
                     acao: () => {
-                        // Fechar modal de senha do totem
+                        // Fechar modal de senha do totem automaticamente
                         window.sistema.fecharModal(document.getElementById('modalSenhaTotem'));
                     }
                 },
