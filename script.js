@@ -2450,10 +2450,58 @@ class TourGuiado {
             },
             {
                 selector: 'modal',
-                title: '6. Modal de Cadastro',
-                description: 'Este é o formulário de cadastro onde você preenche todas as informações do funcionário. Vamos abri-lo para você ver!',
+                title: '6. Abrindo Formulário',
+                description: 'Vamos abrir o formulário de cadastro para mostrar todos os campos disponíveis.',
                 position: 'center',
                 action: 'abrirModalCredenciais'
+            },
+            {
+                selector: '#unidadeCredenciais',
+                title: '7. Campo Unidade',
+                description: 'Primeiro, defina a unidade/filial onde o funcionário trabalhará. Este campo é obrigatório e será usado para organizar os dados.',
+                position: 'bottom'
+            },
+            {
+                selector: '#tipo',
+                title: '8. Tipo de Funcionário',
+                description: 'Selecione o tipo de funcionário: Recepção, Medicina, Odontologia, Laboratório, etc. Cada tipo tem campos específicos.',
+                position: 'bottom'
+            },
+            {
+                selector: '#campoNovoTipo',
+                title: '9. Novo Tipo Personalizado',
+                description: 'Se não encontrar o tipo desejado, escolha "+ Novo Tipo" e este campo aparecerá para criar um tipo personalizado.',
+                position: 'bottom'
+            },
+            {
+                selector: '#camposRecepcao',
+                title: '10. Campos da Recepção',
+                description: 'Para funcionários da recepção, você pode adicionar múltiplos funcionários e definir quais senhas cada um irá chamar.',
+                position: 'top'
+            },
+            {
+                selector: '#camposMedOdonto',
+                title: '11. Campos Médicos/Odonto',
+                description: 'Para profissionais da área médica ou odontológica, defina tratamentos, nomes e especialidades de cada profissional.',
+                position: 'top'
+            },
+            {
+                selector: '#btnMaisLinhas',
+                title: '12. Adicionar Mais Linhas',
+                description: 'Use este botão para adicionar mais profissionais à lista. Você pode incluir quantos precisar.',
+                position: 'bottom'
+            },
+            {
+                selector: '#btnSalvar',
+                title: '13. Salvar Cadastro',
+                description: 'Após preencher todos os campos, clique em "Salvar" para adicionar o funcionário à lista. Os dados são salvos automaticamente.',
+                position: 'top'
+            },
+            {
+                selector: '#btnCancelar',
+                title: '14. Cancelar',
+                description: 'Se precisar cancelar o cadastro, clique aqui. Nenhum dado será salvo e o formulário será fechado.',
+                position: 'top'
             }
         ];
     }
@@ -2463,25 +2511,25 @@ class TourGuiado {
             {
                 selector: '#btnNovoCadastro',
                 title: '1. Nova Senha',
-                description: 'Clique aqui para criar uma nova senha para o totem. Você pode definir nome, cor e ordem de exibição.',
+                description: 'Quando na aba "Senhas do Totem", este botão muda para "Nova Senha". Clique para criar uma nova senha para o totem.',
                 position: 'bottom'
             },
             {
                 selector: '#btnVerTotem',
                 title: '2. Ver Totem',
-                description: 'Visualize como as senhas aparecem na tela do totem de atendimento. Perfeito para conferir a aparência.',
+                description: 'Visualize como as senhas aparecem na tela do totem de atendimento. Perfeito para conferir cores e disposição.',
                 position: 'bottom'
             },
             {
                 selector: '#btnExportarExcel',
                 title: '3. Exportar Excel',
-                description: 'Baixe uma planilha Excel com todas as senhas do totem configuradas.',
+                description: 'Baixe uma planilha Excel com todas as senhas do totem configuradas, incluindo nomes, cores e posições.',
                 position: 'bottom'
             },
             {
                 selector: '#btnEnviarEmail',
                 title: '4. Enviar por Email',
-                description: 'Compartilhe as configurações das senhas do totem por email com outros usuários.',
+                description: 'Compartilhe as configurações das senhas do totem por email com outros usuários ou setores.',
                 position: 'bottom'
             },
             {
@@ -2492,10 +2540,52 @@ class TourGuiado {
             },
             {
                 selector: 'modal',
-                title: '6. Modal de Nova Senha',
-                description: 'Aqui você configura as senhas do totem: nome, cor, e ordem. Vamos mostrar o formulário!',
+                title: '6. Abrindo Formulário',
+                description: 'Vamos abrir o formulário de configuração de senhas do totem para mostrar todas as opções disponíveis.',
                 position: 'center',
                 action: 'abrirModalTotem'
+            },
+            {
+                selector: '#unidadeTotem',
+                title: '7. Unidade do Totem',
+                description: 'Defina a unidade/filial onde este totem estará localizado. Importante para organizar as configurações.',
+                position: 'bottom'
+            },
+            {
+                selector: '#nomeSenhaTotem',
+                title: '8. Nome da Senha',
+                description: 'Digite o nome que aparecerá no botão do totem. Ex: "MEDICINA GERAL", "CARDIOLOGIA", "PEDIATRIA".',
+                position: 'bottom'
+            },
+            {
+                selector: '#ordemTotem',
+                title: '9. Ordem no Totem',
+                description: 'Escolha a posição onde esta senha aparecerá no totem. A ordem define como os botões ficam dispostos na tela.',
+                position: 'bottom'
+            },
+            {
+                selector: '#corFundoTotem',
+                title: '10. Cor de Fundo',
+                description: 'Selecione a cor de fundo do botão no totem. Você pode usar o seletor de cores ou digitar o código hex.',
+                position: 'bottom'
+            },
+            {
+                selector: '#previewSenhaTotem',
+                title: '11. Pré-visualização',
+                description: 'Aqui você vê como a senha ficará no totem em tempo real. A cor e texto mudam conforme suas configurações.',
+                position: 'top'
+            },
+            {
+                selector: '#btnSalvarTotem',
+                title: '12. Salvar Senha',
+                description: 'Salve a configuração da senha do totem. Ela será adicionada à lista e estará disponível para uso.',
+                position: 'top'
+            },
+            {
+                selector: '#btnCancelarTotem',
+                title: '13. Cancelar',
+                description: 'Cancele a criação da senha se necessário. Nenhuma configuração será salva.',
+                position: 'top'
             }
         ];
     }
@@ -2568,10 +2658,20 @@ class TourGuiado {
             return;
         }
 
+        // Preparar elementos condicionais antes de mostrar
+        this.prepararElementoCondicional(passo.selector);
+
         // Encontrar e destacar elemento
         const elemento = document.querySelector(passo.selector);
         if (elemento) {
             this.elementoDestacado = elemento;
+            
+            // Verificar se o elemento está visível, se não, torná-lo visível temporariamente
+            const isVisible = this.verificarVisibilidade(elemento);
+            if (!isVisible) {
+                this.tornarElementoVisivel(passo.selector);
+            }
+            
             elemento.classList.add('tour-highlight');
             
             // Scroll para o elemento
@@ -2582,6 +2682,66 @@ class TourGuiado {
                 this.posicionarTooltip(elemento, passo);
                 this.mostrarTooltip(passo);
             }, 300);
+        } else {
+            // Se elemento não existe, pular para o próximo
+            console.warn(`Elemento ${passo.selector} não encontrado, pulando para o próximo passo`);
+            setTimeout(() => {
+                this.proximo();
+            }, 1000);
+        }
+    }
+
+    // Nova função para preparar elementos condicionais
+    prepararElementoCondicional(selector) {
+        switch (selector) {
+            case '#campoNovoTipo':
+                // Para mostrar o campo de novo tipo, simular seleção da opção
+                const selectTipo = document.getElementById('tipo');
+                if (selectTipo) {
+                    selectTipo.value = 'novo-tipo';
+                    selectTipo.dispatchEvent(new Event('change'));
+                }
+                break;
+                
+            case '#camposRecepcao':
+                // Para mostrar campos de recepção
+                const selectTipoRecepcao = document.getElementById('tipo');
+                if (selectTipoRecepcao) {
+                    selectTipoRecepcao.value = 'recepcao';
+                    selectTipoRecepcao.dispatchEvent(new Event('change'));
+                }
+                break;
+                
+            case '#camposMedOdonto':
+            case '#btnMaisLinhas':
+                // Para mostrar campos médicos/odonto
+                const selectTipoMed = document.getElementById('tipo');
+                if (selectTipoMed) {
+                    selectTipoMed.value = 'medicina';
+                    selectTipoMed.dispatchEvent(new Event('change'));
+                }
+                break;
+        }
+    }
+
+    // Nova função para verificar visibilidade
+    verificarVisibilidade(elemento) {
+        const style = window.getComputedStyle(elemento);
+        return style.display !== 'none' && style.visibility !== 'hidden' && elemento.offsetWidth > 0 && elemento.offsetHeight > 0;
+    }
+
+    // Nova função para tornar elemento visível temporariamente
+    tornarElementoVisivel(selector) {
+        const elemento = document.querySelector(selector);
+        if (elemento) {
+            // Marcar elemento como modificado pelo tour
+            elemento.setAttribute('data-tour-modified', 'true');
+            elemento.setAttribute('data-original-display', elemento.style.display || '');
+            elemento.setAttribute('data-original-visibility', elemento.style.visibility || '');
+            
+            // Tornar visível
+            elemento.style.display = 'block';
+            elemento.style.visibility = 'visible';
         }
     }
 
@@ -2595,14 +2755,26 @@ class TourGuiado {
                     // Fallback: clicar no botão de novo cadastro
                     document.getElementById('btnNovoCadastro')?.click();
                 }
+                
+                // Continuar automaticamente para o próximo passo após abrir o modal
                 setTimeout(() => {
                     const modal = document.getElementById('modalCadastro');
-                    this.elementoDestacado = modal;
-                    modal.classList.add('tour-highlight');
-                    this.posicionarTooltipModal();
-                    this.mostrarTooltip(this.passos[this.passoAtual]);
+                    if (modal) {
+                        this.elementoDestacado = modal;
+                        modal.classList.add('tour-highlight');
+                        
+                        // Mostrar tooltip explicativo sobre a abertura do modal
+                        this.posicionarTooltipModal();
+                        this.mostrarTooltip(this.passos[this.passoAtual]);
+                        
+                        // Após 3 segundos, continuar para o próximo passo automaticamente
+                        setTimeout(() => {
+                            this.proximo();
+                        }, 3000);
+                    }
                 }, 500);
                 break;
+                
             case 'abrirModalTotem':
                 // Abrir modal de senha do totem
                 if (sistema && typeof sistema.abrirModalSenhaTotem === 'function') {
@@ -2614,12 +2786,23 @@ class TourGuiado {
                         document.getElementById('btnNovoCadastro')?.click();
                     }, 100);
                 }
+                
+                // Continuar automaticamente para o próximo passo após abrir o modal
                 setTimeout(() => {
                     const modal = document.getElementById('modalSenhaTotem');
-                    this.elementoDestacado = modal;
-                    modal.classList.add('tour-highlight');
-                    this.posicionarTooltipModal();
-                    this.mostrarTooltip(this.passos[this.passoAtual]);
+                    if (modal) {
+                        this.elementoDestacado = modal;
+                        modal.classList.add('tour-highlight');
+                        
+                        // Mostrar tooltip explicativo sobre a abertura do modal
+                        this.posicionarTooltipModal();
+                        this.mostrarTooltip(this.passos[this.passoAtual]);
+                        
+                        // Após 3 segundos, continuar para o próximo passo automaticamente
+                        setTimeout(() => {
+                            this.proximo();
+                        }, 3000);
+                    }
                 }, 500);
                 break;
         }
@@ -2760,6 +2943,9 @@ class TourGuiado {
             this.elementoDestacado.classList.remove('tour-highlight', 'tour-pulse');
         }
 
+        // Limpar interações feitas durante o tour
+        this.limparEstadoTour();
+
         // Fechar modal se estiver aberto
         if (sistema && typeof sistema.fecharModal === 'function') {
             sistema.fecharModal();
@@ -2789,6 +2975,55 @@ class TourGuiado {
             // Fallback: alert simples
             alert(`Tour ${this.tourType === 'credenciais' ? 'Credenciais' : 'Totem'} concluído!`);
         }
+    }
+
+    // Nova função para limpar estado do tour
+    limparEstadoTour() {
+        // Resetar formulário de credenciais se estiver aberto
+        const formCredenciais = document.getElementById('formCadastro');
+        if (formCredenciais) {
+            formCredenciais.reset();
+            
+            // Limpar seleções específicas feitas durante o tour
+            const selectTipo = document.getElementById('tipo');
+            if (selectTipo) {
+                selectTipo.value = '';
+                selectTipo.dispatchEvent(new Event('change'));
+            }
+        }
+
+        // Resetar formulário de totem se estiver aberto
+        const formTotem = document.getElementById('formSenhaTotem');
+        if (formTotem) {
+            formTotem.reset();
+        }
+
+        // Ocultar campos condicionais que podem ter sido mostrados
+        const camposCondicionais = [
+            '#campoNovoTipo',
+            '#camposRecepcao', 
+            '#camposMedOdonto'
+        ];
+
+        camposCondicionais.forEach(selector => {
+            const elemento = document.querySelector(selector);
+            if (elemento) {
+                elemento.style.display = 'none';
+            }
+        });
+
+        // Restaurar estados originais de elementos que foram modificados
+        document.querySelectorAll('[data-tour-modified]').forEach(elemento => {
+            const originalDisplay = elemento.getAttribute('data-original-display');
+            const originalVisibility = elemento.getAttribute('data-original-visibility');
+            
+            elemento.style.display = originalDisplay;
+            elemento.style.visibility = originalVisibility;
+            
+            elemento.removeAttribute('data-tour-modified');
+            elemento.removeAttribute('data-original-display');
+            elemento.removeAttribute('data-original-visibility');
+        });
     }
 }
 
