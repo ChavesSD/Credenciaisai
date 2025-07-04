@@ -2006,7 +2006,7 @@ form {
         font-size: 1.1rem;
     }
     
-    /* Formulários */
+    /* Formulários otimizados para mobile */
     .form-group {
         margin-bottom: var(--space-4);
     }
@@ -2014,18 +2014,66 @@ form {
     .form-group label {
         font-size: 0.9rem;
         margin-bottom: var(--space-2);
+        font-weight: 500;
+        color: var(--gray-700);
     }
     
     .form-group input,
     .form-group select,
     .form-group textarea {
-        font-size: 1rem;
-        padding: var(--space-3);
-        border-radius: var(--radius-lg);
+        font-size: 16px !important; /* Evita zoom no iOS */
+        padding: var(--space-3) var(--space-4) !important;
+        border-radius: var(--radius-lg) !important;
+        min-height: 44px !important; /* Área de toque adequada */
+        box-sizing: border-box !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        background-color: var(--white) !important;
+        border: 2px solid var(--gray-300) !important;
+        width: 100% !important;
+    }
+    
+    /* Select específico para mobile */
+    .form-group select {
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666'%3E%3Cpath d='M10.3 3.3L6 7.6 1.7 3.3A1 1 0 00.3 4.7l5 5a1 1 0 001.4 0l5-5a1 1 0 00-1.4-1.4z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right var(--space-3) center !important;
+        background-size: 12px !important;
+        padding-right: var(--space-8) !important;
+        cursor: pointer !important;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: var(--primary-500) !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        outline: none !important;
     }
     
     .form-group small {
         font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-top: var(--space-1);
+    }
+    
+    /* Color picker mobile */
+    .color-input-container {
+        flex-direction: column !important;
+        gap: var(--space-2) !important;
+        align-items: stretch !important;
+    }
+    
+    .color-input-container input[type="color"] {
+        width: 100% !important;
+        height: 44px !important;
+        border-radius: var(--radius-lg) !important;
+    }
+    
+    .color-input-container input[type="text"] {
+        width: 100% !important;
+        margin-top: var(--space-2) !important;
     }
     
     /* Tabelas de profissionais dentro dos modais */
@@ -2213,13 +2261,54 @@ form {
     
     .form-group label {
         font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--gray-700);
     }
     
     .form-group input,
     .form-group select,
     .form-group textarea {
-        font-size: 0.9rem;
-        padding: var(--space-2);
+        font-size: 16px !important; /* Evita zoom no iOS */
+        padding: var(--space-3) var(--space-4) !important;
+        min-height: 44px !important;
+        box-sizing: border-box !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        background-color: var(--white) !important;
+        border: 2px solid var(--gray-300) !important;
+        border-radius: var(--radius-lg) !important;
+        width: 100% !important;
+    }
+    
+    /* Select para dispositivos muito pequenos */
+    .form-group select {
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666'%3E%3Cpath d='M10.3 3.3L6 7.6 1.7 3.3A1 1 0 00.3 4.7l5 5a1 1 0 001.4 0l5-5a1 1 0 00-1.4-1.4z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right var(--space-3) center !important;
+        background-size: 12px !important;
+        padding-right: var(--space-8) !important;
+        cursor: pointer !important;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: var(--primary-500) !important;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1) !important;
+        outline: none !important;
+    }
+    
+    /* Color picker ultra responsivo */
+    .color-input-container {
+        flex-direction: column !important;
+        gap: var(--space-2) !important;
+    }
+    
+    .color-input-container input[type="color"] {
+        width: 100% !important;
+        height: 44px !important;
+        border-radius: var(--radius-lg) !important;
     }
     
     /* Tabelas de profissionais ainda menores */
@@ -2450,10 +2539,29 @@ form {
     
     /* Melhora inputs nativos do mobile */
     input, select, textarea {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        border-radius: var(--radius-lg);
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        border-radius: var(--radius-lg) !important;
+        font-size: 16px !important; /* Evita zoom automático no iOS */
+        min-height: 44px !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Garante que placeholders sejam legíveis */
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--gray-400) !important;
+        opacity: 1 !important;
+    }
+    
+    /* Remove outline padrão e adiciona focus customizado */
+    input:focus,
+    select:focus,
+    textarea:focus {
+        outline: none !important;
+        border-color: var(--primary-500) !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
     }
     
     /* Scroll suave em containers */
@@ -2481,13 +2589,53 @@ form {
     
     /* Otimiza o modal para mobile */
     .modal {
-        padding: var(--space-2);
+        padding: var(--space-2) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     .modal-content {
-        border-radius: var(--radius-xl);
-        max-height: 95vh;
-        overflow-y: auto;
+        border-radius: var(--radius-xl) !important;
+        max-height: 95vh !important;
+        overflow-y: auto !important;
+        margin: auto !important;
+        width: 95% !important;
+        max-width: none !important;
+        padding: 0 !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
+    }
+    
+    .modal-header {
+        padding: var(--space-4) !important;
+        border-bottom: 1px solid var(--gray-200) !important;
+        position: sticky !important;
+        top: 0 !important;
+        background: var(--white) !important;
+        z-index: 10 !important;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+    }
+    
+    .modal-body,
+    form {
+        padding: var(--space-4) !important;
+    }
+    
+    /* Garante espaçamento adequado nos campos */
+    .form-group:last-child {
+        margin-bottom: var(--space-6) !important;
+    }
+    
+    /* Ajusta botões de ação do modal */
+    .form-actions {
+        padding: var(--space-4) !important;
+        margin: 0 !important;
+        border-top: 1px solid var(--gray-200) !important;
+        background: var(--gray-50) !important;
+        border-radius: 0 0 var(--radius-xl) var(--radius-xl) !important;
+        position: sticky !important;
+        bottom: 0 !important;
+        z-index: 10 !important;
     }
     
     /* Melhora a visualização das tabelas */
