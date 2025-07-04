@@ -504,6 +504,43 @@
         </div>
     </footer>
 
+    <!-- Botões de Tour -->
+    <div class="tour-start-buttons" id="tourStartButtons">
+        <button class="tour-start-btn" id="btnTourCredenciais" onclick="iniciarTourCredenciais()">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <span>Tour Credenciais</span>
+        </button>
+        <button class="tour-start-btn" id="btnTourTotem" onclick="iniciarTourTotem()">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Tour Totem</span>
+        </button>
+    </div>
+
+    <!-- Overlay e Tooltip do Tour -->
+    <div class="tour-overlay" id="tourOverlay"></div>
+    <div class="tour-tooltip" id="tourTooltip">
+        <div class="tour-content" id="tourContent">
+            <h3 id="tourTitle"></h3>
+            <p id="tourDescription"></p>
+        </div>
+        <div class="tour-controls">
+            <div class="tour-progress">
+                <span id="tourStepCounter">1/6</span>
+                <div class="tour-step-indicator" id="tourStepIndicator"></div>
+            </div>
+            <div class="tour-actions">
+                <button class="tour-btn tour-btn-skip" id="tourBtnSkip" onclick="pularTour()">Pular</button>
+                <button class="tour-btn tour-btn-prev" id="tourBtnPrev" onclick="tourAnterior()">Anterior</button>
+                <button class="tour-btn tour-btn-next" id="tourBtnNext" onclick="tourProximo()">Próximo</button>
+                <button class="tour-btn tour-btn-finish" id="tourBtnFinish" onclick="finalizarTour()" style="display: none;">Finalizar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="script.js"></script>
 </body>

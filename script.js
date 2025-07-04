@@ -2390,3 +2390,404 @@ document.head.appendChild(style);
 document.addEventListener('DOMContentLoaded', () => {
     window.sistema = new SistemaCadastro();
 }); 
+
+// ==========================================
+// SISTEMA DE TOUR GUIADO
+// ==========================================
+
+class TourGuiado {
+    constructor() {
+        this.tourAtivo = false;
+        this.passoAtual = 0;
+        this.passos = [];
+        this.tourType = '';
+        this.elementoDestacado = null;
+        
+        this.overlay = document.getElementById('tourOverlay');
+        this.tooltip = document.getElementById('tourTooltip');
+        this.tourTitle = document.getElementById('tourTitle');
+        this.tourDescription = document.getElementById('tourDescription');
+        this.stepCounter = document.getElementById('tourStepCounter');
+        this.stepIndicator = document.getElementById('tourStepIndicator');
+        this.btnPrev = document.getElementById('tourBtnPrev');
+        this.btnNext = document.getElementById('tourBtnNext');
+        this.btnFinish = document.getElementById('tourBtnFinish');
+        this.startButtons = document.getElementById('tourStartButtons');
+    }
+
+    // Configurações dos tours
+    configurarTourCredenciais() {
+        return [
+            {
+                selector: '#btnNovoCadastro',
+                title: '1. Novo Cadastro',
+                description: 'Clique aqui para cadastrar um novo funcionário. Você pode adicionar informações como nome, tipo, unidade e especialidade.',
+                position: 'bottom'
+            },
+            {
+                selector: '#btnExportarExcel',
+                title: '2. Exportar Excel',
+                description: 'Use este botão para baixar uma planilha Excel com todos os dados cadastrados. Útil para backups ou relatórios.',
+                position: 'bottom'
+            },
+            {
+                selector: '#btnEnviarEmail',
+                title: '3. Enviar por Email',
+                description: 'Envie os dados por email de forma rápida e segura. Ideal para compartilhar informações com outros setores.',
+                position: 'bottom'
+            },
+            {
+                selector: '#searchInput',
+                title: '4. Buscar por Nome',
+                description: 'Digite aqui para filtrar cadastros por nome ou tipo. A busca é instantânea e facilita encontrar informações específicas.',
+                position: 'bottom'
+            },
+            {
+                selector: '#tabelaCredenciais',
+                title: '5. Lista de Cadastros',
+                description: 'Aqui aparecem todos os funcionários cadastrados. Você pode visualizar, editar ou excluir cada registro.',
+                position: 'top'
+            },
+            {
+                selector: 'modal',
+                title: '6. Modal de Cadastro',
+                description: 'Este é o formulário de cadastro onde você preenche todas as informações do funcionário. Vamos abri-lo para você ver!',
+                position: 'center',
+                action: 'abrirModalCredenciais'
+            }
+        ];
+    }
+
+    configurarTourTotem() {
+        return [
+            {
+                selector: '#btnNovoCadastro',
+                title: '1. Nova Senha',
+                description: 'Clique aqui para criar uma nova senha para o totem. Você pode definir nome, cor e ordem de exibição.',
+                position: 'bottom'
+            },
+            {
+                selector: '#btnVerTotem',
+                title: '2. Ver Totem',
+                description: 'Visualize como as senhas aparecem na tela do totem de atendimento. Perfeito para conferir a aparência.',
+                position: 'bottom'
+            },
+            {
+                selector: '#btnExportarExcel',
+                title: '3. Exportar Excel',
+                description: 'Baixe uma planilha Excel com todas as senhas do totem configuradas.',
+                position: 'bottom'
+            },
+            {
+                selector: '#btnEnviarEmail',
+                title: '4. Enviar por Email',
+                description: 'Compartilhe as configurações das senhas do totem por email com outros usuários.',
+                position: 'bottom'
+            },
+            {
+                selector: '#searchInputTotem',
+                title: '5. Buscar Senhas',
+                description: 'Filtre as senhas do totem por nome. Útil quando você tem muitas senhas configuradas.',
+                position: 'bottom'
+            },
+            {
+                selector: 'modal',
+                title: '6. Modal de Nova Senha',
+                description: 'Aqui você configura as senhas do totem: nome, cor, e ordem. Vamos mostrar o formulário!',
+                position: 'center',
+                action: 'abrirModalTotem'
+            }
+        ];
+    }
+
+    iniciarTour(tipo) {
+        this.tourType = tipo;
+        this.passos = tipo === 'credenciais' ? this.configurarTourCredenciais() : this.configurarTourTotem();
+        this.passoAtual = 0;
+        this.tourAtivo = true;
+
+        // Garantir que estamos na aba correta
+        if (tipo === 'credenciais') {
+            sistema.mostrarSecao('credenciais');
+        } else {
+            sistema.mostrarSecao('senhasTotem');
+        }
+
+        // Ocultar botões de tour
+        this.startButtons.style.display = 'none';
+
+        // Criar indicadores de passo
+        this.criarIndicadoresPasso();
+
+        // Mostrar overlay
+        this.overlay.classList.add('active');
+
+        // Começar tour
+        setTimeout(() => this.mostrarPasso(0), 300);
+    }
+
+    criarIndicadoresPasso() {
+        this.stepIndicator.innerHTML = '';
+        for (let i = 0; i < this.passos.length; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'tour-dot';
+            if (i === 0) dot.classList.add('active');
+            this.stepIndicator.appendChild(dot);
+        }
+    }
+
+    mostrarPasso(indice) {
+        if (indice < 0 || indice >= this.passos.length) return;
+
+        const passo = this.passos[indice];
+        this.passoAtual = indice;
+
+        // Remover highlight anterior
+        if (this.elementoDestacado) {
+            this.elementoDestacado.classList.remove('tour-highlight', 'tour-pulse');
+        }
+
+        // Atualizar indicadores
+        this.atualizarIndicadores();
+        this.atualizarContador();
+        this.atualizarBotoes();
+
+        // Ação especial (abrir modal)
+        if (passo.action) {
+            this.executarAcao(passo.action);
+            return;
+        }
+
+        // Encontrar e destacar elemento
+        const elemento = document.querySelector(passo.selector);
+        if (elemento) {
+            this.elementoDestacado = elemento;
+            elemento.classList.add('tour-highlight');
+            
+            // Scroll para o elemento
+            elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Posicionar tooltip
+            setTimeout(() => {
+                this.posicionarTooltip(elemento, passo);
+                this.mostrarTooltip(passo);
+            }, 300);
+        }
+    }
+
+    executarAcao(acao) {
+        switch (acao) {
+            case 'abrirModalCredenciais':
+                // Abrir modal de credenciais
+                sistema.abrirModalCadastro();
+                setTimeout(() => {
+                    const modal = document.getElementById('modalCadastro');
+                    this.elementoDestacado = modal;
+                    modal.classList.add('tour-highlight');
+                    this.posicionarTooltipModal();
+                    this.mostrarTooltip(this.passos[this.passoAtual]);
+                }, 500);
+                break;
+            case 'abrirModalTotem':
+                // Abrir modal de senha do totem
+                sistema.abrirModalSenhaTotem();
+                setTimeout(() => {
+                    const modal = document.getElementById('modalSenhaTotem');
+                    this.elementoDestacado = modal;
+                    modal.classList.add('tour-highlight');
+                    this.posicionarTooltipModal();
+                    this.mostrarTooltip(this.passos[this.passoAtual]);
+                }, 500);
+                break;
+        }
+    }
+
+    posicionarTooltip(elemento, passo) {
+        const rect = elemento.getBoundingClientRect();
+        const tooltipRect = this.tooltip.getBoundingClientRect();
+        
+        let top, left;
+        
+        // Reset classes de posição
+        this.tooltip.className = 'tour-tooltip';
+
+        switch (passo.position) {
+            case 'top':
+                top = rect.top - tooltipRect.height - 30;
+                left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                this.tooltip.classList.add('top');
+                break;
+            case 'bottom':
+                top = rect.bottom + 20;
+                left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                this.tooltip.classList.add('bottom');
+                break;
+            case 'left':
+                top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
+                left = rect.left - tooltipRect.width - 20;
+                this.tooltip.classList.add('left');
+                break;
+            case 'right':
+                top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
+                left = rect.right + 20;
+                this.tooltip.classList.add('right');
+                break;
+        }
+
+        // Ajustar se sair da tela
+        if (left < 10) left = 10;
+        if (left + tooltipRect.width > window.innerWidth - 10) {
+            left = window.innerWidth - tooltipRect.width - 10;
+        }
+        if (top < 10) top = 10;
+        if (top + tooltipRect.height > window.innerHeight - 10) {
+            top = window.innerHeight - tooltipRect.height - 10;
+        }
+
+        this.tooltip.style.top = `${top}px`;
+        this.tooltip.style.left = `${left}px`;
+    }
+
+    posicionarTooltipModal() {
+        // Posicionar tooltip no centro da tela para modais
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const tooltipRect = this.tooltip.getBoundingClientRect();
+
+        const top = (viewportHeight / 2) - (tooltipRect.height / 2);
+        const left = (viewportWidth / 2) - (tooltipRect.width / 2);
+
+        this.tooltip.style.top = `${top}px`;
+        this.tooltip.style.left = `${left}px`;
+        this.tooltip.className = 'tour-tooltip';
+    }
+
+    mostrarTooltip(passo) {
+        this.tourTitle.textContent = passo.title;
+        this.tourDescription.textContent = passo.description;
+        
+        setTimeout(() => {
+            this.tooltip.classList.add('active');
+        }, 100);
+    }
+
+    atualizarIndicadores() {
+        const dots = this.stepIndicator.querySelectorAll('.tour-dot');
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === this.passoAtual);
+        });
+    }
+
+    atualizarContador() {
+        this.stepCounter.textContent = `${this.passoAtual + 1}/${this.passos.length}`;
+    }
+
+    atualizarBotoes() {
+        this.btnPrev.style.display = this.passoAtual === 0 ? 'none' : 'inline-block';
+        
+        if (this.passoAtual === this.passos.length - 1) {
+            this.btnNext.style.display = 'none';
+            this.btnFinish.style.display = 'inline-block';
+        } else {
+            this.btnNext.style.display = 'inline-block';
+            this.btnFinish.style.display = 'none';
+        }
+    }
+
+    proximo() {
+        if (this.passoAtual < this.passos.length - 1) {
+            this.tooltip.classList.remove('active');
+            setTimeout(() => {
+                this.mostrarPasso(this.passoAtual + 1);
+            }, 300);
+        }
+    }
+
+    anterior() {
+        if (this.passoAtual > 0) {
+            this.tooltip.classList.remove('active');
+            
+            // Fechar modal se estiver no último passo
+            if (this.passoAtual === this.passos.length - 1) {
+                sistema.fecharModal();
+            }
+            
+            setTimeout(() => {
+                this.mostrarPasso(this.passoAtual - 1);
+            }, 300);
+        }
+    }
+
+    pular() {
+        this.finalizar();
+    }
+
+    finalizar() {
+        this.tourAtivo = false;
+        
+        // Remover highlight
+        if (this.elementoDestacado) {
+            this.elementoDestacado.classList.remove('tour-highlight', 'tour-pulse');
+        }
+
+        // Fechar modal se estiver aberto
+        sistema.fecharModal();
+
+        // Ocultar tooltip e overlay
+        this.tooltip.classList.remove('active');
+        this.overlay.classList.remove('active');
+
+        // Mostrar botões de tour novamente
+        setTimeout(() => {
+            this.startButtons.style.display = 'flex';
+        }, 300);
+
+        // Mostrar notificação de conclusão
+        sistema.mostrarNotificacao(
+            `Tour ${this.tourType === 'credenciais' ? 'Credenciais' : 'Totem'} concluído!`,
+            'success'
+        );
+    }
+}
+
+// Instância global do tour
+const tourGuiado = new TourGuiado();
+
+// Funções globais para os botões
+function iniciarTourCredenciais() {
+    tourGuiado.iniciarTour('credenciais');
+}
+
+function iniciarTourTotem() {
+    tourGuiado.iniciarTour('totem');
+}
+
+function tourProximo() {
+    tourGuiado.proximo();
+}
+
+function tourAnterior() {
+    tourGuiado.anterior();
+}
+
+function pularTour() {
+    tourGuiado.pular();
+}
+
+function finalizarTour() {
+    tourGuiado.finalizar();
+}
+
+// Adicionar função para abrir modal de senha do totem no sistema principal
+if (typeof sistema !== 'undefined') {
+    sistema.abrirModalSenhaTotem = function() {
+        // Garantir que estamos na aba do totem
+        this.mostrarSecao('senhasTotem');
+        
+        // Simular clique no botão de novo cadastro (que vira nova senha na aba totem)
+        const btnNovo = document.getElementById('btnNovoCadastro');
+        if (btnNovo) {
+            btnNovo.click();
+        }
+    };
+} 
