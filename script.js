@@ -2731,7 +2731,17 @@ class TourGuiado {
         
         // Mostrar/ocultar botões do tooltip
         const btnAnteriorTooltip = document.getElementById('btnAnteriorTooltip');
+        const btnProximoTooltip = document.getElementById('btnProximoTooltip');
+        
         btnAnteriorTooltip.style.display = this.etapaAtual > 0 ? 'inline-flex' : 'none';
+        
+        // Mostrar botão Próximo sempre, exceto na última etapa
+        if (this.etapaAtual === this.totalEtapas - 1) {
+            btnProximoTooltip.textContent = 'Finalizar';
+        } else {
+            btnProximoTooltip.textContent = 'Próximo';
+        }
+        btnProximoTooltip.style.display = 'inline-flex';
         
         // Mostrar overlay
         overlay.style.display = 'flex';
@@ -2743,44 +2753,52 @@ class TourGuiado {
     
     posicionarTooltip(tooltip, rect, posicao) {
         const margemSeguranca = 20;
+        const tooltipWidth = 400;
+        const tooltipHeight = 200;
+        
+        // Reset transform primeiro
+        tooltip.style.transform = 'none';
+        
+        let left, top;
         
         switch (posicao) {
             case 'top':
-                tooltip.style.left = (rect.left + rect.width / 2) + 'px';
-                tooltip.style.top = (rect.top - 200 - margemSeguranca) + 'px';
-                tooltip.style.transform = 'translateX(-50%)';
+                left = rect.left + rect.width / 2 - tooltipWidth / 2;
+                top = rect.top - tooltipHeight - margemSeguranca;
                 break;
             case 'bottom':
-                tooltip.style.left = (rect.left + rect.width / 2) + 'px';
-                tooltip.style.top = (rect.bottom + margemSeguranca) + 'px';
-                tooltip.style.transform = 'translateX(-50%)';
+                left = rect.left + rect.width / 2 - tooltipWidth / 2;
+                top = rect.bottom + margemSeguranca;
                 break;
             case 'left':
-                tooltip.style.left = (rect.left - 420 - margemSeguranca) + 'px';
-                tooltip.style.top = (rect.top + rect.height / 2) + 'px';
-                tooltip.style.transform = 'translateY(-50%)';
+                left = rect.left - tooltipWidth - margemSeguranca;
+                top = rect.top + rect.height / 2 - tooltipHeight / 2;
                 break;
             case 'right':
-                tooltip.style.left = (rect.right + margemSeguranca) + 'px';
-                tooltip.style.top = (rect.top + rect.height / 2) + 'px';
-                tooltip.style.transform = 'translateY(-50%)';
+                left = rect.right + margemSeguranca;
+                top = rect.top + rect.height / 2 - tooltipHeight / 2;
                 break;
             default:
-                tooltip.style.left = '50%';
-                tooltip.style.top = '50%';
-                tooltip.style.transform = 'translate(-50%, -50%)';
+                left = window.innerWidth / 2 - tooltipWidth / 2;
+                top = window.innerHeight / 2 - tooltipHeight / 2;
         }
         
         // Ajustar se sair da tela
-        const tooltipRect = tooltip.getBoundingClientRect();
-        if (tooltipRect.right > window.innerWidth) {
-            tooltip.style.left = (window.innerWidth - tooltipRect.width - margemSeguranca) + 'px';
-            tooltip.style.transform = 'none';
+        if (left < margemSeguranca) {
+            left = margemSeguranca;
         }
-        if (tooltipRect.left < 0) {
-            tooltip.style.left = margemSeguranca + 'px';
-            tooltip.style.transform = 'none';
+        if (left + tooltipWidth > window.innerWidth - margemSeguranca) {
+            left = window.innerWidth - tooltipWidth - margemSeguranca;
         }
+        if (top < margemSeguranca) {
+            top = margemSeguranca;
+        }
+        if (top + tooltipHeight > window.innerHeight - margemSeguranca) {
+            top = window.innerHeight - tooltipHeight - margemSeguranca;
+        }
+        
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
     }
     
     proximaEtapa() {
