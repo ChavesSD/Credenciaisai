@@ -111,9 +111,9 @@ class SistemaCadastro {
         document.getElementById('btnPularTooltip').addEventListener('click', () => this.finalizarTour());
     }
     
-    iniciarTour(tipoTour = 'geral') {
+    iniciarTour(tipoTour = 'credenciais') {
         this.tipoTourAtual = tipoTour;
-        this.etapas = this.tours[tipoTour] || this.tours.geral;
+        this.etapas = this.tours[tipoTour] || this.tours.credenciais;
         this.totalEtapas = this.etapas.length;
         this.tourAtivo = true;
         this.etapaAtual = 0;
@@ -2352,87 +2352,9 @@ class TourGuiado {
         this.etapaAtual = 0;
         this.totalEtapas = 0;
         this.tourAtivo = false;
-        this.tipoTourAtual = 'geral';
-        this.primeiroAcesso = this.verificarPrimeiroAcesso();
+        this.tipoTourAtual = 'credenciais';
         
         this.tours = {
-            geral: [
-                {
-                    tipo: 'modal',
-                    titulo: '🚀 Bem-vindo ao Sistema de Credenciais!',
-                    conteudo: `
-                        <div class="tour-step">
-                            <div class="tour-step-icon">👋</div>
-                            <h3>Olá! Seja bem-vindo!</h3>
-                            <p>Este é o Sistema de Cadastro de Credenciais. Aqui você pode gerenciar credenciais de funcionários e configurar senhas para o totem de atendimento.</p>
-                            <div class="tour-features">
-                                <ul>
-                                    <li>Cadastre funcionários por área (Medicina, Odonto, Laboratório, etc.)</li>
-                                    <li>Configure senhas personalizadas para o totem</li>
-                                    <li>Exporte dados e envie por email</li>
-                                    <li>Interface moderna e responsiva</li>
-                                </ul>
-                            </div>
-                            <p><strong>Vamos fazer um tour rápido para você conhecer as principais funcionalidades!</strong></p>
-                        </div>
-                    `
-                },
-                {
-                    tipo: 'spotlight',
-                    elemento: '.nav-tabs',
-                    titulo: '📋 Navegação Principal',
-                    texto: 'Use essas abas para alternar entre o cadastro de credenciais de funcionários e a configuração das senhas do totem.',
-                    posicao: 'bottom'
-                },
-                {
-                    tipo: 'spotlight',
-                    elemento: '#btnNovoCadastro',
-                    titulo: '➕ Novo Cadastro',
-                    texto: 'Clique aqui para adicionar novos funcionários ao sistema. Você pode cadastrar médicos, dentistas, recepcionistas e muito mais!',
-                    posicao: 'bottom'
-                },
-                {
-                    tipo: 'spotlight',
-                    elemento: '#searchInput',
-                    titulo: '🔍 Buscar Registros',
-                    texto: 'Use este campo para encontrar rapidamente funcionários cadastrados. Você pode buscar por nome ou tipo de profissional.',
-                    posicao: 'bottom'
-                },
-                {
-                    tipo: 'spotlight',
-                    elemento: '#btnEnviarEmail',
-                    titulo: '📧 Enviar por Email',
-                    texto: 'Exporte todos os dados em planilhas e envie por email. Perfeito para compartilhar informações ou fazer backup.',
-                    posicao: 'bottom'
-                },
-                {
-                    tipo: 'spotlight',
-                    elemento: '#btnSenhasTotem',
-                    titulo: '🖥️ Senhas do Totem',
-                    texto: 'Clique aqui para configurar as senhas que aparecerão no totem de atendimento. Você pode personalizar cores e ordem.',
-                    posicao: 'bottom'
-                },
-                {
-                    tipo: 'modal',
-                    titulo: '✅ Tour Geral Concluído!',
-                    conteudo: `
-                        <div class="tour-step">
-                            <div class="tour-step-icon">🎉</div>
-                            <h3>Parabéns! Você conhece o sistema!</h3>
-                            <p>Agora você está pronto para usar todas as funcionalidades do sistema.</p>
-                            <div class="tour-features">
-                                <ul>
-                                    <li>Comece cadastrando seus funcionários</li>
-                                    <li>Configure as senhas do totem conforme necessário</li>
-                                    <li>Use o botão "Tours" para acessar tours específicos</li>
-                                    <li>Aproveite a facilidade do sistema!</li>
-                                </ul>
-                            </div>
-                            <p><strong>Se precisar de ajuda, você pode refazer os tours a qualquer momento clicando no botão "Tours".</strong></p>
-                        </div>
-                    `
-                }
-            ],
             credenciais: [
                 {
                     tipo: 'modal',
@@ -2597,20 +2519,6 @@ class TourGuiado {
         };
         
         this.configurarEventos();
-        
-        // Iniciar tour automático se for primeiro acesso
-        if (this.primeiroAcesso) {
-            setTimeout(() => this.iniciarTour('geral'), 1000);
-        }
-    }
-    
-    verificarPrimeiroAcesso() {
-        const jaVisitou = localStorage.getItem('sistema_credenciais_visitado');
-        if (!jaVisitou) {
-            localStorage.setItem('sistema_credenciais_visitado', 'true');
-            return true;
-        }
-        return false;
     }
     
     configurarEventos() {
@@ -2636,9 +2544,9 @@ class TourGuiado {
         document.getElementById('btnPularTooltip').addEventListener('click', () => this.finalizarTour());
     }
     
-    iniciarTour(tipoTour = 'geral') {
+    iniciarTour(tipoTour = 'credenciais') {
         this.tipoTourAtual = tipoTour;
-        this.etapas = this.tours[tipoTour] || this.tours.geral;
+        this.etapas = this.tours[tipoTour] || this.tours.credenciais;
         this.totalEtapas = this.etapas.length;
         this.tourAtivo = true;
         this.etapaAtual = 0;
@@ -2832,7 +2740,7 @@ class TourGuiado {
         } else if (this.tipoTourAtual === 'credenciais') {
             window.sistema.alternarSecao('credenciais');
         } else {
-            // Tour geral - voltar para credenciais
+            // Tour padrão - voltar para credenciais
             window.sistema.alternarSecao('credenciais');
         }
         
