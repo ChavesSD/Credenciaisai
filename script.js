@@ -2385,7 +2385,7 @@ class TourGuiado {
                 },
                 {
                     tipo: 'spotlight',
-                    elemento: '#btnNovoCadastro',
+                    elemento: '#modalCadastro .modal-content',
                     titulo: '📝 Vamos Conhecer o Formulário',
                     texto: 'Agora vamos abrir o modal para conhecer os campos de cadastro.',
                     posicao: 'bottom',
@@ -2484,7 +2484,7 @@ class TourGuiado {
                 },
                 {
                     tipo: 'spotlight',
-                    elemento: '#btnNovoCadastro',
+                    elemento: '#modalSenhaTotem .modal-content',
                     titulo: '📝 Vamos Conhecer os Campos',
                     texto: 'Agora vamos abrir o modal para conhecer os campos de configuração da senha.',
                     posicao: 'bottom',
