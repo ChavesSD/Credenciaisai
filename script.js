@@ -2811,47 +2811,87 @@ class TourGuiado {
     posicionarTooltip(elemento, passo) {
         const rect = elemento.getBoundingClientRect();
         const tooltipRect = this.tooltip.getBoundingClientRect();
+        const viewport = {
+            width: window.innerWidth,
+            height: window.innerHeight
+        };
         
-        let top, left;
+        let top, left, position;
         
         // Reset classes de posição
         this.tooltip.className = 'tour-tooltip';
 
-        switch (passo.position) {
-            case 'top':
-                top = rect.top - tooltipRect.height - 30;
+        // Calcular posição automática baseada no espaço disponível
+        const espacoTop = rect.top;
+        const espacoBottom = viewport.height - rect.bottom;
+        const espacoLeft = rect.left;
+        const espacoRight = viewport.width - rect.right;
+        
+        // Determinar melhor posição automaticamente
+        if (passo.position === 'center') {
+            // Centralizar na tela
+            top = (viewport.height / 2) - (tooltipRect.height / 2);
+            left = (viewport.width / 2) - (tooltipRect.width / 2);
+            position = 'center';
+        } else {
+            // Lógica inteligente de posicionamento
+            if (espacoBottom >= tooltipRect.height + 30 && passo.position === 'bottom') {
+                // Posição bottom se houver espaço
+                top = rect.bottom + 15;
                 left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-                this.tooltip.classList.add('top');
-                break;
-            case 'bottom':
-                top = rect.bottom + 20;
+                position = 'bottom';
+            } else if (espacoTop >= tooltipRect.height + 30 && passo.position === 'top') {
+                // Posição top se houver espaço
+                top = rect.top - tooltipRect.height - 15;
                 left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-                this.tooltip.classList.add('bottom');
-                break;
-            case 'left':
+                position = 'top';
+            } else if (espacoRight >= tooltipRect.width + 30 && passo.position === 'right') {
+                // Posição right se houver espaço
                 top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
-                left = rect.left - tooltipRect.width - 20;
-                this.tooltip.classList.add('left');
-                break;
-            case 'right':
+                left = rect.right + 15;
+                position = 'right';
+            } else if (espacoLeft >= tooltipRect.width + 30 && passo.position === 'left') {
+                // Posição left se houver espaço
                 top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
-                left = rect.right + 20;
-                this.tooltip.classList.add('right');
-                break;
+                left = rect.left - tooltipRect.width - 15;
+                position = 'left';
+            } else {
+                // Fallback: posição que tem mais espaço
+                if (espacoBottom >= espacoTop) {
+                    top = rect.bottom + 15;
+                    left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                    position = 'bottom';
+                } else {
+                    top = rect.top - tooltipRect.height - 15;
+                    left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                    position = 'top';
+                }
+            }
         }
 
-        // Ajustar se sair da tela
-        if (left < 10) left = 10;
-        if (left + tooltipRect.width > window.innerWidth - 10) {
-            left = window.innerWidth - tooltipRect.width - 10;
+        // Ajustar limites da tela com margem de segurança
+        const margin = 15;
+        if (left < margin) {
+            left = margin;
         }
-        if (top < 10) top = 10;
-        if (top + tooltipRect.height > window.innerHeight - 10) {
-            top = window.innerHeight - tooltipRect.height - 10;
+        if (left + tooltipRect.width > viewport.width - margin) {
+            left = viewport.width - tooltipRect.width - margin;
+        }
+        if (top < margin) {
+            top = margin;
+        }
+        if (top + tooltipRect.height > viewport.height - margin) {
+            top = viewport.height - tooltipRect.height - margin;
         }
 
+        // Aplicar posição
         this.tooltip.style.top = `${top}px`;
         this.tooltip.style.left = `${left}px`;
+        
+        // Adicionar classe de posição para estilização da seta
+        if (position !== 'center') {
+            this.tooltip.classList.add(position);
+        }
     }
 
     posicionarTooltipModal() {
