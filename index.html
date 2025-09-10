@@ -8,13 +8,11 @@
     <meta name="theme-color" content="#667eea">
     
     <!-- Favicon -->
-    <link rel="shortcut icon" href="favicon.ico?v=4" type="image/x-icon">
-    <link rel="icon" href="favicon.ico?v=4" type="image/x-icon">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=4">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=4">
-    <link rel="apple-touch-icon" sizes="180x180" href="favicon.png?v=4">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="shortcut icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
     <meta name="msapplication-TileColor" content="#667eea">
-    <meta name="msapplication-TileImage" content="favicon.png?v=4">
+    <meta name="msapplication-TileImage" content="favicon.png">
     
     <title>Cadastro de Credenciais</title>
     <link rel="stylesheet" href="style.css">
@@ -102,7 +100,7 @@
                         <table id="tabelaCredenciais">
                             <thead>
                                 <tr>
-                                    <th>Nome</th>
+                                    <th>Nome e Sobrenome</th>
                                     <th>Tipo</th>
                                     <th>Unidade</th>
                                     <th>Especialidade</th>
@@ -126,7 +124,7 @@
                 <div class="lista-container">
                     <div id="unidadeAtualContainer" class="unidade-atual-container" style="display: none;">
                         <div class="unidade-atual">
-                            <strong>Unidade:</strong> <span id="unidadeAtualTexto"></span>
+                            <strong>Empresa:</strong> <span id="unidadeAtualTexto"></span>
                             <button type="button" class="btn btn-sm btn-secondary" id="btnAlterarUnidade">Alterar</button>
                         </div>
                     </div>
@@ -143,6 +141,7 @@
                                     <th>Nome da Senha</th>
                                     <th>Cor</th>
                                     <th>Pré-visualização</th>
+                                    <th>Exibir no Totem</th>
                                     <th>Data Criação</th>
                                     <th>Ações</th>
                                 </tr>
@@ -170,11 +169,11 @@
             </div>
             
             <form id="formCadastro">
-                <!-- Unidade Atual (aparece quando já definida) -->
+                <!-- Nome da Empresa Atual (aparece quando já definida) -->
                 <div id="unidadeAtualCredenciais" class="unidade-atual-container" style="display: none;">
                     <div class="unidade-atual">
                         <div>
-                            <strong>Unidade:</strong>
+                            <strong>Empresa:</strong>
                             <span id="unidadeAtualTextoCredenciais"></span>
                         </div>
                         <button type="button" class="btn btn-sm btn-secondary" onclick="sistema.permitirAlterarUnidadeCredenciais()">
@@ -185,17 +184,17 @@
 
 
 
-                <!-- Campo de Unidade (aparece quando não definida) -->
+                <!-- Campo de Nome da Empresa (aparece quando não definida) -->
                 <div id="campoUnidadeCredenciais" class="form-group">
-                    <label for="unidadeCredenciais">Unidade *</label>
-                    <input type="text" id="unidadeCredenciais" name="unidadeCredenciais" placeholder="Ex: João Pessoa, Campina Grande" required>
-                    <small>Nome da unidade/filial específica</small>
+                    <label for="unidadeCredenciais">Nome da Empresa *</label>
+                    <input type="text" id="unidadeCredenciais" name="unidadeCredenciais" placeholder="Ex: Clínica São Paulo, Hospital Central" required>
+                    <small>Nome da empresa ou instituição</small>
                 </div>
 
                 <div class="form-group">
-                    <label for="tipo">Tipo *</label>
+                    <label for="tipo">Tipo de Usuário *</label>
                     <select id="tipo" name="tipo" required>
-                        <option value="">Selecione o tipo</option>
+                        <option value="">Selecione o tipo de usuário</option>
                         <option value="recepcao">Recepção Médica</option>
                         <option value="recepcao-odonto">Recepção Odonto</option>
                         <option value="medicina">Medicina</option>
@@ -223,7 +222,7 @@
                             <table class="profissionais-table">
                                 <thead>
                                     <tr>
-                                        <th>Nome</th>
+                                        <th>Nome e Sobrenome</th>
                                         <th>Senhas que irá chamar</th>
                                     </tr>
                                 </thead>
@@ -247,7 +246,7 @@
                                 <thead>
                                     <tr>
                                         <th>Tratamento</th>
-                                        <th>Nome</th>
+                                        <th>Nome e Sobrenome</th>
                                         <th>Especialidade</th>
                                     </tr>
                                 </thead>
@@ -282,9 +281,9 @@
             
             <form id="formSenhaTotem">
                 <div class="form-group">
-                    <label for="unidadeTotem">Unidade *</label>
-                    <input type="text" id="unidadeTotem" name="unidadeTotem" placeholder="Ex: João Pessoa, Campina Grande" required>
-                    <small>Nome da unidade/filial específica</small>
+                    <label for="unidadeTotem">Nome da Empresa *</label>
+                    <input type="text" id="unidadeTotem" name="unidadeTotem" placeholder="Ex: Clínica São Paulo, Hospital Central" required>
+                    <small>Nome da empresa ou instituição</small>
                 </div>
                 
                 <div class="form-group">
@@ -293,6 +292,18 @@
                     <small>Digite o nome da senha que aparecerá no totem</small>
                 </div>
                 
+                <!-- Exibir no Totem (switch) -->
+                <div class="form-group" id="grupoExibirTotem">
+                    <label for="exibirNoTotem">Exibir no Totem</label>
+                    <div class="switch-row">
+                        <label class="switch">
+                            <input type="checkbox" id="exibirNoTotem" name="exibirNoTotem" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <small style="margin-left: 10px;">Ative para mostrar essa senha no totem</small>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="ordemTotem">Ordem no Totem *</label>
                     <select id="ordemTotem" name="ordemTotem" required>
@@ -426,11 +437,6 @@
                     
                     <div class="info-fields">
                         <div class="form-group">
-                            <label for="unidadeInfo">Informações da Unidade</label>
-                            <input type="text" id="unidadeInfo" name="unidade" readonly>
-                        </div>
-                        
-                        <div class="form-group">
                             <label for="totalCredenciais">Total de Registros</label>
                             <input type="text" id="totalCredenciais" name="total_registros" readonly>
                         </div>
@@ -504,52 +510,6 @@
         </div>
     </footer>
 
-    <!-- Botão de Tour -->
-    <div class="tour-menu" id="tourMenu">
-        <button class="tour-btn-main" id="tourBtnMain" onclick="toggleTourMenu()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 1v6m0 6v6"/>
-                <path d="M21 12h-6m-6 0H3"/>
-            </svg>
-            <span>Tour</span>
-        </button>
-        <div class="tour-dropdown" id="tourDropdown">
-            <button class="tour-option" onclick="iniciarTourCredenciais()">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
-                <span>Tour Credenciais</span>
-            </button>
-            <button class="tour-option" onclick="iniciarTourTotem()">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span>Tour Totem</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Overlay e Tooltip do Tour -->
-    <div class="tour-overlay" id="tourOverlay"></div>
-    <div class="tour-tooltip" id="tourTooltip">
-        <div class="tour-content" id="tourContent">
-            <h3 id="tourTitle"></h3>
-            <p id="tourDescription"></p>
-        </div>
-        <div class="tour-controls">
-            <div class="tour-progress">
-                <span id="tourStepCounter">1/6</span>
-                <div class="tour-step-indicator" id="tourStepIndicator"></div>
-            </div>
-            <div class="tour-actions">
-                <button class="tour-btn tour-btn-skip" id="tourBtnSkip" onclick="pularTour()">Pular</button>
-                <button class="tour-btn tour-btn-prev" id="tourBtnPrev" onclick="tourAnterior()">Anterior</button>
-                <button class="tour-btn tour-btn-next" id="tourBtnNext" onclick="tourProximo()">Próximo</button>
-                <button class="tour-btn tour-btn-finish" id="tourBtnFinish" onclick="finalizarTour()" style="display: none;">Finalizar</button>
-            </div>
-        </div>
-    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="script.js"></script>

@@ -90,7 +90,12 @@ class SistemaCadastro {
             }
         });
 
-
+        // Inicializar comportamento do switch Exibir no Totem
+        const exibirSwitch = document.getElementById('exibirNoTotem');
+        if (exibirSwitch) {
+            exibirSwitch.addEventListener('change', () => this.atualizarVisibilidadeOrdemTotem());
+        }
+        this.atualizarVisibilidadeOrdemTotem();
     }
 
     alternarSecao(secao) {
@@ -122,25 +127,22 @@ class SistemaCadastro {
                 </svg>
                 <span>Nova Senha</span>
             `;
-            
-            // Mostrar/ocultar botão Ver Totem baseado na quantidade de senhas
-            const btnVerTotem = document.getElementById('btnVerTotem');
-            if (this.senhasTotem.length > 0) {
-                btnVerTotem.style.display = 'inline-flex';
-            } else {
-                btnVerTotem.style.display = 'none';
-            }
         }
 
         // Atualizar seções de conteúdo
         document.querySelectorAll('.secao-conteudo').forEach(section => section.classList.remove('active'));
+        
+        // Controlar visibilidade do botão Ver Totem
+        const btnVerTotem = document.getElementById('btnVerTotem');
+        
         if (secao === 'credenciais') {
             document.getElementById('secaoCredenciais').classList.add('active');
+            // Ocultar botão Ver Totem na aba de credenciais
+            btnVerTotem.style.display = 'none';
         } else {
             document.getElementById('secaoSenhasTotem').classList.add('active');
             
-            // Mostrar/ocultar botão Ver Totem baseado na quantidade de senhas
-            const btnVerTotem = document.getElementById('btnVerTotem');
+            // Mostrar/ocultar botão Ver Totem baseado na quantidade de senhas (apenas na aba de totem)
             if (this.senhasTotem.length > 0) {
                 btnVerTotem.style.display = 'inline-flex';
             } else {
@@ -161,9 +163,9 @@ class SistemaCadastro {
             senhasParaExibir = [...this.senhasTotem]
                 .sort((a, b) => (a.ordem || 999) - (b.ordem || 999))
                 .map(senha => ({
-                    nome: senha.nomeSenha.toUpperCase(),
-                    classe: this.obterClassePorNome(senha.nomeSenha),
-                    cor: senha.corFundo
+                    nome: (senha.nome || senha.nomeSenha || '').toUpperCase(),
+                    classe: this.obterClassePorNome(senha.nome || senha.nomeSenha || ''),
+                    cor: senha.cor || senha.corFundo || '#48c9b0'
                 }));
         } else {
             // Gerar senhas padrão baseadas na imagem
@@ -181,58 +183,29 @@ class SistemaCadastro {
         // Calcular altura dinâmica baseada na quantidade de senhas e tamanho da tela
         const quantidadeSenhas = senhasParaExibir.length;
         
-        // Ajustar altura disponível baseado no tamanho da tela
-        let alturaDisponivelPixels = 320; // Desktop padrão
+        // Calcular tamanho da fonte baseado no tamanho da tela
         const larguraTela = window.innerWidth;
         
-        if (larguraTela <= 480) {
-            alturaDisponivelPixels = 280; // Mobile
-        } else if (larguraTela <= 768) {
-            alturaDisponivelPixels = 300; // Tablet
-        }
-        
-        const espacoEntreItens = 2; // Gap entre os itens
-        const espacoTotalGaps = (quantidadeSenhas - 1) * espacoEntreItens;
-        const alturaItem = Math.floor((alturaDisponivelPixels - espacoTotalGaps) / quantidadeSenhas);
-        
-        // Garantir altura mínima para legibilidade baseada no tamanho da tela
-        let alturaMinima = 25;
-        if (larguraTela <= 480) {
-            alturaMinima = 20;
-        } else if (larguraTela <= 768) {
-            alturaMinima = 22;
-        }
-        
-        const alturaCalculada = Math.max(alturaItem, alturaMinima);
-        
-        // Calcular tamanho da fonte baseado na altura e tamanho da tela
-        let fatorFonte = 0.35;
-        let fonteMinima = 10;
-        let fonteMaxima = 16;
+        let fonteMinima = 14;
+        let fonteMaxima = 24;
         
         if (larguraTela <= 480) {
-            fatorFonte = 0.3;
-            fonteMinima = 8;
-            fonteMaxima = 12;
+            fonteMinima = 12;
+            fonteMaxima = 18;
         } else if (larguraTela <= 768) {
-            fatorFonte = 0.32;
-            fonteMinima = 9;
-            fonteMaxima = 14;
+            fonteMinima = 13;
+            fonteMaxima = 20;
         }
         
-        const tamanhoFonte = Math.min(Math.max(alturaCalculada * fatorFonte, fonteMinima), fonteMaxima);
+        // Usar fonte média para melhor legibilidade
+        const tamanhoFonte = Math.min(Math.max((fonteMinima + fonteMaxima) / 2, fonteMinima), fonteMaxima);
         
-        // Renderizar as senhas no totem com altura dinâmica
+        // Renderizar as senhas no totem com altura flexível
         totemOptions.innerHTML = senhasParaExibir.map((senha, index) => `
             <div class="totem-option-dynamic ${senha.classe}" 
                  style="background-color: ${senha.cor}; 
-                        height: ${alturaCalculada}px; 
                         font-size: ${tamanhoFonte}px; 
-                        padding: ${Math.max(5, alturaCalculada * 0.15)}px 8px;
-                        line-height: ${alturaCalculada * 0.7}px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;">
+                        padding: 18px 14px;">
                 <span style="display: block; text-align: center; width: 100%;">${senha.nome}</span>
             </div>
         `).join('');
@@ -282,12 +255,12 @@ class SistemaCadastro {
     }
 
     permitirAlterarUnidade() {
-        const novaUnidade = prompt('Digite a nova unidade:', this.unidadeTotem || '');
+        const novaUnidade = prompt('Digite o novo nome da empresa:', this.unidadeTotem || '');
         if (novaUnidade !== null && novaUnidade.trim() !== '') {
             this.unidadeTotem = novaUnidade.trim();
             this.salvarUnidadeTotem();
             this.atualizarUnidadeAtual();
-            this.mostrarNotificacao('Unidade atualizada com sucesso!', 'success');
+            this.mostrarNotificacao('Empresa atualizada com sucesso!', 'success');
         }
     }
 
@@ -297,7 +270,7 @@ class SistemaCadastro {
         try {
             return localStorage.getItem('unidadeTotem') || '';
         } catch (error) {
-            console.error('Erro ao carregar unidade do totem:', error);
+            console.error('Erro ao carregar empresa do totem:', error);
             return '';
         }
     }
@@ -306,55 +279,43 @@ class SistemaCadastro {
         try {
             localStorage.setItem('unidadeTotem', this.unidadeTotem);
         } catch (error) {
-            console.error('Erro ao salvar unidade do totem:', error);
-            this.mostrarNotificacao('Erro ao salvar unidade do totem!', 'error');
+            console.error('Erro ao salvar empresa do totem:', error);
+            this.mostrarNotificacao('Erro ao salvar empresa do totem!', 'error');
         }
     }
 
     configurarEventosTotem() {
-        // Para o modal específico de senha do totem
-        const corFundoTotem = document.getElementById('corFundoTotem');
-        const corFundoTextoTotem = document.getElementById('corFundoTextoTotem');
-        const nomeSenhaTotem = document.getElementById('nomeSenhaTotem');
-
-        if (corFundoTotem && corFundoTextoTotem && nomeSenhaTotem) {
-            // Atualizar preview quando cor mudar
-            corFundoTotem.addEventListener('input', (e) => {
-                const cor = e.target.value;
-                corFundoTextoTotem.value = cor;
+        const form = document.getElementById('formSenhaTotem');
+        if (!form) return;
+        // Listeners para atualizar a preview
+        const nomeInput = document.getElementById('nomeSenhaTotem');
+        const corInput = document.getElementById('corFundoTotem');
+        const corTextoInput = document.getElementById('corFundoTextoTotem');
+        if (nomeInput) nomeInput.addEventListener('input', () => this.atualizarPreviewTotemModal());
+        if (corInput) corInput.addEventListener('input', (e) => {
+            corTextoInput && (corTextoInput.value = e.target.value);
                 this.atualizarPreviewTotemModal();
             });
-
-            // Atualizar color picker quando texto mudar
-            corFundoTextoTotem.addEventListener('input', (e) => {
-                let valor = e.target.value;
-                
-                // Adicionar # se não tiver
-                if (valor && !valor.startsWith('#')) {
-                    valor = '#' + valor;
-                }
-                
-                // Validar formato hex
-                if (/^#[0-9A-Fa-f]{6}$/.test(valor)) {
-                    corFundoTotem.value = valor;
+        if (corTextoInput) corTextoInput.addEventListener('input', (e) => {
+            corInput && (corInput.value = e.target.value);
                     this.atualizarPreviewTotemModal();
-                }
-                
-                e.target.value = valor;
-            });
-
-            // Atualizar preview quando nome mudar
-            nomeSenhaTotem.addEventListener('input', () => {
-                this.atualizarPreviewTotemModal();
-            });
-        }
+        });
     }
 
-
+    atualizarVisibilidadeOrdemTotem() {
+        const exibirSwitch = document.getElementById('exibirNoTotem');
+        const grupoOrdem = document.querySelector('label[for="ordemTotem"]').closest('.form-group');
+        const selectOrdem = document.getElementById('ordemTotem');
+        if (!exibirSwitch || !grupoOrdem || !selectOrdem) return;
+        const ativo = exibirSwitch.checked;
+        grupoOrdem.style.display = ativo ? 'block' : 'none';
+        selectOrdem.disabled = !ativo;
+        selectOrdem.required = ativo;
+    }
 
     atualizarPreviewTotemModal() {
-        const nomeSenha = document.getElementById('nomeSenhaTotem').value || 'NOME DA SENHA';
-        const corFundo = document.getElementById('corFundoTotem').value;
+        const nomeSenha = document.getElementById('nomeSenhaTotem')?.value || 'NOME DA SENHA';
+        const corFundo = document.getElementById('corFundoTotem')?.value || '#667eea';
         const previewSenha = document.getElementById('previewSenhaTotem');
         const previewTexto = document.getElementById('previewTextoTotem');
 
@@ -500,12 +461,12 @@ class SistemaCadastro {
             
             // Verificar se a posição está ocupada
             const posicaoOcupada = this.senhasTotem.some(s => 
-                s.ordem === i && (!this.senhaTotemEditando || s.id !== this.senhaTotemEditando.id)
+                s.exibir !== false && s.ordem === i && (!this.senhaTotemEditando || s.id !== this.senhaTotemEditando.id)
             );
             
             if (posicaoOcupada) {
                 const senhaNaPosicao = this.senhasTotem.find(s => s.ordem === i);
-                option.textContent = `${i}ª posição (Ocupada: ${senhaNaPosicao.nomeSenha})`;
+                option.textContent = `${i}ª posição (Ocupada: ${senhaNaPosicao.nome || ''})`;
                 option.disabled = true;
             } else {
                 option.textContent = `${i}ª posição`;
@@ -515,12 +476,18 @@ class SistemaCadastro {
         }
     }
 
-    preencherFormularioTotem(senhaTotem) {
+    preencherFormularioTotem(senhaTotem = {}) {
+        // Preencher dados no formulário do totem
         document.getElementById('unidadeTotem').value = this.unidadeTotem || senhaTotem.unidade || '';
-        document.getElementById('nomeSenhaTotem').value = senhaTotem.nomeSenha;
         document.getElementById('ordemTotem').value = senhaTotem.ordem || 1;
-        document.getElementById('corFundoTotem').value = senhaTotem.corFundo;
-        document.getElementById('corFundoTextoTotem').value = senhaTotem.corFundo;
+        const exibirSwitch = document.getElementById('exibirNoTotem');
+        if (exibirSwitch) {
+            exibirSwitch.checked = senhaTotem.exibir !== false; // padrão true
+            this.atualizarVisibilidadeOrdemTotem();
+        }
+        document.getElementById('corFundoTotem').value = senhaTotem.cor || '#667eea';
+        document.getElementById('corFundoTextoTotem').value = senhaTotem.cor || '#667eea';
+        document.getElementById('nomeSenhaTotem').value = senhaTotem.nome || '';
         setTimeout(() => this.atualizarPreviewTotemModal(), 100);
     }
 
@@ -604,7 +571,7 @@ class SistemaCadastro {
                 </select>
             </td>
             <td>
-                <input type="text" name="nome_${index}" placeholder="Nome do profissional" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <input type="text" name="nome_${index}" placeholder="Nome e sobrenome do profissional" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
             </td>
             <td>
                 <input type="text" name="especialidade_${index}" placeholder="Especialidade" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
@@ -637,7 +604,7 @@ class SistemaCadastro {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
-                <input type="text" name="nome_funcionario_${index}" placeholder="Nome do funcionário" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <input type="text" name="nome_funcionario_${index}" placeholder="Nome e sobrenome do funcionário" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
             </td>
             <td>
                 <input type="text" name="senhas_funcionario_${index}" placeholder="Ex: Medicina Geral, Cardiologia..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
@@ -828,7 +795,7 @@ class SistemaCadastro {
 
         // Verificar se a unidade está definida (globalmente ou no cadastro)
         if (!this.unidadeCredenciais && !credencial.unidade) {
-            this.mostrarNotificacao('Unidade é obrigatória!', 'error');
+            this.mostrarNotificacao('Nome da empresa é obrigatório!', 'error');
             return false;
         }
 
@@ -942,24 +909,32 @@ class SistemaCadastro {
                     <td>${especialidade}</td>
                     <td>
                         <div class="acoes-btn">
-                            <button class="btn btn-secondary btn-sm" onclick="sistema.editarCredencial(${credencial.id})">
+                            <button class="btn btn-secondary btn-sm" data-acao="editar" data-index="${credencial.id}">
                                 <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                 </svg>
-                                <span>Editar</span>
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="sistema.excluirCadastro(${credencial.id})">
+                            <button class="btn btn-danger btn-sm" data-acao="excluir" data-index="${credencial.id}">
                                 <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                    <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
                                 </svg>
-                                <span>Excluir</span>
                             </button>
                         </div>
                     </td>
                 </tr>
             `;
         }).join('');
+
+        // Delegação de eventos para botões
+        tbody.querySelectorAll('.acoes-btn button').forEach(btn => {
+            btn.onclick = (e) => {
+                const id = parseInt(e.currentTarget.getAttribute('data-index'));
+                const acao = e.currentTarget.getAttribute('data-acao');
+                if (acao === 'editar') this.editarCredencial(id);
+                if (acao === 'excluir') this.excluirCadastro(id);
+            };
+        });
     }
 
     formatarNomeCompleto(credencial) {
@@ -1127,56 +1102,72 @@ class SistemaCadastro {
         }
 
         // Ordenar senhas por ordem antes de renderizar
-        const senhasOrdenadas = [...this.senhasTotem].sort((a, b) => (a.ordem || 999) - (b.ordem || 999));
+        const senhasOrdenadas = [...this.senhasTotem].sort((a, b) => {
+            const aKey = (a.exibir === false || !a.ordem) ? 999 : a.ordem;
+            const bKey = (b.exibir === false || !b.ordem) ? 999 : b.ordem;
+            return aKey - bKey;
+        });
 
-        tbody.innerHTML = senhasOrdenadas.map(senhaTotem => {
-            const dataFormatada = senhaTotem.dataInclusao 
-                ? new Date(senhaTotem.dataInclusao).toLocaleDateString('pt-BR')
+        tbody.innerHTML = senhasOrdenadas.map((senhaTotem, index) => {
+            const dataFormatada = senhaTotem.dataCriacao 
+                ? new Date(senhaTotem.dataCriacao).toLocaleDateString('pt-BR')
                 : new Date().toLocaleDateString('pt-BR');
-                
+            const exibir = senhaTotem.exibir !== false;
             return `
                 <tr>
                     <td><strong>${senhaTotem.ordem || '-'}ª</strong></td>
-                    <td><strong>${senhaTotem.nomeSenha}</strong></td>
+                    <td><strong>${senhaTotem.nome || ''}</strong></td>
                     <td>
                         <div class="detalhes-totem">
-                            <div class="cor-totem" style="background-color: ${senhaTotem.corFundo}"></div>
-                            <span>${senhaTotem.corFundo}</span>
+                            <div class="cor-totem" style="background-color: ${senhaTotem.cor || '#667eea'}"></div>
+                            <span>${senhaTotem.cor || '#667eea'}</span>
                         </div>
                     </td>
                     <td>
-                        <div class="preview-senha" style="background-color: ${senhaTotem.corFundo}; color: ${this.obterCorTextoContraste(senhaTotem.corFundo)}; padding: 8px 16px; border-radius: 4px; font-size: 12px; text-align: center; font-weight: bold;">
-                            ${senhaTotem.nomeSenha.toUpperCase()}
+                        <div class="preview-senha" style="background-color: ${senhaTotem.cor || '#667eea'}; color: ${this.obterCorTextoContraste(senhaTotem.cor || '#667eea')}; padding: 8px 16px; border-radius: 4px; font-size: 12px; text-align: center; font-weight: bold;">
+                            ${(senhaTotem.nome || '').toUpperCase()}
                         </div>
                     </td>
+                    <td>${exibir ? 'Sim' : 'Não'}</td>
                     <td>${dataFormatada}</td>
                     <td>
                         <div class="acoes-btn">
-                            <button class="btn btn-secondary btn-sm" onclick="sistema.editarSenhaTotem(${senhaTotem.id})">
+                            <button class="btn btn-secondary btn-sm" data-acao="editar" data-index="${index}">
                                 <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                 </svg>
-                                <span>Editar</span>
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="sistema.excluirSenhaTotem(${senhaTotem.id})">
+                            <button class="btn btn-danger btn-sm" data-acao="excluir" data-index="${index}">
                                 <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                    <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
                                 </svg>
-                                <span>Excluir</span>
                             </button>
                         </div>
                     </td>
                 </tr>
             `;
         }).join('');
+
+        // Delegação de eventos para botões
+        tbody.querySelectorAll('.acoes-btn button').forEach(btn => {
+            btn.onclick = (e) => {
+                const idx = parseInt(e.currentTarget.getAttribute('data-index'));
+                const acao = e.currentTarget.getAttribute('data-acao');
+                const item = senhasOrdenadas[idx];
+                if (!item) return;
+                const originalIndex = this.senhasTotem.findIndex(s => s.id === item.id);
+                if (acao === 'editar') this.editarSenhaTotem(item.id);
+                if (acao === 'excluir') this.excluirSenhaTotem(item.id);
+            };
+        });
     }
 
     excluirSenhaTotem(id) {
         const senhaTotem = this.senhasTotem.find(s => s.id === id);
         if (!senhaTotem) return;
 
-        document.getElementById('nomeExclusao').textContent = senhaTotem.nomeSenha;
+        document.getElementById('nomeExclusao').textContent = senhaTotem.nome || senhaTotem.nomeSenha || 'Senha';
         document.getElementById('modalConfirmacao').style.display = 'block';
         this.senhaTotemParaExcluir = id;
     }
@@ -1336,7 +1327,7 @@ class SistemaCadastro {
 
         // Adicionar cada senha com código
         this.senhasTotem.forEach(senhaTotem => {
-            const nomeSenhaUpper = senhaTotem.nomeSenha.toUpperCase();
+            const nomeSenhaUpper = (senhaTotem.nome || senhaTotem.nomeSenha || '').toUpperCase();
             const codigo = gerarCodigo();
             dadosExportacao.push([nomeSenhaUpper, codigo]);
         });
@@ -1560,9 +1551,6 @@ class SistemaCadastro {
         const form = e.target;
         const formData = new FormData(form);
         
-
-
-        // Verificar se existe campo de unidade no formulário (primeira vez) 
         const unidadeFormulario = formData.get('unidadeTotem');
         if (unidadeFormulario && unidadeFormulario.trim()) {
             this.unidadeTotem = unidadeFormulario.trim();
@@ -1570,27 +1558,28 @@ class SistemaCadastro {
             this.atualizarUnidadeAtual();
         }
 
-        const senhaTotem = {
-            id: this.senhaTotemEditando ? this.senhaTotemEditando.id : Date.now(),
-            nomeSenha: (formData.get('nomeSenhaTotem') || '').trim(),
-            corFundo: (formData.get('corFundoTotem') || '').trim(),
-            corFundoTexto: (formData.get('corFundoTextoTotem') || '').trim(),
-            ordem: parseInt(formData.get('ordemTotem') || '1'),
+        const exibir = document.getElementById('exibirNoTotem')?.checked ?? true;
+        const novaSenha = {
+            id: this.gerarId(),
+            nome: formData.get('nomeSenhaTotem') || '',
+            ordem: exibir ? parseInt(formData.get('ordemTotem') || '0') : null,
+            exibir,
             unidade: this.unidadeTotem,
-            dataInclusao: this.senhaTotemEditando ? this.senhaTotemEditando.dataInclusao : new Date().toISOString()
+            cor: formData.get('corFundoTotem') || '#667eea',
+            dataCriacao: new Date().toISOString()
         };
 
         // Validar dados
-        if (!this.validarSenhaTotem(senhaTotem)) {
+        if (!this.validarSenhaTotem(novaSenha)) {
             return;
         }
 
         // Salvar ou atualizar
         if (this.senhaTotemEditando) {
             const index = this.senhasTotem.findIndex(s => s.id === this.senhaTotemEditando.id);
-            this.senhasTotem[index] = senhaTotem;
+            this.senhasTotem[index] = novaSenha;
         } else {
-            this.senhasTotem.push(senhaTotem);
+            this.senhasTotem.push(novaSenha);
         }
 
                          this.salvarSenhasTotem();
@@ -1615,27 +1604,30 @@ class SistemaCadastro {
 
     validarSenhaTotem(senhaTotem) {
         if (!senhaTotem.unidade) {
-            this.mostrarNotificacao('Unidade é obrigatória!', 'error');
+            this.mostrarNotificacao('Nome da empresa é obrigatório!', 'error');
             return false;
         }
 
-        if (!senhaTotem.nomeSenha) {
+        if (!senhaTotem.nome) {
             this.mostrarNotificacao('Nome da senha é obrigatório!', 'error');
             return false;
         }
 
-        if (!senhaTotem.corFundo) {
+        if (!senhaTotem.cor) {
             this.mostrarNotificacao('Cor de fundo é obrigatória!', 'error');
             return false;
         }
 
+        // Ordem só é obrigatória se a senha for exibida no totem
+        if (senhaTotem.exibir !== false) {
         if (!senhaTotem.ordem || senhaTotem.ordem < 1 || senhaTotem.ordem > 12) {
             this.mostrarNotificacao('Ordem deve estar entre 1 e 12!', 'error');
             return false;
+            }
         }
 
                  // Validar formato da cor
-         if (!/^#[0-9A-Fa-f]{6}$/.test(senhaTotem.corFundo)) {
+        if (!/^#[0-9A-Fa-f]{6}$/.test(senhaTotem.cor)) {
              this.mostrarNotificacao('Formato de cor inválido! Use o formato #RRGGBB', 'error');
              return false;
          }
@@ -1643,7 +1635,7 @@ class SistemaCadastro {
         // Verificar se já existe nome duplicado (apenas para novos cadastros)
         if (!this.senhaTotemEditando) {
             const nomeExiste = this.senhasTotem.some(s => 
-                s.nomeSenha.toLowerCase() === senhaTotem.nomeSenha.toLowerCase()
+                (s.nome || '').toLowerCase() === senhaTotem.nome.toLowerCase()
             );
             
             if (nomeExiste) {
@@ -1652,14 +1644,14 @@ class SistemaCadastro {
             }
         }
 
-        // Verificar se a ordem já está ocupada
+        if (senhaTotem.exibir !== false && senhaTotem.ordem) {
         const ordemOcupada = this.senhasTotem.some(s => 
             s.ordem === senhaTotem.ordem && s.id !== senhaTotem.id
         );
-        
         if (ordemOcupada) {
             this.mostrarNotificacao('Esta posição já está ocupada! Escolha outra ordem.', 'error');
             return false;
+            }
         }
 
         return true;
@@ -1681,7 +1673,7 @@ class SistemaCadastro {
         try {
             return localStorage.getItem('unidadeCredenciais') || '';
         } catch (error) {
-            console.error('Erro ao carregar unidade de credenciais:', error);
+            console.error('Erro ao carregar empresa de credenciais:', error);
             return '';
         }
     }
@@ -1690,8 +1682,8 @@ class SistemaCadastro {
         try {
             localStorage.setItem('unidadeCredenciais', this.unidadeCredenciais);
         } catch (error) {
-            console.error('Erro ao salvar unidade de credenciais:', error);
-            this.mostrarNotificacao('Erro ao salvar unidade de credenciais!', 'error');
+            console.error('Erro ao salvar empresa de credenciais:', error);
+            this.mostrarNotificacao('Erro ao salvar empresa de credenciais!', 'error');
         }
     }
 
@@ -1728,12 +1720,12 @@ class SistemaCadastro {
     }
 
     permitirAlterarUnidadeCredenciais() {
-        const novaUnidade = prompt('Digite a nova unidade:', this.unidadeCredenciais || '');
+        const novaUnidade = prompt('Digite o novo nome da empresa:', this.unidadeCredenciais || '');
         if (novaUnidade !== null && novaUnidade.trim() !== '') {
             this.unidadeCredenciais = novaUnidade.trim();
             this.salvarUnidadeCredenciais();
             this.atualizarUnidadeAtualCredenciais();
-            this.mostrarNotificacao('Unidade atualizada com sucesso!', 'success');
+            this.mostrarNotificacao('Empresa atualizada com sucesso!', 'success');
         }
     }
 
@@ -1978,7 +1970,6 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             // Preencher campos do modal
             document.getElementById('assuntoEmail').value = assunto;
             document.getElementById('corpoEmail').value = corpo;
-            document.getElementById('unidadeInfo').value = unidade;
             document.getElementById('totalCredenciais').value = `${this.credenciais.length} credenciais, ${this.senhasTotem.length} senhas do totem`;
 
             // Limpar campos do remetente
@@ -2311,8 +2302,8 @@ Por favor, anexe os arquivos baixados a este email antes de enviar.`;
         senhasOrdenadas.forEach(senha => {
             dadosTotem.push([
                 senha.ordem,
-                senha.nomeSenha,
-                senha.corFundo
+                senha.nome || senha.nomeSenha || '',
+                senha.cor || senha.corFundo || '#48c9b0'
             ]);
         });
 
@@ -2391,743 +2382,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.sistema = new SistemaCadastro();
 }); 
 
-// ==========================================
-// SISTEMA DE TOUR GUIADO
-// ==========================================
-
-class TourGuiado {
-    constructor() {
-        this.tourAtivo = false;
-        this.passoAtual = 0;
-        this.passos = [];
-        this.tourType = '';
-        this.elementoDestacado = null;
-        
-        this.overlay = document.getElementById('tourOverlay');
-        this.tooltip = document.getElementById('tourTooltip');
-        this.tourTitle = document.getElementById('tourTitle');
-        this.tourDescription = document.getElementById('tourDescription');
-        this.stepCounter = document.getElementById('tourStepCounter');
-        this.stepIndicator = document.getElementById('tourStepIndicator');
-        this.btnPrev = document.getElementById('tourBtnPrev');
-        this.btnNext = document.getElementById('tourBtnNext');
-        this.btnFinish = document.getElementById('tourBtnFinish');
-        this.startButtons = document.getElementById('tourMenu');
-    }
-
-    // Configurações dos tours
-    configurarTourCredenciais() {
-        return [
-            {
-                selector: '#btnNovoCadastro',
-                title: '1. Novo Cadastro',
-                description: 'Clique aqui para cadastrar um novo funcionário. Você pode adicionar informações como nome, tipo, unidade e especialidade.',
-                position: 'bottom'
-            },
-            {
-                selector: '#btnExportarExcel',
-                title: '2. Exportar Excel',
-                description: 'Use este botão para baixar uma planilha Excel com todos os dados cadastrados. Útil para backups ou relatórios.',
-                position: 'bottom'
-            },
-            {
-                selector: '#btnEnviarEmail',
-                title: '3. Enviar por Email',
-                description: 'Envie os dados por email de forma rápida e segura. Ideal para compartilhar informações com outros setores.',
-                position: 'bottom'
-            },
-            {
-                selector: '#searchInput',
-                title: '4. Buscar por Nome',
-                description: 'Digite aqui para filtrar cadastros por nome ou tipo. A busca é instantânea e facilita encontrar informações específicas.',
-                position: 'bottom'
-            },
-            {
-                selector: '#tabelaCredenciais',
-                title: '5. Lista de Cadastros',
-                description: 'Aqui aparecem todos os funcionários cadastrados. Você pode visualizar, editar ou excluir cada registro.',
-                position: 'top'
-            },
-            {
-                selector: 'modal',
-                title: '6. Abrindo Formulário',
-                description: 'Vamos abrir o formulário de cadastro para mostrar todos os campos disponíveis.',
-                position: 'center',
-                action: 'abrirModalCredenciais'
-            },
-            {
-                selector: '#unidadeCredenciais',
-                title: '7. Campo Unidade',
-                description: 'Primeiro, defina a unidade/filial onde o funcionário trabalhará. Este campo é obrigatório e será usado para organizar os dados.',
-                position: 'bottom'
-            },
-            {
-                selector: '#tipo',
-                title: '8. Tipo de Funcionário',
-                description: 'Selecione o tipo de funcionário: Recepção, Medicina, Odontologia, Laboratório, etc. Cada tipo tem campos específicos.',
-                position: 'bottom'
-            },
-            {
-                selector: '#campoNovoTipo',
-                title: '9. Novo Tipo Personalizado',
-                description: 'Se não encontrar o tipo desejado, escolha "+ Novo Tipo" e este campo aparecerá para criar um tipo personalizado.',
-                position: 'bottom'
-            },
-            {
-                selector: '#camposRecepcao',
-                title: '10. Campos da Recepção',
-                description: 'Para funcionários da recepção, você pode adicionar múltiplos funcionários e definir quais senhas cada um irá chamar.',
-                position: 'top'
-            },
-            {
-                selector: '#camposMedOdonto',
-                title: '11. Campos Médicos/Odonto',
-                description: 'Para profissionais da área médica ou odontológica, defina tratamentos, nomes e especialidades de cada profissional.',
-                position: 'top'
-            },
-            {
-                selector: '#btnMaisLinhas',
-                title: '12. Adicionar Mais Linhas',
-                description: 'Use este botão para adicionar mais profissionais à lista. Você pode incluir quantos precisar.',
-                position: 'bottom'
-            },
-            {
-                selector: '#btnSalvar',
-                title: '13. Salvar Cadastro',
-                description: 'Após preencher todos os campos, clique em "Salvar" para adicionar o funcionário à lista. Os dados são salvos automaticamente.',
-                position: 'top'
-            },
-            {
-                selector: '#btnCancelar',
-                title: '14. Cancelar',
-                description: 'Se precisar cancelar o cadastro, clique aqui. Nenhum dado será salvo e o formulário será fechado.',
-                position: 'top'
-            }
-        ];
-    }
-
-    configurarTourTotem() {
-        return [
-            {
-                selector: '#btnNovoCadastro',
-                title: '1. Nova Senha',
-                description: 'Quando na aba "Senhas do Totem", este botão muda para "Nova Senha". Clique para criar uma nova senha para o totem.',
-                position: 'bottom'
-            },
-            {
-                selector: '#btnVerTotem',
-                title: '2. Ver Totem',
-                description: 'Visualize como as senhas aparecem na tela do totem de atendimento. Perfeito para conferir cores e disposição.',
-                position: 'bottom'
-            },
-            {
-                selector: '#btnExportarExcel',
-                title: '3. Exportar Excel',
-                description: 'Baixe uma planilha Excel com todas as senhas do totem configuradas, incluindo nomes, cores e posições.',
-                position: 'bottom'
-            },
-            {
-                selector: '#btnEnviarEmail',
-                title: '4. Enviar por Email',
-                description: 'Compartilhe as configurações das senhas do totem por email com outros usuários ou setores.',
-                position: 'bottom'
-            },
-            {
-                selector: '#searchInputTotem',
-                title: '5. Buscar Senhas',
-                description: 'Filtre as senhas do totem por nome. Útil quando você tem muitas senhas configuradas.',
-                position: 'bottom'
-            },
-            {
-                selector: 'modal',
-                title: '6. Abrindo Formulário',
-                description: 'Vamos abrir o formulário de configuração de senhas do totem para mostrar todas as opções disponíveis.',
-                position: 'center',
-                action: 'abrirModalTotem'
-            },
-            {
-                selector: '#unidadeTotem',
-                title: '7. Unidade do Totem',
-                description: 'Defina a unidade/filial onde este totem estará localizado. Importante para organizar as configurações.',
-                position: 'bottom'
-            },
-            {
-                selector: '#nomeSenhaTotem',
-                title: '8. Nome da Senha',
-                description: 'Digite o nome que aparecerá no botão do totem. Ex: "MEDICINA GERAL", "CARDIOLOGIA", "PEDIATRIA".',
-                position: 'bottom'
-            },
-            {
-                selector: '#ordemTotem',
-                title: '9. Ordem no Totem',
-                description: 'Escolha a posição onde esta senha aparecerá no totem. A ordem define como os botões ficam dispostos na tela.',
-                position: 'bottom'
-            },
-            {
-                selector: '#corFundoTotem',
-                title: '10. Cor de Fundo',
-                description: 'Selecione a cor de fundo do botão no totem. Você pode usar o seletor de cores ou digitar o código hex.',
-                position: 'bottom'
-            },
-            {
-                selector: '#previewSenhaTotem',
-                title: '11. Pré-visualização',
-                description: 'Aqui você vê como a senha ficará no totem em tempo real. A cor e texto mudam conforme suas configurações.',
-                position: 'top'
-            },
-            {
-                selector: '#btnSalvarTotem',
-                title: '12. Salvar Senha',
-                description: 'Salve a configuração da senha do totem. Ela será adicionada à lista e estará disponível para uso.',
-                position: 'top'
-            },
-            {
-                selector: '#btnCancelarTotem',
-                title: '13. Cancelar',
-                description: 'Cancele a criação da senha se necessário. Nenhuma configuração será salva.',
-                position: 'top'
-            }
-        ];
-    }
-
-    iniciarTour(tipo) {
-        this.tourType = tipo;
-        this.passos = tipo === 'credenciais' ? this.configurarTourCredenciais() : this.configurarTourTotem();
-        this.passoAtual = 0;
-        this.tourAtivo = true;
-
-        // Garantir que estamos na aba correta
-        if (tipo === 'credenciais') {
-            if (sistema && typeof sistema.mostrarSecao === 'function') {
-                sistema.mostrarSecao('credenciais');
-            } else {
-                // Fallback: clicar na aba credenciais
-                document.getElementById('btnCredenciais')?.click();
-            }
-        } else {
-            if (sistema && typeof sistema.mostrarSecao === 'function') {
-                sistema.mostrarSecao('senhasTotem');
-            } else {
-                // Fallback: clicar na aba totem
-                document.getElementById('btnSenhasTotem')?.click();
-            }
-        }
-
-        // Ocultar menu de tour
-        this.startButtons.style.display = 'none';
-
-        // Criar indicadores de passo
-        this.criarIndicadoresPasso();
-
-        // Mostrar overlay
-        this.overlay.classList.add('active');
-
-        // Começar tour
-        setTimeout(() => this.mostrarPasso(0), 300);
-    }
-
-    criarIndicadoresPasso() {
-        this.stepIndicator.innerHTML = '';
-        for (let i = 0; i < this.passos.length; i++) {
-            const dot = document.createElement('div');
-            dot.className = 'tour-dot';
-            if (i === 0) dot.classList.add('active');
-            this.stepIndicator.appendChild(dot);
-        }
-    }
-
-    mostrarPasso(indice) {
-        if (indice < 0 || indice >= this.passos.length) return;
-
-        const passo = this.passos[indice];
-        this.passoAtual = indice;
-
-        // Remover highlight anterior
-        if (this.elementoDestacado) {
-            this.elementoDestacado.classList.remove('tour-highlight', 'tour-pulse');
-        }
-
-        // Atualizar indicadores
-        this.atualizarIndicadores();
-        this.atualizarContador();
-        this.atualizarBotoes();
-
-        // Ação especial (abrir modal)
-        if (passo.action) {
-            this.executarAcao(passo.action);
-            return;
-        }
-
-        // Preparar elementos condicionais antes de mostrar
-        this.prepararElementoCondicional(passo.selector);
-
-        // Encontrar e destacar elemento
-        const elemento = document.querySelector(passo.selector);
-        if (elemento) {
-            this.elementoDestacado = elemento;
-            
-            // Verificar se o elemento está visível, se não, torná-lo visível temporariamente
-            const isVisible = this.verificarVisibilidade(elemento);
-            if (!isVisible) {
-                this.tornarElementoVisivel(passo.selector);
-            }
-            
-            elemento.classList.add('tour-highlight');
-            
-            // Scroll para o elemento
-            elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            // Posicionar tooltip
-            setTimeout(() => {
-                this.posicionarTooltip(elemento, passo);
-                this.mostrarTooltip(passo);
-            }, 300);
-        } else {
-            // Se elemento não existe, pular para o próximo
-            console.warn(`Elemento ${passo.selector} não encontrado, pulando para o próximo passo`);
-            setTimeout(() => {
-                this.proximo();
-            }, 1000);
-        }
-    }
-
-    // Nova função para preparar elementos condicionais
-    prepararElementoCondicional(selector) {
-        switch (selector) {
-            case '#campoNovoTipo':
-                // Para mostrar o campo de novo tipo, simular seleção da opção
-                const selectTipo = document.getElementById('tipo');
-                if (selectTipo) {
-                    selectTipo.value = 'novo-tipo';
-                    selectTipo.dispatchEvent(new Event('change'));
-                }
-                break;
-                
-            case '#camposRecepcao':
-                // Para mostrar campos de recepção
-                const selectTipoRecepcao = document.getElementById('tipo');
-                if (selectTipoRecepcao) {
-                    selectTipoRecepcao.value = 'recepcao';
-                    selectTipoRecepcao.dispatchEvent(new Event('change'));
-                }
-                break;
-                
-            case '#camposMedOdonto':
-            case '#btnMaisLinhas':
-                // Para mostrar campos médicos/odonto
-                const selectTipoMed = document.getElementById('tipo');
-                if (selectTipoMed) {
-                    selectTipoMed.value = 'medicina';
-                    selectTipoMed.dispatchEvent(new Event('change'));
-                }
-                break;
-        }
-    }
-
-    // Nova função para verificar visibilidade
-    verificarVisibilidade(elemento) {
-        const style = window.getComputedStyle(elemento);
-        return style.display !== 'none' && style.visibility !== 'hidden' && elemento.offsetWidth > 0 && elemento.offsetHeight > 0;
-    }
-
-    // Nova função para tornar elemento visível temporariamente
-    tornarElementoVisivel(selector) {
-        const elemento = document.querySelector(selector);
-        if (elemento) {
-            // Marcar elemento como modificado pelo tour
-            elemento.setAttribute('data-tour-modified', 'true');
-            elemento.setAttribute('data-original-display', elemento.style.display || '');
-            elemento.setAttribute('data-original-visibility', elemento.style.visibility || '');
-            
-            // Tornar visível
-            elemento.style.display = 'block';
-            elemento.style.visibility = 'visible';
-        }
-    }
-
-    executarAcao(acao) {
-        switch (acao) {
-            case 'abrirModalCredenciais':
-                // Abrir modal de credenciais
-                if (sistema && typeof sistema.abrirModalCadastro === 'function') {
-                    sistema.abrirModalCadastro();
-                } else {
-                    // Fallback: clicar no botão de novo cadastro
-                    document.getElementById('btnNovoCadastro')?.click();
-                }
-                
-                // Continuar automaticamente para o próximo passo após abrir o modal
-                setTimeout(() => {
-                    const modal = document.getElementById('modalCadastro');
-                    if (modal) {
-                        this.elementoDestacado = modal;
-                        modal.classList.add('tour-highlight');
-                        
-                        // Mostrar tooltip explicativo sobre a abertura do modal
-                        this.posicionarTooltipModal();
-                        this.mostrarTooltip(this.passos[this.passoAtual]);
-                        
-                        // Após 3 segundos, continuar para o próximo passo automaticamente
-                        setTimeout(() => {
-                            this.proximo();
-                        }, 3000);
-                    }
-                }, 500);
-                break;
-                
-            case 'abrirModalTotem':
-                // Abrir modal de senha do totem
-                if (sistema && typeof sistema.abrirModalSenhaTotem === 'function') {
-                    sistema.abrirModalSenhaTotem();
-                } else {
-                    // Fallback: clicar na aba do totem e depois no botão
-                    document.getElementById('btnSenhasTotem')?.click();
-                    setTimeout(() => {
-                        document.getElementById('btnNovoCadastro')?.click();
-                    }, 100);
-                }
-                
-                // Continuar automaticamente para o próximo passo após abrir o modal
-                setTimeout(() => {
-                    const modal = document.getElementById('modalSenhaTotem');
-                    if (modal) {
-                        this.elementoDestacado = modal;
-                        modal.classList.add('tour-highlight');
-                        
-                        // Mostrar tooltip explicativo sobre a abertura do modal
-                        this.posicionarTooltipModal();
-                        this.mostrarTooltip(this.passos[this.passoAtual]);
-                        
-                        // Após 3 segundos, continuar para o próximo passo automaticamente
-                        setTimeout(() => {
-                            this.proximo();
-                        }, 3000);
-                    }
-                }, 500);
-                break;
-        }
-    }
-
-    posicionarTooltip(elemento, passo) {
-        const rect = elemento.getBoundingClientRect();
-        const tooltipRect = this.tooltip.getBoundingClientRect();
-        const viewport = {
-            width: window.innerWidth,
-            height: window.innerHeight
-        };
-        
-        let top, left, position;
-        
-        // Reset classes de posição
-        this.tooltip.className = 'tour-tooltip';
-
-        // Calcular posição automática baseada no espaço disponível
-        const espacoTop = rect.top;
-        const espacoBottom = viewport.height - rect.bottom;
-        const espacoLeft = rect.left;
-        const espacoRight = viewport.width - rect.right;
-        
-        // Determinar melhor posição automaticamente
-        if (passo.position === 'center') {
-            // Centralizar na tela
-            top = (viewport.height / 2) - (tooltipRect.height / 2);
-            left = (viewport.width / 2) - (tooltipRect.width / 2);
-            position = 'center';
-        } else {
-            // Lógica inteligente de posicionamento
-            if (espacoBottom >= tooltipRect.height + 30 && passo.position === 'bottom') {
-                // Posição bottom se houver espaço
-                top = rect.bottom + 15;
-                left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-                position = 'bottom';
-            } else if (espacoTop >= tooltipRect.height + 30 && passo.position === 'top') {
-                // Posição top se houver espaço
-                top = rect.top - tooltipRect.height - 15;
-                left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-                position = 'top';
-            } else if (espacoRight >= tooltipRect.width + 30 && passo.position === 'right') {
-                // Posição right se houver espaço
-                top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
-                left = rect.right + 15;
-                position = 'right';
-            } else if (espacoLeft >= tooltipRect.width + 30 && passo.position === 'left') {
-                // Posição left se houver espaço
-                top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
-                left = rect.left - tooltipRect.width - 15;
-                position = 'left';
-            } else {
-                // Fallback: posição que tem mais espaço
-                if (espacoBottom >= espacoTop) {
-                    top = rect.bottom + 15;
-                    left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-                    position = 'bottom';
-                } else {
-                    top = rect.top - tooltipRect.height - 15;
-                    left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-                    position = 'top';
-                }
-            }
-        }
-
-        // Ajustar limites da tela com margem de segurança
-        const margin = 15;
-        if (left < margin) {
-            left = margin;
-        }
-        if (left + tooltipRect.width > viewport.width - margin) {
-            left = viewport.width - tooltipRect.width - margin;
-        }
-        if (top < margin) {
-            top = margin;
-        }
-        if (top + tooltipRect.height > viewport.height - margin) {
-            top = viewport.height - tooltipRect.height - margin;
-        }
-
-        // Aplicar posição
-        this.tooltip.style.top = `${top}px`;
-        this.tooltip.style.left = `${left}px`;
-        
-        // Adicionar classe de posição para estilização da seta
-        if (position !== 'center') {
-            this.tooltip.classList.add(position);
-        }
-    }
-
-    posicionarTooltipModal() {
-        // Posicionar tooltip no centro da tela para modais
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const tooltipRect = this.tooltip.getBoundingClientRect();
-
-        const top = (viewportHeight / 2) - (tooltipRect.height / 2);
-        const left = (viewportWidth / 2) - (tooltipRect.width / 2);
-
-        this.tooltip.style.top = `${top}px`;
-        this.tooltip.style.left = `${left}px`;
-        this.tooltip.className = 'tour-tooltip';
-    }
-
-    mostrarTooltip(passo) {
-        this.tourTitle.textContent = passo.title;
-        this.tourDescription.textContent = passo.description;
-        
-        setTimeout(() => {
-            this.tooltip.classList.add('active');
-        }, 100);
-    }
-
-    atualizarIndicadores() {
-        const dots = this.stepIndicator.querySelectorAll('.tour-dot');
-        dots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === this.passoAtual);
-        });
-    }
-
-    atualizarContador() {
-        this.stepCounter.textContent = `${this.passoAtual + 1}/${this.passos.length}`;
-    }
-
-    atualizarBotoes() {
-        this.btnPrev.style.display = this.passoAtual === 0 ? 'none' : 'inline-block';
-        
-        if (this.passoAtual === this.passos.length - 1) {
-            this.btnNext.style.display = 'none';
-            this.btnFinish.style.display = 'inline-block';
-        } else {
-            this.btnNext.style.display = 'inline-block';
-            this.btnFinish.style.display = 'none';
-        }
-    }
-
-    proximo() {
-        if (this.passoAtual < this.passos.length - 1) {
-            this.tooltip.classList.remove('active');
-            setTimeout(() => {
-                this.mostrarPasso(this.passoAtual + 1);
-            }, 300);
-        }
-    }
-
-    anterior() {
-        if (this.passoAtual > 0) {
-            this.tooltip.classList.remove('active');
-            
-            // Fechar modal se estiver no último passo
-            if (this.passoAtual === this.passos.length - 1) {
-                if (sistema && typeof sistema.fecharModal === 'function') {
-                    sistema.fecharModal();
-                } else {
-                    // Fallback: fechar modais manualmente
-                    document.querySelectorAll('.modal').forEach(modal => {
-                        modal.style.display = 'none';
-                    });
-                }
-            }
-            
-            setTimeout(() => {
-                this.mostrarPasso(this.passoAtual - 1);
-            }, 300);
-        }
-    }
-
-    pular() {
-        this.finalizar();
-    }
-
-    finalizar() {
-        this.tourAtivo = false;
-        
-        // Remover highlight
-        if (this.elementoDestacado) {
-            this.elementoDestacado.classList.remove('tour-highlight', 'tour-pulse');
-        }
-
-        // Limpar interações feitas durante o tour
-        this.limparEstadoTour();
-
-        // Fechar modal se estiver aberto
-        if (sistema && typeof sistema.fecharModal === 'function') {
-            sistema.fecharModal();
-        } else {
-            // Fallback: fechar modais manualmente
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.style.display = 'none';
-            });
-        }
-
-        // Ocultar tooltip e overlay
-        this.tooltip.classList.remove('active');
-        this.overlay.classList.remove('active');
-
-        // Mostrar botões de tour novamente
-        setTimeout(() => {
-            this.startButtons.style.display = 'block';
-        }, 300);
-
-        // Mostrar notificação de conclusão
-        if (sistema && typeof sistema.mostrarNotificacao === 'function') {
-            sistema.mostrarNotificacao(
-                `Tour ${this.tourType === 'credenciais' ? 'Credenciais' : 'Totem'} concluído!`,
-                'success'
-            );
-        } else {
-            // Fallback: alert simples
-            alert(`Tour ${this.tourType === 'credenciais' ? 'Credenciais' : 'Totem'} concluído!`);
-        }
-    }
-
-    // Nova função para limpar estado do tour
-    limparEstadoTour() {
-        // Resetar formulário de credenciais se estiver aberto
-        const formCredenciais = document.getElementById('formCadastro');
-        if (formCredenciais) {
-            formCredenciais.reset();
-            
-            // Limpar seleções específicas feitas durante o tour
-            const selectTipo = document.getElementById('tipo');
-            if (selectTipo) {
-                selectTipo.value = '';
-                selectTipo.dispatchEvent(new Event('change'));
-            }
-        }
-
-        // Resetar formulário de totem se estiver aberto
-        const formTotem = document.getElementById('formSenhaTotem');
-        if (formTotem) {
-            formTotem.reset();
-        }
-
-        // Ocultar campos condicionais que podem ter sido mostrados
-        const camposCondicionais = [
-            '#campoNovoTipo',
-            '#camposRecepcao', 
-            '#camposMedOdonto'
-        ];
-
-        camposCondicionais.forEach(selector => {
-            const elemento = document.querySelector(selector);
-            if (elemento) {
-                elemento.style.display = 'none';
-            }
-        });
-
-        // Restaurar estados originais de elementos que foram modificados
-        document.querySelectorAll('[data-tour-modified]').forEach(elemento => {
-            const originalDisplay = elemento.getAttribute('data-original-display');
-            const originalVisibility = elemento.getAttribute('data-original-visibility');
-            
-            elemento.style.display = originalDisplay;
-            elemento.style.visibility = originalVisibility;
-            
-            elemento.removeAttribute('data-tour-modified');
-            elemento.removeAttribute('data-original-display');
-            elemento.removeAttribute('data-original-visibility');
-        });
-    }
-}
-
-// Instância global do tour
-const tourGuiado = new TourGuiado();
-
-// Função para alternar o menu de tour
-function toggleTourMenu() {
-    const dropdown = document.getElementById('tourDropdown');
-    dropdown.classList.toggle('active');
-    
-    // Fechar ao clicar fora
-    document.addEventListener('click', function(event) {
-        const tourMenu = document.getElementById('tourMenu');
-        if (!tourMenu.contains(event.target)) {
-            dropdown.classList.remove('active');
-        }
-    });
-}
-
-// Funções globais para os botões
-function iniciarTourCredenciais() {
-    // Fechar dropdown
-    document.getElementById('tourDropdown').classList.remove('active');
-    tourGuiado.iniciarTour('credenciais');
-}
-
-function iniciarTourTotem() {
-    // Fechar dropdown
-    document.getElementById('tourDropdown').classList.remove('active');
-    tourGuiado.iniciarTour('totem');
-}
-
-function tourProximo() {
-    tourGuiado.proximo();
-}
-
-function tourAnterior() {
-    tourGuiado.anterior();
-}
-
-function pularTour() {
-    tourGuiado.pular();
-}
-
-function finalizarTour() {
-    tourGuiado.finalizar();
-}
-
-// Adicionar função para abrir modal de senha do totem no sistema principal
-if (typeof sistema !== 'undefined') {
-    sistema.abrirModalSenhaTotem = function() {
-        // Garantir que estamos na aba do totem
-        if (this && typeof this.mostrarSecao === 'function') {
-            this.mostrarSecao('senhasTotem');
-        } else {
-            // Fallback: clicar na aba totem
-            document.getElementById('btnSenhasTotem')?.click();
-        }
-        
-        // Simular clique no botão de novo cadastro (que vira nova senha na aba totem)
-        const btnNovo = document.getElementById('btnNovoCadastro');
-        if (btnNovo) {
-            btnNovo.click();
-        }
+// Garantir que exista um gerador de IDs para registros
+if (typeof SistemaCadastro !== 'undefined' && !SistemaCadastro.prototype.gerarId) {
+    SistemaCadastro.prototype.gerarId = function() {
+        const randomPart = Math.random().toString(36).slice(2, 8);
+        const timePart = Date.now().toString(36);
+        return `id_${timePart}_${randomPart}`;
     };
-} 
+}
+
