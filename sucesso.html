@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="shortcut icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-TileImage" content="favicon.png">
+    
+    <title>Email Enviado com Sucesso - Sistema de Credenciais</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos específicos para a página de sucesso */
+        .sucesso-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+            padding: var(--space-6);
+        }
+        
+        .sucesso-card {
+            background: var(--white);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-12);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--gray-200);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .sucesso-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto var(--space-8);
+            background: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: successPulse 2s ease-in-out;
+        }
+        
+        .sucesso-icon svg {
+            width: 60px;
+            height: 60px;
+            color: var(--white);
+        }
+        
+        .sucesso-titulo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-4);
+            background: linear-gradient(135deg, var(--success-600) 0%, var(--success-500) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sucesso-mensagem {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+            margin-bottom: var(--space-8);
+            line-height: 1.6;
+        }
+        
+        .sucesso-detalhes {
+            background: var(--success-50);
+            border: 1px solid var(--success-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+        
+        .sucesso-detalhes h3 {
+            color: var(--success-700);
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: var(--space-3);
+        }
+        
+        .sucesso-detalhes p {
+            color: var(--success-600);
+            margin: 0;
+            font-size: 0.875rem;
+        }
+        
+        .sucesso-acoes {
+            display: flex;
+            gap: var(--space-4);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-voltar {
+            background: linear-gradient(135deg, var(--brand-500), #764ba2);
+            border-color: var(--brand-500);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(102,126,234,.35);
+        }
+        
+        .btn-voltar:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--brand-600), #6a4190);
+            border-color: var(--brand-600);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(102,126,234,.35);
+        }
+        
+        .btn-novo-email {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            border-color: #16a34a;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(16,163,74,.35);
+        }
+        
+        .btn-novo-email:hover:not(:disabled) {
+            filter: brightness(1.03);
+            box-shadow: 0 8px 24px rgba(16,163,74,.35);
+        }
+        
+        @keyframes successPulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(16, 163, 74, 0.7);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 20px rgba(16, 163, 74, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(16, 163, 74, 0);
+            }
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .sucesso-container {
+                padding: var(--space-4);
+            }
+            
+            .sucesso-card {
+                padding: var(--space-8);
+            }
+            
+            .sucesso-titulo {
+                font-size: 2rem;
+            }
+            
+            .sucesso-mensagem {
+                font-size: 1.125rem;
+            }
+            
+            .sucesso-acoes {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .sucesso-acoes .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .sucesso-card {
+                padding: var(--space-6);
+            }
+            
+            .sucesso-titulo {
+                font-size: 1.75rem;
+            }
+            
+            .sucesso-icon {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .sucesso-icon svg {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sucesso-container">
+        <div class="sucesso-card">
+            <!-- Ícone de sucesso -->
+            <div class="sucesso-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            
+            <!-- Título -->
+            <h1 class="sucesso-titulo">Email Enviado com Sucesso!</h1>
+            
+            <!-- Mensagem principal -->
+            <p class="sucesso-mensagem">
+                Suas planilhas de credenciais foram enviadas com sucesso!<br>
+                Você receberá uma confirmação em breve no seu email.
+            </p>
+            
+            <!-- Detalhes do envio -->
+            <div class="sucesso-detalhes">
+                <h3>📧 Detalhes do Envio</h3>
+                <p>
+                    • Arquivos anexados enviados com sucesso<br>
+                    • Confirmação será enviada para o email informado<br>
+                    • Processamento pode levar alguns minutos
+                </p>
+            </div>
+            
+            <!-- Ações -->
+            <div class="sucesso-acoes">
+                <button onclick="voltarAo Sistema()" class="btn btn-voltar">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Voltar ao Sistema
+                </button>
+                
+                <button onclick="enviarNovoEmail()" class="btn btn-novo-email">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    Enviar Novo Email
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function voltarAoSistema() {
+            // Voltar para a página principal
+            window.location.href = 'index.html';
+        }
+        
+        function enviarNovoEmail() {
+            // Voltar para a página principal e abrir o modal de email
+            window.location.href = 'index.html#email';
+        }
+        
+        // Auto-redirect após 30 segundos (opcional)
+        setTimeout(() => {
+            if (confirm('Deseja voltar ao sistema automaticamente?')) {
+                voltarAoSistema();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -1932,6 +1932,11 @@ class SistemaCadastro {
                 return;
             }
 
+            // Definir URL de redirecionamento baseada no ambiente
+            const baseUrl = window.location.origin;
+            const redirectUrl = `${baseUrl}/sucesso.html`;
+            document.getElementById('redirectUrl').value = redirectUrl;
+
             this.mostrarNotificacao('Preparando modal de envio...', 'info');
 
             // Preparar dados para o modal
