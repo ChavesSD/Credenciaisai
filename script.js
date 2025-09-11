@@ -107,7 +107,13 @@ class SistemaCadastro {
         if (secao === 'credenciais') {
             document.getElementById('btnCredenciais').classList.add('active');
             document.getElementById('headerTitle').textContent = 'Cadastro de Credenciais';
-            document.getElementById('headerSubtitle').textContent = 'Gerencie credenciais de funcionários e senhas do totem';
+            // Atualizar subtítulo com contagem de credenciais individuais
+            const totalCredenciaisIndividuais = this.contarCredenciaisIndividuais();
+            if (totalCredenciaisIndividuais > 0) {
+                document.getElementById('headerSubtitle').textContent = `Gerencie credenciais de funcionários e senhas do totem - ${totalCredenciaisIndividuais} credenciais cadastradas`;
+            } else {
+                document.getElementById('headerSubtitle').textContent = 'Gerencie credenciais de funcionários e senhas do totem';
+            }
             document.getElementById('btnNovoCadastro').innerHTML = `
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -890,11 +896,21 @@ class SistemaCadastro {
         if (this.credenciais.length === 0) {
             tableContainer.style.display = 'none';
             mensagemVazia.style.display = 'block';
+            // Atualizar subtítulo quando não há credenciais
+            if (this.secaoAtual === 'credenciais') {
+                document.getElementById('headerSubtitle').textContent = 'Gerencie credenciais de funcionários e senhas do totem';
+            }
             return;
         }
 
         tableContainer.style.display = 'block';
         mensagemVazia.style.display = 'none';
+        
+        // Atualizar subtítulo com contagem de credenciais individuais
+        if (this.secaoAtual === 'credenciais') {
+            const totalCredenciaisIndividuais = this.contarCredenciaisIndividuais();
+            document.getElementById('headerSubtitle').textContent = `Gerencie credenciais de funcionários e senhas do totem - ${totalCredenciaisIndividuais} credenciais cadastradas`;
+        }
 
         tbody.innerHTML = this.credenciais.map(credencial => {
             const especialidade = this.formatarEspecialidade(credencial);
@@ -1959,18 +1975,20 @@ class SistemaCadastro {
             
             const assunto = `Planilhas de Credenciais - ${unidade} - ${dataFormatada}`;
             
+            const totalCredenciaisIndividuais = this.contarCredenciaisIndividuais();
+            
             const corpo = `Segue em anexo as planilhas de credenciais:
 
 Unidade: ${unidade}
 Data de geração: ${dataFormatada}
 
-Total de credenciais: ${this.credenciais.length}
+Total de credenciais: ${totalCredenciaisIndividuais}
 Total de senhas do totem: ${this.senhasTotem.length}`;
 
             // Preencher campos do modal
             document.getElementById('assuntoEmail').value = assunto;
             document.getElementById('corpoEmail').value = corpo;
-            document.getElementById('totalCredenciais').value = `${this.credenciais.length} credenciais, ${this.senhasTotem.length} senhas do totem`;
+            document.getElementById('totalCredenciais').value = `${totalCredenciaisIndividuais} credenciais, ${this.senhasTotem.length} senhas do totem`;
 
             // Limpar campos do remetente
             document.getElementById('emailRemetente').value = '';
@@ -2220,6 +2238,25 @@ Por favor, anexe os arquivos baixados a este email antes de enviar.`;
             btnEnviar.classList.remove('btn-loading');
             btnEnviar.disabled = false;
         }
+    }
+
+    // Função para contar credenciais individuais (cada linha)
+    contarCredenciaisIndividuais() {
+        let total = 0;
+        
+        this.credenciais.forEach(credencial => {
+            if (credencial.tipo === 'medicina' || credencial.tipo === 'odonto') {
+                if (credencial.profissionais && credencial.profissionais.length > 0) {
+                    total += credencial.profissionais.length;
+                }
+            } else {
+                if (credencial.funcionarios && credencial.funcionarios.length > 0) {
+                    total += credencial.funcionarios.length;
+                }
+            }
+        });
+        
+        return total;
     }
 
     gerarExcelCredenciais() {
