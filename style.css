@@ -2868,3 +2868,253 @@ input:checked + .slider:before {
 .acoes-btn .btn { padding: 8px; width: 42px; height: 36px; display: inline-flex; align-items: center; justify-content: center; }
 .acoes-btn .btn .btn-icon { width: 16px; height: 16px; }
 
+/* ===========================
+   BOTÃO FLUTUANTE DE AJUDA
+   ========================== */
+
+.btn-ajuda-flutuante {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite;
+}
+
+.btn-ajuda-flutuante:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+}
+
+.btn-ajuda-flutuante:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.btn-ajuda-icon {
+    width: 28px;
+    height: 28px;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    }
+    50% {
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6), 0 0 0 10px rgba(102, 126, 234, 0.1);
+    }
+    100% {
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    }
+}
+
+/* ===========================
+   MODAL DA ASSISTENTE MILLY
+   ========================== */
+
+.modal-milly {
+    z-index: 1001;
+}
+
+.modal-milly-content {
+    max-width: 500px;
+    width: 90%;
+    margin: 5% auto;
+    border-radius: 20px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+.milly-container {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.milly-avatar {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.milly-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    object-fit: cover;
+}
+
+.milly-dialog {
+    padding: 30px;
+    position: relative;
+}
+
+.milly-speech-bubble {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border: 2px solid #e2e8f0;
+}
+
+.milly-speech-bubble::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 30px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid white;
+}
+
+.milly-speech-bubble::after {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 28px;
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-bottom: 12px solid #e2e8f0;
+    z-index: -1;
+}
+
+.milly-message {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #334155;
+    margin: 0;
+}
+
+.milly-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.milly-progress {
+    background: #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    flex: 1;
+    text-align: center;
+}
+
+.btn-milly-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.btn-milly-close:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.1);
+}
+
+.btn-milly-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Responsividade do Modal da Milly */
+@media (max-width: 768px) {
+    .modal-milly-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+    
+    .milly-avatar {
+        padding: 15px;
+    }
+    
+    .milly-image {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .milly-dialog {
+        padding: 20px;
+    }
+    
+    .milly-message {
+        font-size: 14px;
+    }
+    
+    .milly-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .milly-progress {
+        order: -1;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn-ajuda-flutuante {
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+    }
+    
+    .btn-ajuda-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .modal-milly-content {
+        width: 98%;
+        margin: 5% auto;
+    }
+    
+    .milly-image {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .milly-dialog {
+        padding: 15px;
+    }
+    
+    .milly-speech-bubble {
+        padding: 15px;
+    }
+}
+

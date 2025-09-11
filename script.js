@@ -9,6 +9,8 @@ class SistemaCadastro {
         this.credencialEditando = null;
         this.senhaTotemEditando = null;
         this.secaoAtual = 'credenciais';
+        this.tutorialAtual = 0;
+        this.tutorialPassos = this.definirPassosTutorial();
         this.inicializar();
     }
 
@@ -86,7 +88,11 @@ class SistemaCadastro {
         // Fechar modal clicando fora
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
-                this.fecharModal(e.target);
+                if (e.target.id === 'modalMilly') {
+                    this.fecharTutorialMilly();
+                } else {
+                    this.fecharModal(e.target);
+                }
             }
         });
 
@@ -96,6 +102,12 @@ class SistemaCadastro {
             exibirSwitch.addEventListener('change', () => this.atualizarVisibilidadeOrdemTotem());
         }
         this.atualizarVisibilidadeOrdemTotem();
+
+        // Eventos da Assistente Milly
+        document.getElementById('btnAjuda').addEventListener('click', () => this.abrirTutorialMilly());
+        document.getElementById('btnMillyFechar').addEventListener('click', () => this.fecharTutorialMilly());
+        document.getElementById('btnMillyProximo').addEventListener('click', () => this.proximoPassoTutorial());
+        document.getElementById('btnMillyAnterior').addEventListener('click', () => this.passoTutorialAnterior());
     }
 
     alternarSecao(secao) {
@@ -2345,6 +2357,109 @@ Por favor, anexe os arquivos baixados a este email antes de enviar.`;
         });
 
         return this.criarArquivoExcel(dadosTotem, 'Senhas do Totem');
+    }
+
+    // ===========================
+    // SISTEMA DE TUTORIAL DA MILLY
+    // ===========================
+
+    definirPassosTutorial() {
+        return [
+            {
+                titulo: "Bem-vindo ao Sistema! 👋",
+                mensagem: "Olá! Eu sou a Milly, sua assistente virtual!<br><br>Estou aqui para te ajudar a usar o sistema de cadastro de credenciais. Vou te mostrar como tudo funciona passo a passo!<br><br>Este sistema permite cadastrar credenciais de funcionários e configurar senhas para o totem de atendimento."
+            },
+            {
+                titulo: "Navegação Principal 🧭",
+                mensagem: "Aqui você tem duas abas principais:<br><br>• <strong>Credenciais:</strong> Para cadastrar funcionários e profissionais<br>• <strong>Senhas do Totem:</strong> Para configurar as senhas que aparecerão no totem<br><br>Use os botões no topo para alternar entre as seções. Atualmente você está na seção de Credenciais."
+            },
+            {
+                titulo: "Cadastrando Credenciais 📝",
+                mensagem: "Para cadastrar novas credenciais, clique no botão <strong>'Novo Cadastro'</strong>.<br><br>Você pode cadastrar diferentes tipos:<br>• <strong>Recepção:</strong> Funcionários da recepção<br>• <strong>Medicina/Odontologia:</strong> Médicos e dentistas<br>• <strong>Laboratório:</strong> Funcionários do laboratório<br>• <strong>Pós Consulta:</strong> Funcionários de pós-consulta"
+            },
+            {
+                titulo: "Tipos de Cadastro 🏥",
+                mensagem: "Cada tipo de cadastro tem campos específicos:<br><br><strong>Para Recepção/Laboratório:</strong><br>• Nome do funcionário<br>• Senhas que irá chamar<br><br><strong>Para Medicina/Odontologia:</strong><br>• Tratamento (Dr./Dra.)<br>• Nome completo<br>• Especialidade"
+            },
+            {
+                titulo: "Gerenciando Dados 📊",
+                mensagem: "Na tabela principal você pode:<br><br>• <strong>Editar:</strong> Clique no ícone de lápis para modificar um cadastro<br>• <strong>Excluir:</strong> Clique no ícone de lixeira para remover<br>• <strong>Buscar:</strong> Use a barra de busca para filtrar por nome ou tipo<br><br>O sistema conta cada linha como uma credencial individual!"
+            },
+            {
+                titulo: "Senhas do Totem 🎯",
+                mensagem: "Na aba 'Senhas do Totem' você pode:<br><br>• Configurar até 12 senhas diferentes<br>• Escolher cores personalizadas<br>• Definir a ordem de exibição<br>• Ativar/desativar senhas<br><br>Use o botão 'Nova Senha' para adicionar senhas ao totem."
+            },
+            {
+                titulo: "Exportação e Email 📧",
+                mensagem: "Você pode exportar seus dados de duas formas:<br><br>• <strong>Exportar Excel:</strong> Baixa arquivos Excel com os dados<br>• <strong>Enviar por Email:</strong> Envia os arquivos por email automaticamente<br><br>Os arquivos incluem todas as credenciais e senhas do totem organizadas por tipo."
+            },
+            {
+                titulo: "Visualização do Totem 🖥️",
+                mensagem: "Para ver como ficará o totem, clique em <strong>'Ver Totem'</strong> na aba de senhas.<br><br>Isso mostra uma prévia de como as senhas aparecerão para os pacientes, com as cores e ordem que você definiu.<br><br>Perfeito para testar antes de colocar em produção!"
+            },
+            {
+                titulo: "Tutorial Concluído! 🎉",
+                mensagem: "Parabéns! Você agora conhece todas as funcionalidades do sistema.<br><br>Se precisar de ajuda novamente, é só clicar no botão de ajuda no canto inferior direito.<br><br>Boa sorte com seus cadastros! Estou sempre aqui para ajudar! 😊"
+            }
+        ];
+    }
+
+    abrirTutorialMilly() {
+        this.tutorialAtual = 0;
+        this.atualizarTutorialMilly();
+        document.getElementById('modalMilly').style.display = 'block';
+    }
+
+    fecharTutorialMilly() {
+        document.getElementById('modalMilly').style.display = 'none';
+    }
+
+    proximoPassoTutorial() {
+        if (this.tutorialAtual < this.tutorialPassos.length - 1) {
+            this.tutorialAtual++;
+            this.atualizarTutorialMilly();
+        } else {
+            // Se estiver na última etapa, fechar o modal
+            this.fecharTutorialMilly();
+        }
+    }
+
+    passoTutorialAnterior() {
+        if (this.tutorialAtual > 0) {
+            this.tutorialAtual--;
+            this.atualizarTutorialMilly();
+        }
+    }
+
+    atualizarTutorialMilly() {
+        const passo = this.tutorialPassos[this.tutorialAtual];
+        const totalPassos = this.tutorialPassos.length;
+        
+        // Atualizar mensagem
+        document.getElementById('millyMessage').innerHTML = `
+            <strong>${passo.titulo}</strong><br><br>
+            ${passo.mensagem}
+        `;
+        
+        // Atualizar progresso
+        document.getElementById('millyProgress').textContent = `${this.tutorialAtual + 1} de ${totalPassos}`;
+        
+        // Atualizar botões
+        const btnAnterior = document.getElementById('btnMillyAnterior');
+        const btnProximo = document.getElementById('btnMillyProximo');
+        
+        btnAnterior.style.display = this.tutorialAtual === 0 ? 'none' : 'inline-flex';
+        
+        if (this.tutorialAtual === totalPassos - 1) {
+            btnProximo.innerHTML = 'Finalizar';
+        } else {
+            btnProximo.innerHTML = `
+                Próximo
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+                </svg>
+            `;
+        }
     }
 
     criarArquivoExcel(dados, nomeAba) {
