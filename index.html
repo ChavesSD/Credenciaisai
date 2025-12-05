@@ -52,7 +52,7 @@
                     <p id="headerSubtitle">Gerencie credenciais de funcionários e senhas do totem</p>
                 </div>
                 <div class="header-actions">
-                    <button id="btnNovoCadastro" class="btn btn-primary">
+                    <button id="btnNovoCadastro" class="btn btn-primary" style="display: none;">
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                             <circle cx="9" cy="7" r="4"/>
@@ -96,6 +96,104 @@
                         <input type="text" id="searchInput" placeholder="Buscar por nome ou tipo...">
                     </div>
                     
+                    <!-- Formulário Inline de Cadastro -->
+                    <div id="formularioInlineCredenciais" class="formulario-inline">
+                        <form id="formCadastroInline">
+                            <!-- Nome da Empresa Atual (aparece quando já definida) -->
+                            <div id="unidadeAtualCredenciaisInline" class="unidade-atual-container" style="display: none;">
+                                <div class="unidade-atual">
+                                    <div>
+                                        <strong>Empresa:</strong>
+                                        <span id="unidadeAtualTextoCredenciaisInline"></span>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-secondary" onclick="sistema.permitirAlterarUnidadeCredenciaisInline()">
+                                        Alterar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Campo de Nome da Empresa (aparece quando não definida) -->
+                            <div id="campoUnidadeCredenciaisInline" class="form-group-inline">
+                                <label for="unidadeCredenciaisInline">Nome da Empresa *</label>
+                                <input type="text" id="unidadeCredenciaisInline" name="unidadeCredenciais" placeholder="Ex: Clínica São Paulo, Hospital Central" required>
+                                <small>Nome da empresa ou instituição</small>
+                            </div>
+
+                            <div class="form-group-inline">
+                                <label for="tipoInline">Tipo de Usuário *</label>
+                                <select id="tipoInline" name="tipo" required>
+                                    <option value="">Selecione o tipo de usuário</option>
+                                    <option value="recepcao">Recepção Médica</option>
+                                    <option value="recepcao-odonto">Recepção Odonto</option>
+                                    <option value="medicina">Medicina</option>
+                                    <option value="odonto">Odontologia</option>
+                                    <option value="laboratorio">Laboratório</option>
+                                    <option value="pos-consulta">Pós Consulta</option>
+                                    <option value="novo-tipo" style="color: #007bff; font-weight: bold;">+ Novo Tipo</option>
+                                </select>
+                            </div>
+
+                            <!-- Campo para Novo Tipo Personalizado -->
+                            <div id="campoNovoTipoInline" class="form-group-inline" style="display: none;">
+                                <label for="novoTipoNomeInline">Nome do Novo Tipo *</label>
+                                <input type="text" id="novoTipoNomeInline" name="novoTipoNome" placeholder="Ex: Fisioterapia, Nutrição, etc...">
+                                <small>Digite o nome do novo tipo que será salvo para uso futuro</small>
+                            </div>
+
+                            <!-- Campos específicos para Recepção -->
+                            <div id="camposRecepcaoInline" class="campos-especificos-inline" style="display: none;">
+                                <div class="form-group-inline">
+                                    <label>Funcionários</label>
+                                    <div class="funcionarios-container">
+                                        <table class="profissionais-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nome e Sobrenome</th>
+                                                    <th>Senhas que irá chamar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="funcionariosTableBodyInline">
+                                                <!-- As linhas serão geradas dinamicamente -->
+                                            </tbody>
+                                        </table>
+                                        <button type="button" id="btnMaisLinhasFuncionariosInline" class="btn btn-secondary btn-sm" style="margin-top: 10px;">
+                                            <span>+ 1 linha</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Campos específicos para Medicina/Odontologia -->
+                            <div id="camposMedOdontoInline" class="campos-especificos-inline" style="display: none;">
+                                <div class="form-group-inline">
+                                    <label>Profissionais</label>
+                                    <div class="profissionais-container">
+                                        <table class="profissionais-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Tratamento</th>
+                                                    <th>Nome e Sobrenome</th>
+                                                    <th>Especialidade</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="profissionaisTableBodyInline">
+                                                <!-- As linhas serão geradas dinamicamente -->
+                                            </tbody>
+                                        </table>
+                                        <button type="button" id="btnMaisLinhasInline" class="btn btn-secondary btn-sm" style="margin-top: 10px;">
+                                            <span>+ 1 linha</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions-inline">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btnLimparCredenciais">Limpar</button>
+                                <button type="submit" class="btn btn-primary btn-sm" id="btnSalvarCredenciais">Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                    
                     <div class="table-container">
                         <table id="tabelaCredenciais">
                             <thead>
@@ -114,7 +212,7 @@
                     </div>
                     
                     <div id="mensagemVazia" class="mensagem-vazia">
-                        <p>Nenhum cadastro encontrado. Clique em "Novo Cadastro" para começar.</p>
+                        <p>Nenhum cadastro encontrado. Use o formulário acima para adicionar novos cadastros.</p>
                     </div>
                 </div>
             </div>
@@ -131,6 +229,65 @@
                     
                     <div class="search-bar">
                         <input type="text" id="searchInputTotem" placeholder="Buscar senhas do totem...">
+                    </div>
+                    
+                    <!-- Formulário Inline de Senha do Totem -->
+                    <div id="formularioInlineTotem" class="formulario-inline">
+                        <form id="formSenhaTotemInline">
+                            <div class="form-group-inline">
+                                <label for="unidadeTotemInline">Nome da Empresa *</label>
+                                <input type="text" id="unidadeTotemInline" name="unidadeTotem" placeholder="Ex: Clínica São Paulo, Hospital Central" required>
+                                <small>Nome da empresa ou instituição</small>
+                            </div>
+                            
+                            <div class="form-group-inline">
+                                <label for="nomeSenhaTotemInline">Nome da Senha *</label>
+                                <input type="text" id="nomeSenhaTotemInline" name="nomeSenhaTotem" placeholder="Ex: MEDICINA GERAL, CARDIOLOGIA, PEDIATRIA..." required>
+                                <small>Digite o nome da senha que aparecerá no totem</small>
+                            </div>
+                            
+                            <!-- Exibir no Totem (switch) -->
+                            <div class="form-group-inline" id="grupoExibirTotemInline">
+                                <label for="exibirNoTotemInline">Exibir no Totem</label>
+                                <div class="switch-row">
+                                    <label class="switch">
+                                        <input type="checkbox" id="exibirNoTotemInline" name="exibirNoTotem" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <small style="margin-left: 10px;">Ative para mostrar essa senha no totem</small>
+                                </div>
+                            </div>
+
+                            <div class="form-group-inline">
+                                <label for="ordemTotemInline">Ordem no Totem *</label>
+                                <select id="ordemTotemInline" name="ordemTotem" required>
+                                    <option value="">Selecione a posição</option>
+                                    <!-- Opções serão inseridas dinamicamente -->
+                                </select>
+                                <small>Escolha em qual posição esta senha aparecerá no totem</small>
+                            </div>
+                            
+                            <div class="form-group-inline">
+                                <label for="corFundoTotemInline">Cor de Fundo *</label>
+                                <div class="color-input-container">
+                                    <input type="color" id="corFundoTotemInline" name="corFundoTotem" value="#667eea" required>
+                                    <input type="text" id="corFundoTextoTotemInline" name="corFundoTextoTotem" value="#667eea" placeholder="#667eea" maxlength="7" required>
+                                </div>
+                                <small>Escolha a cor de fundo que a senha terá no totem</small>
+                            </div>
+                            
+                            <div class="form-group-inline">
+                                <label>Pré-visualização da Senha</label>
+                                <div id="previewSenhaTotemInline" class="preview-senha">
+                                    <span id="previewTextoTotemInline">NOME DA SENHA</span>
+                                </div>
+                            </div>
+
+                            <div class="form-actions-inline">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btnLimparTotem">Limpar</button>
+                                <button type="submit" class="btn btn-primary btn-sm" id="btnSalvarTotem">Salvar</button>
+                            </div>
+                        </form>
                     </div>
                     
                     <div class="table-container">
@@ -153,7 +310,7 @@
                     </div>
                     
                     <div id="mensagemVaziaTotem" class="mensagem-vazia">
-                        <p>Nenhuma senha cadastrada. Clique em "Nova Senha" para começar.</p>
+                        <p>Nenhuma senha cadastrada. Use o formulário acima para adicionar novas senhas.</p>
                     </div>
                 </div>
             </div>

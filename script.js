@@ -20,7 +20,11 @@ class SistemaCadastro {
         this.atualizarTabelaTotem();
         this.atualizarUnidadeAtual();
         this.atualizarUnidadeAtualCredenciais();
+        this.atualizarUnidadeAtualCredenciaisInline();
+        this.preencherUnidadeTotemInline();
         this.carregarTiposNoSelect();
+        this.configurarOpcoesOrdemInline();
+        this.atualizarPreviewTotemInline();
     }
 
     configurarEventos() {
@@ -35,18 +39,45 @@ class SistemaCadastro {
         // Botão de exportar removido
         document.getElementById('btnEnviarEmail').addEventListener('click', () => this.enviarPorEmail());
 
-        // Modal de cadastro
+        // Modal de cadastro (mantido para edição)
         document.getElementById('btnCancelar').addEventListener('click', () => this.fecharModal());
         document.getElementById('formCadastro').addEventListener('submit', (e) => this.salvarCadastro(e));
 
-        // Modal de senha do totem
+        // Modal de senha do totem (mantido para edição)
         document.getElementById('btnCancelarTotem').addEventListener('click', () => this.fecharModal(document.getElementById('modalSenhaTotem')));
         document.getElementById('formSenhaTotem').addEventListener('submit', (e) => this.salvarSenhaTotem(e));
+        
+        // Formulários inline de cadastro
+        const formCadastroInline = document.getElementById('formCadastroInline');
+        if (formCadastroInline) {
+            formCadastroInline.addEventListener('submit', (e) => this.salvarCadastroInline(e));
+        }
+        const btnLimparCredenciais = document.getElementById('btnLimparCredenciais');
+        if (btnLimparCredenciais) {
+            btnLimparCredenciais.addEventListener('click', () => this.limparFormularioCredenciais());
+        }
+        const tipoInline = document.getElementById('tipoInline');
+        if (tipoInline) {
+            tipoInline.addEventListener('change', (e) => this.alterarTipoInline(e.target.value));
+        }
+
+        // Formulários inline de senha do totem
+        const formSenhaTotemInline = document.getElementById('formSenhaTotemInline');
+        if (formSenhaTotemInline) {
+            formSenhaTotemInline.addEventListener('submit', (e) => this.salvarSenhaTotemInline(e));
+        }
+        const btnLimparTotem = document.getElementById('btnLimparTotem');
+        if (btnLimparTotem) {
+            btnLimparTotem.addEventListener('click', () => this.limparFormularioTotem());
+        }
+        
+        // Configurar eventos do totem inline
+        this.configurarEventosTotemInline();
         
         // Botão alterar unidade
         document.getElementById('btnAlterarUnidade').addEventListener('click', () => this.permitirAlterarUnidade());
 
-        // Controle do tipo de profissional
+        // Controle do tipo de profissional (modal)
         document.getElementById('tipo').addEventListener('change', (e) => this.alterarTipo(e.target.value));
 
         // Eventos específicos do Totem
@@ -135,6 +166,8 @@ class SistemaCadastro {
                 </svg>
                 <span>Novo Cadastro</span>
             `;
+            // Atualizar unidade no formulário inline
+            this.atualizarUnidadeAtualCredenciaisInline();
         } else {
             document.getElementById('btnSenhasTotem').classList.add('active');
             document.getElementById('headerTitle').textContent = 'Senhas do Totem';
@@ -145,6 +178,10 @@ class SistemaCadastro {
                 </svg>
                 <span>Nova Senha</span>
             `;
+            // Atualizar opções de ordem no formulário inline
+            this.configurarOpcoesOrdemInline();
+            // Preencher unidade do totem se já estiver definida
+            this.preencherUnidadeTotemInline();
         }
 
         // Atualizar seções de conteúdo
@@ -1694,6 +1731,454 @@ class SistemaCadastro {
         }
     }
 
+    // ========== FUNÇÕES PARA FORMULÁRIOS INLINE ==========
+    
+    salvarCadastroInline(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        
+        // Processar tipo personalizado se necessário
+        let tipoSelecionado = formData.get('tipo');
+        if (tipoSelecionado === 'novo-tipo') {
+            const novoTipoValor = this.processarNovoTipoInline(formData);
+            if (!novoTipoValor) {
+                return; // Erro no processamento do novo tipo
+            }
+            tipoSelecionado = novoTipoValor;
+        }
+
+        // Verificar e salvar unidade se fornecida
+        const campoUnidadeVisivel = document.getElementById('campoUnidadeCredenciaisInline');
+        const inputUnidade = document.getElementById('unidadeCredenciaisInline');
+        
+        if (campoUnidadeVisivel && 
+            campoUnidadeVisivel.style.display !== 'none' && 
+            inputUnidade && 
+            !inputUnidade.disabled) {
+            
+            const unidadeInput = inputUnidade.value || formData.get('unidadeCredenciais');
+            if (unidadeInput && unidadeInput.trim()) {
+                this.unidadeCredenciais = unidadeInput.trim();
+                this.salvarUnidadeCredenciais();
+                this.atualizarUnidadeAtualCredenciaisInline();
+            }
+        }
+        
+        const credencial = {
+            id: Date.now(),
+            tipo: tipoSelecionado,
+            unidade: this.unidadeCredenciais,
+            dataInclusao: new Date().toISOString()
+        };
+
+        // Verificar se é um tipo personalizado
+        const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === tipoSelecionado);
+
+        // Adicionar campos específicos baseado no tipo
+        if (tipoPersonalizado || ['recepcao', 'recepcao-odonto', 'laboratorio', 'pos-consulta'].includes(credencial.tipo)) {
+            credencial.funcionarios = this.coletarDadosFuncionariosInline(formData);
+        } else if (credencial.tipo === 'medicina' || credencial.tipo === 'odonto') {
+            credencial.profissionais = this.coletarDadosProfissionaisInline(formData);
+        }
+
+        // Validar dados
+        if (!this.validarCadastro(credencial)) {
+            return;
+        }
+
+        // Salvar
+        this.credenciais.push(credencial);
+        this.salvarDados();
+        this.atualizarTabela();
+        this.limparFormularioCredenciais();
+        
+        this.mostrarNotificacao('Cadastro criado com sucesso!', 'success');
+    }
+
+    salvarSenhaTotemInline(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        
+        const unidadeFormulario = formData.get('unidadeTotem');
+        if (unidadeFormulario && unidadeFormulario.trim()) {
+            this.unidadeTotem = unidadeFormulario.trim();
+            this.salvarUnidadeTotem();
+            this.atualizarUnidadeAtual();
+        }
+
+        const exibir = document.getElementById('exibirNoTotemInline')?.checked ?? true;
+        const novaSenha = {
+            id: this.gerarId(),
+            nome: formData.get('nomeSenhaTotem') || '',
+            ordem: exibir ? parseInt(formData.get('ordemTotem') || '0') : null,
+            exibir,
+            unidade: this.unidadeTotem,
+            cor: formData.get('corFundoTotem') || '#667eea',
+            dataCriacao: new Date().toISOString()
+        };
+
+        // Validar dados
+        if (!this.validarSenhaTotem(novaSenha)) {
+            return;
+        }
+
+        // Verificar limite de 12 senhas
+        if (this.senhasTotem.length >= 12) {
+            this.mostrarNotificacao('Limite máximo de 12 senhas do totem atingido!', 'error');
+            return;
+        }
+
+        // Salvar
+        this.senhasTotem.push(novaSenha);
+        this.salvarSenhasTotem();
+        this.atualizarTabelaTotem();
+        this.limparFormularioTotem();
+        
+        // Atualizar visibilidade do botão Ver Totem
+        if (this.secaoAtual === 'totem') {
+            const btnVerTotem = document.getElementById('btnVerTotem');
+            if (this.senhasTotem.length > 0) {
+                btnVerTotem.style.display = 'inline-flex';
+            } else {
+                btnVerTotem.style.display = 'none';
+            }
+        }
+        
+        this.mostrarNotificacao('Senha do totem criada com sucesso!', 'success');
+    }
+
+    alterarTipoInline(tipo) {
+        const camposRecepcao = document.getElementById('camposRecepcaoInline');
+        const camposMedOdonto = document.getElementById('camposMedOdontoInline');
+        const campoNovoTipo = document.getElementById('campoNovoTipoInline');
+
+        // Esconder todos os campos específicos
+        camposRecepcao.style.display = 'none';
+        camposMedOdonto.style.display = 'none';
+        campoNovoTipo.style.display = 'none';
+
+        // Verificar se é um tipo personalizado
+        const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === tipo);
+
+        // Mostrar campos específicos baseado no tipo
+        if (tipo === 'novo-tipo') {
+            campoNovoTipo.style.display = 'block';
+            document.getElementById('novoTipoNomeInline').required = true;
+        } else if (tipoPersonalizado || ['recepcao', 'recepcao-odonto', 'laboratorio', 'pos-consulta'].includes(tipo)) {
+            camposRecepcao.style.display = 'block';
+            this.inicializarTabelaFuncionariosInline();
+            document.getElementById('novoTipoNomeInline').required = false;
+        } else if (tipo === 'medicina' || tipo === 'odonto') {
+            camposMedOdonto.style.display = 'block';
+            this.inicializarTabelaProfissionaisInline();
+            document.getElementById('novoTipoNomeInline').required = false;
+        } else {
+            document.getElementById('novoTipoNomeInline').required = false;
+        }
+    }
+
+    processarNovoTipoInline(formData) {
+        const novoTipoNome = formData.get('novoTipoNome')?.trim();
+        if (!novoTipoNome) {
+            this.mostrarNotificacao('Nome do novo tipo é obrigatório!', 'error');
+            return null;
+        }
+
+        // Verificar se já existe um tipo com esse nome
+        const tipoExistente = this.tiposPersonalizados.find(t => 
+            t.nome.toLowerCase() === novoTipoNome.toLowerCase()
+        );
+
+        if (tipoExistente) {
+            this.mostrarNotificacao('Já existe um tipo com este nome!', 'error');
+            return null;
+        }
+
+        // Criar novo tipo personalizado
+        const novoTipo = {
+            id: Date.now(),
+            nome: novoTipoNome,
+            valor: `tipo-${Date.now()}`
+        };
+
+        this.tiposPersonalizados.push(novoTipo);
+        this.salvarTiposPersonalizados();
+        this.carregarTiposNoSelect();
+
+        return novoTipo.valor;
+    }
+
+    coletarDadosProfissionaisInline(formData) {
+        const profissionais = [];
+        const tbody = document.getElementById('profissionaisTableBodyInline');
+        
+        for (let i = 0; i < tbody.children.length; i++) {
+            const tratamento = formData.get(`tratamento_${i}`);
+            const nome = formData.get(`nome_${i}`)?.trim();
+            const especialidade = formData.get(`especialidade_${i}`)?.trim();
+            
+            if (nome) {
+                profissionais.push({
+                    tratamento: tratamento || '',
+                    nome: nome,
+                    especialidade: especialidade || ''
+                });
+            }
+        }
+        
+        return profissionais;
+    }
+
+    coletarDadosFuncionariosInline(formData) {
+        const funcionarios = [];
+        const tbody = document.getElementById('funcionariosTableBodyInline');
+        
+        for (let i = 0; i < tbody.children.length; i++) {
+            const nome = formData.get(`nome_funcionario_${i}`)?.trim();
+            const senhas = formData.get(`senhas_funcionario_${i}`)?.trim();
+            
+            if (nome) {
+                funcionarios.push({
+                    nome: nome,
+                    senhas: senhas || ''
+                });
+            }
+        }
+        
+        return funcionarios;
+    }
+
+    inicializarTabelaProfissionaisInline() {
+        const tbody = document.getElementById('profissionaisTableBodyInline');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        for (let i = 0; i < 3; i++) {
+            this.adicionarLinhaProfissionalInline();
+        }
+
+        const btnMaisLinhas = document.getElementById('btnMaisLinhasInline');
+        if (btnMaisLinhas) {
+            btnMaisLinhas.onclick = () => this.adicionarLinhaProfissionalInline();
+        }
+    }
+
+    adicionarLinhaProfissionalInline() {
+        const tbody = document.getElementById('profissionaisTableBodyInline');
+        if (!tbody) return;
+        const index = tbody.children.length;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <select name="tratamento_${index}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">Selecione...</option>
+                    <option value="Dr.">Dr.</option>
+                    <option value="Dra.">Dra.</option>
+                    <option value="Prof.">Prof.</option>
+                    <option value="Prof.ª">Prof.ª</option>
+                    <option value="Sr.">Sr.</option>
+                    <option value="Sra.">Sra.</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" name="nome_${index}" placeholder="Nome e sobrenome do profissional" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </td>
+            <td>
+                <input type="text" name="especialidade_${index}" placeholder="Especialidade" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    }
+
+    inicializarTabelaFuncionariosInline() {
+        const tbody = document.getElementById('funcionariosTableBodyInline');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        for (let i = 0; i < 3; i++) {
+            this.adicionarLinhaFuncionarioInline();
+        }
+
+        const btnMaisLinhas = document.getElementById('btnMaisLinhasFuncionariosInline');
+        if (btnMaisLinhas) {
+            btnMaisLinhas.onclick = () => this.adicionarLinhaFuncionarioInline();
+        }
+    }
+
+    adicionarLinhaFuncionarioInline() {
+        const tbody = document.getElementById('funcionariosTableBodyInline');
+        if (!tbody) return;
+        const index = tbody.children.length;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <input type="text" name="nome_funcionario_${index}" placeholder="Nome e sobrenome do funcionário" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </td>
+            <td>
+                <input type="text" name="senhas_funcionario_${index}" placeholder="Ex: Medicina Geral, Cardiologia..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    }
+
+    limparFormularioCredenciais() {
+        const form = document.getElementById('formCadastroInline');
+        if (form) {
+            form.reset();
+        }
+        this.alterarTipoInline('');
+        this.atualizarUnidadeAtualCredenciaisInline();
+    }
+
+    limparFormularioTotem() {
+        const form = document.getElementById('formSenhaTotemInline');
+        if (form) {
+            form.reset();
+        }
+        document.getElementById('corFundoTotemInline').value = '#667eea';
+        document.getElementById('corFundoTextoTotemInline').value = '#667eea';
+        document.getElementById('exibirNoTotemInline').checked = true;
+        this.configurarOpcoesOrdemInline();
+        this.atualizarPreviewTotemInline();
+    }
+
+    atualizarUnidadeAtualCredenciaisInline() {
+        const container = document.getElementById('unidadeAtualCredenciaisInline');
+        const campo = document.getElementById('campoUnidadeCredenciaisInline');
+        const texto = document.getElementById('unidadeAtualTextoCredenciaisInline');
+        const inputUnidade = document.getElementById('unidadeCredenciaisInline');
+        
+        if (this.unidadeCredenciais && this.unidadeCredenciais.trim() !== '') {
+            if (container) container.style.display = 'block';
+            if (campo) campo.style.display = 'none';
+            if (texto) texto.textContent = this.unidadeCredenciais;
+            // Remover required quando o campo está oculto
+            if (inputUnidade) {
+                inputUnidade.removeAttribute('required');
+            }
+        } else {
+            if (container) container.style.display = 'none';
+            if (campo) campo.style.display = 'block';
+            // Adicionar required quando o campo está visível
+            if (inputUnidade) {
+                inputUnidade.setAttribute('required', 'required');
+            }
+        }
+    }
+
+    permitirAlterarUnidadeCredenciaisInline() {
+        const container = document.getElementById('unidadeAtualCredenciaisInline');
+        const campo = document.getElementById('campoUnidadeCredenciaisInline');
+        const input = document.getElementById('unidadeCredenciaisInline');
+        
+        if (container) container.style.display = 'none';
+        if (campo) campo.style.display = 'block';
+        if (input) {
+            input.value = this.unidadeCredenciais || '';
+            // Adicionar required quando o campo for exibido
+            input.setAttribute('required', 'required');
+            input.focus();
+        }
+    }
+
+    configurarEventosTotemInline() {
+        const nomeInput = document.getElementById('nomeSenhaTotemInline');
+        const corInput = document.getElementById('corFundoTotemInline');
+        const corTextoInput = document.getElementById('corFundoTextoTotemInline');
+        const exibirSwitch = document.getElementById('exibirNoTotemInline');
+        
+        if (nomeInput) {
+            nomeInput.addEventListener('input', () => this.atualizarPreviewTotemInline());
+        }
+        if (corInput) {
+            corInput.addEventListener('input', (e) => {
+                if (corTextoInput) corTextoInput.value = e.target.value;
+                this.atualizarPreviewTotemInline();
+            });
+        }
+        if (corTextoInput) {
+            corTextoInput.addEventListener('input', (e) => {
+                if (corInput) corInput.value = e.target.value;
+                this.atualizarPreviewTotemInline();
+            });
+        }
+        if (exibirSwitch) {
+            exibirSwitch.addEventListener('change', () => this.atualizarVisibilidadeOrdemTotemInline());
+        }
+        
+        this.configurarOpcoesOrdemInline();
+        this.atualizarVisibilidadeOrdemTotemInline();
+    }
+
+    atualizarPreviewTotemInline() {
+        const nomeSenha = document.getElementById('nomeSenhaTotemInline')?.value || 'NOME DA SENHA';
+        const cor = document.getElementById('corFundoTotemInline')?.value || '#667eea';
+        const preview = document.getElementById('previewSenhaTotemInline');
+        const previewTexto = document.getElementById('previewTextoTotemInline');
+        
+        if (preview) {
+            preview.style.backgroundColor = cor;
+            preview.style.color = this.obterCorTextoContraste(cor);
+        }
+        if (previewTexto) {
+            previewTexto.textContent = nomeSenha.toUpperCase();
+        }
+    }
+
+    atualizarVisibilidadeOrdemTotemInline() {
+        const exibirSwitch = document.getElementById('exibirNoTotemInline');
+        const grupoOrdem = document.querySelector('label[for="ordemTotemInline"]')?.closest('.form-group-inline');
+        const selectOrdem = document.getElementById('ordemTotemInline');
+        
+        if (!exibirSwitch || !grupoOrdem || !selectOrdem) return;
+        
+        const ativo = exibirSwitch.checked;
+        grupoOrdem.style.display = ativo ? 'block' : 'none';
+        selectOrdem.disabled = !ativo;
+        selectOrdem.required = ativo;
+    }
+
+    configurarOpcoesOrdemInline() {
+        const selectOrdem = document.getElementById('ordemTotemInline');
+        if (!selectOrdem) return;
+        
+        selectOrdem.innerHTML = '<option value="">Selecione a posição</option>';
+        
+        for (let i = 1; i <= 12; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            
+            const posicaoOcupada = this.senhasTotem.some(s => 
+                s.exibir !== false && s.ordem === i
+            );
+            
+            if (posicaoOcupada) {
+                const senhaNaPosicao = this.senhasTotem.find(s => s.ordem === i);
+                option.textContent = `${i}ª posição (Ocupada: ${senhaNaPosicao.nome || ''})`;
+                option.disabled = true;
+            } else {
+                option.textContent = `${i}ª posição`;
+            }
+            
+            selectOrdem.appendChild(option);
+        }
+    }
+
+    preencherUnidadeTotemInline() {
+        const inputUnidade = document.getElementById('unidadeTotemInline');
+        if (inputUnidade && this.unidadeTotem && this.unidadeTotem.trim() !== '') {
+            inputUnidade.value = this.unidadeTotem;
+        }
+    }
+
 
 
     // Métodos para gerenciar unidade de credenciais
@@ -1779,12 +2264,12 @@ class SistemaCadastro {
 
     carregarTiposNoSelect() {
         const selectTipo = document.getElementById('tipo');
-        if (!selectTipo) return;
+        const selectTipoInline = document.getElementById('tipoInline');
         
         // Salvar opções padrão se não existirem
         if (!this.optionsPadraoSelect) {
             this.optionsPadraoSelect = [
-                { value: '', text: 'Selecione o tipo' },
+                { value: '', text: 'Selecione o tipo de usuário' },
                 { value: 'recepcao', text: 'Recepção Médica' },
                 { value: 'recepcao-odonto', text: 'Recepção Odonto' },
                 { value: 'medicina', text: 'Medicina' },
@@ -1794,34 +2279,41 @@ class SistemaCadastro {
             ];
         }
 
-        // Limpar select e recriar com opções padrão
-        selectTipo.innerHTML = '';
-        
-        // Adicionar opções padrão
-        this.optionsPadraoSelect.forEach(opt => {
-            const option = document.createElement('option');
-            option.value = opt.value;
-            option.textContent = opt.text;
-            selectTipo.appendChild(option);
-        });
+        // Função auxiliar para preencher um select
+        const preencherSelect = (select) => {
+            if (!select) return;
+            select.innerHTML = '';
+            
+            // Adicionar opções padrão
+            this.optionsPadraoSelect.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.text;
+                select.appendChild(option);
+            });
 
-        // Adicionar tipos personalizados
-        this.tiposPersonalizados.forEach(tipo => {
-            const option = document.createElement('option');
-            option.value = tipo.valor;
-            option.textContent = tipo.nome;
-            option.style.color = '#28a745';
-            option.style.fontStyle = 'italic';
-            selectTipo.appendChild(option);
-        });
+            // Adicionar tipos personalizados
+            this.tiposPersonalizados.forEach(tipo => {
+                const option = document.createElement('option');
+                option.value = tipo.valor;
+                option.textContent = tipo.nome;
+                option.style.color = '#28a745';
+                option.style.fontStyle = 'italic';
+                select.appendChild(option);
+            });
 
-        // Adicionar opção "Novo Tipo" no final
-        const novoTipoOption = document.createElement('option');
-        novoTipoOption.value = 'novo-tipo';
-        novoTipoOption.textContent = '+ Novo Tipo';
-        novoTipoOption.style.color = '#007bff';
-        novoTipoOption.style.fontWeight = 'bold';
-        selectTipo.appendChild(novoTipoOption);
+            // Adicionar opção "Novo Tipo" no final
+            const novoTipoOption = document.createElement('option');
+            novoTipoOption.value = 'novo-tipo';
+            novoTipoOption.textContent = '+ Novo Tipo';
+            novoTipoOption.style.color = '#007bff';
+            novoTipoOption.style.fontWeight = 'bold';
+            select.appendChild(novoTipoOption);
+        };
+
+        // Preencher ambos os selects
+        preencherSelect(selectTipo);
+        preencherSelect(selectTipoInline);
     }
 
     criarNovoTipo(nomeNovoTipo) {
