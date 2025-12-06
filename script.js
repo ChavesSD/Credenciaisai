@@ -9,8 +9,12 @@ class SistemaCadastro {
         this.credencialEditando = null;
         this.senhaTotemEditando = null;
         this.secaoAtual = 'credenciais';
-        this.tutorialAtual = 0;
-        this.tutorialPassos = this.definirPassosTutorial();
+        
+        // Estado do cadastro via Milly
+        this.millyCadastroEmAndamento = null;
+        this.millyDadosColetados = {};
+        this.millyAguardandoConfirmacao = false;
+        this.millyCadastrosMultiplos = []; // Array para múltiplos cadastros
         
         this.inicializar();
     }
@@ -120,11 +124,7 @@ class SistemaCadastro {
         // Fechar modal clicando fora
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
-                if (e.target.id === 'modalMilly') {
-                    this.fecharTutorialMilly();
-                } else {
                     this.fecharModal(e.target);
-                }
             }
         });
 
@@ -136,10 +136,1194 @@ class SistemaCadastro {
         this.atualizarVisibilidadeOrdemTotem();
 
         // Eventos da Assistente Milly
-        document.getElementById('btnAjuda').addEventListener('click', () => this.abrirTutorialMilly());
-        document.getElementById('btnMillyFechar').addEventListener('click', () => this.fecharTutorialMilly());
-        document.getElementById('btnMillyProximo').addEventListener('click', () => this.proximoPassoTutorial());
-        document.getElementById('btnMillyAnterior').addEventListener('click', () => this.passoTutorialAnterior());
+        this.inicializarMillyChat();
+    }
+
+    inicializarMillyChat() {
+        const btnMilly = document.getElementById('btnMillyAssistente');
+        const btnFechar = document.getElementById('btnFecharMillyChat');
+        const btnEnviar = document.getElementById('btnEnviarMillyChat');
+        const inputChat = document.getElementById('millyChatInput');
+        const modalChat = document.getElementById('modalMillyChat');
+        const suggestions = document.querySelectorAll('.suggestion-btn');
+
+        // Abrir modal
+        if (btnMilly) {
+            btnMilly.addEventListener('click', () => {
+                modalChat.style.display = 'block';
+                inputChat.focus();
+                // Mensagem de boas-vindas apenas se o chat estiver vazio
+                const chatBody = document.getElementById('millyChatBody');
+                if (chatBody && chatBody.children.length === 0) {
+                    setTimeout(() => {
+                        this.adicionarMensagemMilly('Olá! Eu sou a Milly, sua assistente virtual! 😊', 'texto');
+                        setTimeout(() => {
+                            this.adicionarMensagemMilly('Posso te ajudar com várias coisas:<br><br>• <strong>Cadastrar credenciais</strong> de funcionários e profissionais<br>• <strong>Cadastrar senhas do totem</strong> para exibição<br>• <strong>Exportar dados</strong> para Excel<br>• <strong>Enviar relatórios</strong> por email<br>• <strong>Ver estatísticas</strong> e visualizar o totem<br>• <strong>Tirar dúvidas</strong> sobre o sistema<br><br>O que você gostaria de fazer?', 'html');
+                        }, 500);
+                    }, 300);
+                }
+            });
+        }
+
+        // Fechar modal
+        if (btnFechar) {
+            btnFechar.addEventListener('click', () => {
+                modalChat.style.display = 'none';
+            });
+        }
+
+        // Enviar mensagem
+        const enviarMensagem = () => {
+            const mensagem = inputChat.value.trim();
+            if (mensagem) {
+                this.adicionarMensagemUsuario(mensagem);
+                inputChat.value = '';
+                this.processarMensagemMilly(mensagem);
+            }
+        };
+
+        if (btnEnviar) {
+            btnEnviar.addEventListener('click', enviarMensagem);
+        }
+
+        if (inputChat) {
+            // Auto-resize do textarea
+            inputChat.addEventListener('input', () => {
+                inputChat.style.height = 'auto';
+                inputChat.style.height = Math.min(inputChat.scrollHeight, 120) + 'px';
+            });
+            
+            inputChat.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    enviarMensagem();
+                }
+                // Shift+Enter permite quebrar linha (comportamento padrão do textarea)
+            });
+        }
+
+        // Botões de sugestão
+        suggestions.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.getAttribute('data-action');
+                this.processarAcaoRapida(action);
+            });
+        });
+
+        // Fechar ao clicar fora
+        if (modalChat) {
+            modalChat.addEventListener('click', (e) => {
+                if (e.target === modalChat) {
+                    modalChat.style.display = 'none';
+                }
+            });
+        }
+    }
+
+    adicionarMensagemUsuario(mensagem) {
+        const chatBody = document.getElementById('millyChatBody');
+        if (!chatBody) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'user-message-bubble user-message';
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <p>${this.escapeHtml(mensagem)}</p>
+            </div>
+        `;
+        chatBody.appendChild(messageDiv);
+        this.rolarChatParaBaixo();
+    }
+
+    adicionarMensagemMilly(mensagem, tipo = 'texto') {
+        const chatBody = document.getElementById('millyChatBody');
+        if (!chatBody) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'milly-message-bubble milly-message';
+        
+        let conteudo = '';
+        if (tipo === 'texto') {
+            conteudo = `<p>${mensagem}</p>`;
+        } else if (tipo === 'html') {
+            conteudo = mensagem;
+        }
+
+        messageDiv.innerHTML = `
+            <div class="message-avatar">
+                <img src="Milly_semfundo.png" alt="Milly">
+            </div>
+            <div class="message-content">
+                ${conteudo}
+            </div>
+        `;
+        
+        chatBody.appendChild(messageDiv);
+        this.rolarChatParaBaixo();
+    }
+
+    rolarChatParaBaixo() {
+        const chatBody = document.getElementById('millyChatBody');
+        if (chatBody) {
+            setTimeout(() => {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }, 100);
+        }
+    }
+
+    processarMensagemMilly(mensagem) {
+        const msg = mensagem.toLowerCase().trim();
+        const palavras = msg.split(/\s+/);
+        
+        // Simular delay de resposta
+        setTimeout(() => {
+            // Detecção de palavras-chave principais
+            const temCredencial = palavras.some(p => ['credencial', 'credenciais', 'usuário', 'usuarios', 'funcionário', 'funcionarios', 'profissional', 'profissionais'].includes(p));
+            const temTotem = palavras.some(p => ['totem', 'senha', 'senhas'].includes(p));
+            const temCadastrar = palavras.some(p => ['cadastrar', 'cadastro', 'adicionar', 'criar', 'novo', 'nova', 'inserir', 'incluir'].includes(p));
+            const temExportar = palavras.some(p => ['exportar', 'excel', 'baixar', 'download', 'planilha', 'arquivo'].includes(p));
+            const temEmail = palavras.some(p => ['email', 'e-mail', 'enviar', 'mandar', 'enviar por email'].includes(p));
+            const temAjuda = palavras.some(p => ['ajuda', 'ajudar', 'dúvida', 'duvida', 'como', 'help', 'explicar', 'tutorial'].includes(p));
+            const temVer = palavras.some(p => ['ver', 'visualizar', 'mostrar', 'exibir', 'abrir', 'ver o'].includes(p));
+            const temListar = palavras.some(p => ['listar', 'lista', 'dados', 'tabela', 'quantos', 'quantas', 'estatística', 'estatisticas'].includes(p));
+            
+            // Verificar se está aguardando confirmação
+            if (this.millyAguardandoConfirmacao) {
+                const confirmacao = msg.includes('sim') || msg.includes('confirmar') || msg.includes('ok') || msg.includes('pode') || msg === 's';
+                if (confirmacao) {
+                    if (this.millyCadastroEmAndamento === 'credencial') {
+                        if (this.millyCadastrosMultiplos.length > 1) {
+                            this.executarCadastrosMultiplosMilly(this.millyCadastrosMultiplos);
+                        } else {
+                            this.executarCadastroCredencialMilly(this.millyDadosColetados);
+                        }
+                    } else if (this.millyCadastroEmAndamento === 'totem') {
+                        this.executarCadastroTotemMilly(this.millyDadosColetados);
+                    }
+                    this.millyAguardandoConfirmacao = false;
+                } else {
+                    this.adicionarMensagemMilly('Cadastro cancelado. Posso ajudar com mais alguma coisa?', 'texto');
+                    this.millyCadastroEmAndamento = null;
+                    this.millyDadosColetados = {};
+                    this.millyCadastrosMultiplos = [];
+                    this.millyAguardandoConfirmacao = false;
+                }
+                return;
+            }
+            
+            // Verificar se há cadastro em andamento
+            if (this.millyCadastroEmAndamento) {
+                this.processarDadosCadastroMilly(mensagem);
+                return;
+            }
+            
+            // Comandos de cadastro de TOTEM - verificar primeiro (mais específico)
+            // Se mencionou totem/senha, assumir que quer cadastrar (a menos que seja para ver/listar)
+            if (temTotem && !temVer && !temListar && (temCadastrar || msg.includes('senhas do totem') || msg === 'totem' || msg === 'senha' || msg === 'senhas' || msg.includes('cadastrar senha'))) {
+                // Tentar processar dados diretos da mensagem
+                const dadosExtraidos = this.extrairDadosTotem(mensagem);
+                if (dadosExtraidos.completo) {
+                    // Dados completos - mostrar resumo e pedir confirmação
+                    this.millyDadosColetados = dadosExtraidos;
+                    this.millyCadastroEmAndamento = 'totem';
+                    this.adicionarMensagemMilly('Ótimo! Entendi os dados. Vou cadastrar com:', 'texto');
+                    setTimeout(() => {
+                        const resumo = `
+                            <ul>
+                                <li><strong>Empresa:</strong> ${dadosExtraidos.empresa}</li>
+                                <li><strong>Senha:</strong> ${dadosExtraidos.nome}</li>
+                                <li><strong>Ordem:</strong> ${dadosExtraidos.ordem}</li>
+                                ${dadosExtraidos.cor ? `<li><strong>Cor:</strong> ${dadosExtraidos.cor}</li>` : ''}
+                            </ul>
+                            <p>Posso cadastrar agora? (Digite "sim" ou "confirmar")</p>
+                        `;
+                        this.adicionarMensagemMilly(resumo, 'html');
+                        this.millyAguardandoConfirmacao = true;
+                    }, 500);
+                } else {
+                    this.iniciarCadastroTotemMilly(mensagem);
+                }
+                return;
+            }
+            
+            // Comandos de cadastro de CREDENCIAIS
+            if (temCadastrar || (temCredencial && !temTotem) || (msg === 'credenciais' || msg === 'credencial')) {
+                if (temCredencial || msg === 'credenciais' || msg === 'credencial') {
+                    // Tentar extrair múltiplos cadastros primeiro
+                    const cadastrosMultiplos = this.extrairMultiplosCadastros(mensagem);
+                    
+                    if (cadastrosMultiplos.length > 1) {
+                        // Múltiplos cadastros encontrados
+                        this.millyCadastrosMultiplos = cadastrosMultiplos;
+                        this.millyCadastroEmAndamento = 'credencial';
+                        this.adicionarMensagemMilly(`Ótimo! Encontrei <strong>${cadastrosMultiplos.length}</strong> cadastros para fazer! 📝`, 'html');
+                        setTimeout(() => {
+                            let resumo = '<p><strong>Cadastros encontrados:</strong></p><ol>';
+                            cadastrosMultiplos.forEach((cad, index) => {
+                                resumo += `<li>`;
+                                resumo += `<strong>Empresa:</strong> ${cad.empresa}<br>`;
+                                resumo += `<strong>Tipo:</strong> ${cad.tipo}${cad.tipoNovo ? ' <span style="color: #28a745;">(novo tipo criado)</span>' : ''}<br>`;
+                                resumo += `<strong>Nome:</strong> ${cad.nome}`;
+                                if (cad.especialidade) {
+                                    resumo += `<br><strong>Especialidade:</strong> ${cad.especialidade}`;
+                                }
+                                resumo += `</li>`;
+                            });
+                            resumo += '</ol>';
+                            resumo += '<p>Posso cadastrar todos agora? (Digite "sim" ou "confirmar")</p>';
+                            this.adicionarMensagemMilly(resumo, 'html');
+                            this.millyAguardandoConfirmacao = true;
+                        }, 500);
+                    } else {
+                        // Tentar processar dados diretos da mensagem (cadastro único)
+                        const dadosExtraidos = this.extrairDadosCredencial(mensagem);
+                        if (dadosExtraidos.completo) {
+                            // Dados completos - mostrar resumo e pedir confirmação
+                            this.millyDadosColetados = dadosExtraidos;
+                            this.millyCadastroEmAndamento = 'credencial';
+                            this.millyCadastrosMultiplos = [dadosExtraidos];
+                            
+                            let mensagemTipo = '';
+                            if (dadosExtraidos.tipoNovo) {
+                                mensagemTipo = ' <span style="color: #28a745;">(novo tipo criado automaticamente)</span>';
+                            }
+                            
+                            this.adicionarMensagemMilly('Ótimo! Entendi os dados. Vou cadastrar com:', 'texto');
+                            setTimeout(() => {
+                                const resumo = `
+                                    <ul>
+                                        <li><strong>Empresa:</strong> ${dadosExtraidos.empresa}</li>
+                                        <li><strong>Tipo:</strong> ${dadosExtraidos.tipo}${mensagemTipo}</li>
+                                        <li><strong>Nome:</strong> ${dadosExtraidos.nome}</li>
+                                        ${dadosExtraidos.especialidade ? `<li><strong>Especialidade:</strong> ${dadosExtraidos.especialidade}</li>` : ''}
+                                    </ul>
+                                    <p>Posso cadastrar agora? (Digite "sim" ou "confirmar")</p>
+                                `;
+                                this.adicionarMensagemMilly(resumo, 'html');
+                                this.millyAguardandoConfirmacao = true;
+                            }, 500);
+                        } else {
+                            this.iniciarCadastroCredencialMilly(mensagem);
+                        }
+                    }
+                } else {
+                    this.adicionarMensagemMilly('O que você gostaria de cadastrar?', 'texto');
+                    setTimeout(() => {
+                        this.adicionarMensagemMilly('Posso te ajudar com:<br>• <strong>Credenciais</strong> - Cadastrar funcionários e profissionais<br>• <strong>Senhas do Totem</strong> - Configurar senhas para exibição no totem<br><br>💡 <strong>Dica:</strong> Você pode cadastrar vários usuários de uma vez! Ex: "Empresa Intelite, Recepção João, Medicina Maria, Odonto Pedro"', 'html');
+                    }, 500);
+                }
+                return;
+            }
+            // Comandos de exportação - melhorado
+            else if (temExportar || msg === 'excel' || msg === 'exportar') {
+                this.adicionarMensagemMilly('Vou exportar os dados para Excel agora! 📊', 'texto');
+                setTimeout(() => {
+                    if (this.credenciais.length > 0 || this.senhasTotem.length > 0) {
+                        this.exportarDados();
+                        this.adicionarMensagemMilly('✅ Exportação concluída! Os arquivos Excel foram baixados com sucesso.', 'texto');
+                    } else {
+                        this.adicionarMensagemMilly('⚠️ Não há dados para exportar. Cadastre algumas credenciais ou senhas primeiro.', 'texto');
+                    }
+                }, 1000);
+            }
+            // Comandos de email - melhorado
+            else if (temEmail || msg === 'email') {
+                this.adicionarMensagemMilly('Vou preparar o envio por email! 📧', 'texto');
+                setTimeout(() => {
+                    this.prepararModalEmail();
+                    const modalEmail = document.getElementById('modalEmail');
+                    if (modalEmail) {
+                        modalEmail.style.display = 'block';
+                        this.adicionarMensagemMilly('✅ Modal de email aberto! Preencha seus dados e clique em enviar.', 'texto');
+                    }
+                }, 1000);
+            }
+            // Comandos de ajuda - melhorado
+            else if (temAjuda || msg === 'ajuda' || msg === 'help') {
+                this.adicionarMensagemMilly('Claro! Posso te ajudar com várias coisas! 😊', 'texto');
+                setTimeout(() => {
+                    this.adicionarMensagemMilly(`
+                        <p><strong>Funcionalidades disponíveis:</strong></p>
+                        <ul>
+                            <li>📝 <strong>Cadastros:</strong> Ajudar a cadastrar credenciais e senhas do totem</li>
+                            <li>📊 <strong>Exportação:</strong> Exportar dados para Excel</li>
+                            <li>📧 <strong>Email:</strong> Enviar relatórios por email</li>
+                            <li>🖥️ <strong>Visualização:</strong> Ver o totem e estatísticas</li>
+                            <li>❓ <strong>Dúvidas:</strong> Explicar como usar cada funcionalidade</li>
+                        </ul>
+                        <p>O que você gostaria de fazer ou saber?</p>
+                    `, 'html');
+                }, 500);
+            }
+            // Comandos de visualização - melhorado
+            else if (temVer && temTotem) {
+                this.adicionarMensagemMilly('Vou abrir a visualização do totem para você! 🖥️', 'texto');
+                setTimeout(() => {
+                    this.abrirModalTotemVisualizacao();
+                    this.adicionarMensagemMilly('✅ Totem aberto! Você pode ver como ficará a exibição das senhas.', 'texto');
+                }, 1000);
+            }
+            // Comandos de listagem/estatísticas - melhorado
+            else if (temListar || temCredencial || (msg === 'totem' && !temCadastrar)) {
+                const totalCredenciais = this.credenciais.length;
+                const totalSenhas = this.senhasTotem.length;
+                const senhasAtivas = this.senhasTotem.filter(s => s.exibirNoTotem).length;
+                
+                this.adicionarMensagemMilly('Aqui estão as informações do sistema: 📊', 'texto');
+                setTimeout(() => {
+                    let info = `<p><strong>Estatísticas:</strong></p><ul>`;
+                    info += `<li>📝 <strong>${totalCredenciais}</strong> credenciais cadastradas</li>`;
+                    info += `<li>🎯 <strong>${totalSenhas}</strong> senhas do totem cadastradas</li>`;
+                    if (totalSenhas > 0) {
+                        info += `<li>✅ <strong>${senhasAtivas}</strong> senhas ativas no totem</li>`;
+                    }
+                    info += `</ul>`;
+                    
+                    if (totalCredenciais === 0 && totalSenhas === 0) {
+                        info += `<p>💡 <strong>Dica:</strong> Comece cadastrando algumas credenciais ou senhas do totem!</p>`;
+                    }
+                    
+                    this.adicionarMensagemMilly(info, 'html');
+                }, 500);
+            }
+            // Palavras soltas - melhor interpretação
+            else if (msg === 'credenciais' || msg === 'credencial') {
+                this.adicionarMensagemMilly('Sobre credenciais! 📝', 'texto');
+                setTimeout(() => {
+                    this.adicionarMensagemMilly(`Você tem <strong>${this.credenciais.length}</strong> credenciais cadastradas.<br><br>O que você gostaria de fazer?<br>• Cadastrar novas credenciais<br>• Ver a lista de credenciais<br>• Exportar credenciais`, 'html');
+                }, 500);
+            }
+            else if (msg === 'totem' || msg === 'senha' || msg === 'senhas' || msg.includes('senhas do totem')) {
+                // Se mencionou totem/senha sem cadastrar, oferecer cadastro
+                this.adicionarMensagemMilly('Sobre senhas do totem! 🎯', 'texto');
+                setTimeout(() => {
+                    this.adicionarMensagemMilly(`Você tem <strong>${this.senhasTotem.length}</strong> senhas cadastradas.<br><br>O que você gostaria de fazer?<br>• <strong>Cadastrar nova senha</strong> - Vou te guiar passo a passo<br>• Ver o totem<br>• Exportar senhas<br><br>Para cadastrar, me diga: "cadastrar senha do totem" ou me informe os dados!`, 'html');
+                }, 500);
+            }
+            // Resposta padrão melhorada
+            else {
+                this.adicionarMensagemMilly('Entendi! Deixa eu te ajudar melhor. 😊', 'texto');
+                setTimeout(() => {
+                    this.adicionarMensagemMilly('Posso te ajudar com:<br><br>• <strong>Cadastrar</strong> credenciais ou senhas do totem<br>• <strong>Exportar</strong> dados para Excel<br>• <strong>Enviar</strong> relatórios por email<br>• <strong>Ver</strong> estatísticas e visualizar o totem<br>• <strong>Tirar dúvidas</strong> sobre o sistema<br><br>O que você gostaria de fazer?', 'html');
+                }, 500);
+            }
+        }, 800);
+    }
+
+    processarAcaoRapida(acao) {
+        switch(acao) {
+            case 'cadastrar':
+                this.adicionarMensagemUsuario('Quero cadastrar credenciais');
+                this.processarMensagemMilly('cadastrar credenciais');
+                break;
+            case 'exportar':
+                this.adicionarMensagemUsuario('Exportar para Excel');
+                this.processarMensagemMilly('exportar excel');
+                break;
+            case 'email':
+                this.adicionarMensagemUsuario('Enviar por email');
+                this.processarMensagemMilly('enviar email');
+                break;
+            case 'ajuda':
+                this.adicionarMensagemUsuario('Preciso de ajuda');
+                this.processarMensagemMilly('ajuda');
+                break;
+            case 'totem':
+                // Ação rápida para cadastrar senha do totem
+                this.adicionarMensagemUsuario('Cadastrar senha do totem');
+                this.processarMensagemMilly('cadastrar senha do totem');
+                break;
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    iniciarCadastroCredencialMilly(mensagem) {
+        this.millyCadastroEmAndamento = 'credencial';
+        this.millyDadosColetados = {};
+        
+        this.adicionarMensagemMilly('Vou te ajudar a cadastrar credenciais! 📝', 'texto');
+        setTimeout(() => {
+            this.adicionarMensagemMilly('Me informe os dados no seguinte formato:<br><br><strong>Empresa: [nome]<br>Tipo: [tipo]<br>Nome: [nome completo]<br>Especialidade: [se aplicável]</strong><br><br>Ou me diga os dados separadamente que eu vou coletando! 😊', 'html');
+        }, 500);
+        
+        // Tentar extrair dados da mensagem inicial
+        const dados = this.extrairDadosCredencial(mensagem);
+        if (dados.empresa) this.millyDadosColetados.empresa = dados.empresa;
+        if (dados.tipo) this.millyDadosColetados.tipo = dados.tipo;
+        if (dados.nome) this.millyDadosColetados.nome = dados.nome;
+        if (dados.especialidade) this.millyDadosColetados.especialidade = dados.especialidade;
+    }
+
+    iniciarCadastroTotemMilly(mensagem) {
+        this.millyCadastroEmAndamento = 'totem';
+        this.millyDadosColetados = {};
+        
+        // Tentar extrair dados da mensagem inicial
+        const dados = this.extrairDadosTotem(mensagem);
+        if (dados.empresa) this.millyDadosColetados.empresa = dados.empresa;
+        if (dados.nome) this.millyDadosColetados.nome = dados.nome;
+        if (dados.ordem) this.millyDadosColetados.ordem = dados.ordem;
+        if (dados.cor) this.millyDadosColetados.cor = dados.cor;
+        
+        // Verificar se já temos dados suficientes
+        const falta = this.verificarDadosFaltantesTotem();
+        if (falta.length === 0) {
+            // Dados completos - mostrar resumo e pedir confirmação
+            this.adicionarMensagemMilly('Perfeito! Vou cadastrar com os seguintes dados:', 'texto');
+            setTimeout(() => {
+                const resumo = `
+                    <ul>
+                        <li><strong>Empresa:</strong> ${this.millyDadosColetados.empresa}</li>
+                        <li><strong>Senha:</strong> ${this.millyDadosColetados.nome}</li>
+                        <li><strong>Ordem:</strong> ${this.millyDadosColetados.ordem}</li>
+                        ${this.millyDadosColetados.cor ? `<li><strong>Cor:</strong> ${this.millyDadosColetados.cor}</li>` : ''}
+                    </ul>
+                    <p>Posso cadastrar agora? (Digite "sim" ou "confirmar")</p>
+                `;
+                this.adicionarMensagemMilly(resumo, 'html');
+                this.millyAguardandoConfirmacao = true;
+            }, 500);
+        } else {
+            this.adicionarMensagemMilly('Vou te ajudar a cadastrar uma senha do totem! 🎯', 'texto');
+            setTimeout(() => {
+                let mensagemInstrucao = 'Preciso das seguintes informações:<br><br>';
+                mensagemInstrucao += '<ol>';
+                if (!this.millyDadosColetados.empresa) {
+                    mensagemInstrucao += '<li><strong>Nome da empresa</strong></li>';
+                }
+                if (!this.millyDadosColetados.nome) {
+                    mensagemInstrucao += '<li><strong>Nome da senha</strong> (ex: MEDICINA GERAL, CARDIOLOGIA)</li>';
+                }
+                if (!this.millyDadosColetados.ordem) {
+                    mensagemInstrucao += '<li><strong>Ordem no totem</strong> (número de 1 a 12)</li>';
+                }
+                mensagemInstrucao += '<li><strong>Cor de fundo</strong> (opcional, padrão: azul)</li>';
+                mensagemInstrucao += '</ol>';
+                mensagemInstrucao += '<br>Você pode me informar tudo de uma vez ou separadamente! 😊';
+                this.adicionarMensagemMilly(mensagemInstrucao, 'html');
+            }, 500);
+        }
+    }
+
+    processarDadosCadastroMilly(mensagem) {
+        if (this.millyCadastroEmAndamento === 'credencial') {
+            const dados = this.extrairDadosCredencial(mensagem);
+            
+            if (dados.empresa) this.millyDadosColetados.empresa = dados.empresa;
+            if (dados.tipo) {
+                // Verificar se o tipo existe, se não, criar automaticamente
+                const tipoVerificado = this.verificarTipoExiste(dados.tipo);
+                if (tipoVerificado.existe) {
+                    this.millyDadosColetados.tipo = tipoVerificado.valor;
+                } else {
+                    // Tipo não existe - criar automaticamente
+                    const nomeTipo = dados.tipo;
+                    this.millyDadosColetados.tipo = this.criarTipoPersonalizado(nomeTipo);
+                    this.millyDadosColetados.tipoNovo = true;
+                    this.adicionarMensagemMilly(`✅ Tipo "<strong>${nomeTipo}</strong>" não existia, então criei automaticamente! 🆕`, 'html');
+                }
+            }
+            if (dados.nome) this.millyDadosColetados.nome = dados.nome;
+            if (dados.especialidade) this.millyDadosColetados.especialidade = dados.especialidade;
+            
+            // Verificar se temos dados suficientes
+            const falta = this.verificarDadosFaltantesCredencial();
+            if (falta.length === 0) {
+                // Mostrar resumo e confirmar
+                this.adicionarMensagemMilly(`Perfeito! Vou cadastrar com os seguintes dados:`, 'texto');
+                setTimeout(() => {
+                    let tipoDisplay = this.millyDadosColetados.tipo;
+                    // Buscar nome do tipo se for personalizado
+                    const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === this.millyDadosColetados.tipo);
+                    if (tipoPersonalizado) {
+                        tipoDisplay = tipoPersonalizado.nome;
+                    }
+                    
+                    const resumo = `
+                        <ul>
+                            <li><strong>Empresa:</strong> ${this.millyDadosColetados.empresa}</li>
+                            <li><strong>Tipo:</strong> ${tipoDisplay}${this.millyDadosColetados.tipoNovo ? ' <span style="color: #28a745;">(novo tipo criado)</span>' : ''}</li>
+                            <li><strong>Nome:</strong> ${this.millyDadosColetados.nome}</li>
+                            ${this.millyDadosColetados.especialidade ? `<li><strong>Especialidade:</strong> ${this.millyDadosColetados.especialidade}</li>` : ''}
+                        </ul>
+                        <p>Posso cadastrar agora? (Digite "sim" ou "confirmar")</p>
+                    `;
+                    this.adicionarMensagemMilly(resumo, 'html');
+                    this.millyAguardandoConfirmacao = true;
+                }, 500);
+            } else {
+                this.adicionarMensagemMilly(`Ainda preciso de: <strong>${falta.join(', ')}</strong>. Pode me informar?`, 'html');
+            }
+        } else if (this.millyCadastroEmAndamento === 'totem') {
+            const dados = this.extrairDadosTotem(mensagem);
+            
+            if (dados.empresa) this.millyDadosColetados.empresa = dados.empresa;
+            if (dados.nome) this.millyDadosColetados.nome = dados.nome;
+            if (dados.ordem) this.millyDadosColetados.ordem = dados.ordem;
+            if (dados.cor) this.millyDadosColetados.cor = dados.cor;
+            
+            // Verificar se temos dados suficientes
+            const falta = this.verificarDadosFaltantesTotem();
+            if (falta.length === 0) {
+                // Mostrar resumo e confirmar
+                this.adicionarMensagemMilly(`Perfeito! Vou cadastrar com os seguintes dados:`, 'texto');
+                setTimeout(() => {
+                    const resumo = `
+                        <ul>
+                            <li><strong>Empresa:</strong> ${this.millyDadosColetados.empresa}</li>
+                            <li><strong>Senha:</strong> ${this.millyDadosColetados.nome}</li>
+                            <li><strong>Ordem:</strong> ${this.millyDadosColetados.ordem}</li>
+                            ${this.millyDadosColetados.cor ? `<li><strong>Cor:</strong> ${this.millyDadosColetados.cor}</li>` : ''}
+                        </ul>
+                        <p>Posso cadastrar agora? (Digite "sim" ou "confirmar")</p>
+                    `;
+                    this.adicionarMensagemMilly(resumo, 'html');
+                    this.millyAguardandoConfirmacao = true;
+                }, 500);
+            } else {
+                this.adicionarMensagemMilly(`Ainda preciso de: <strong>${falta.join(', ')}</strong>. Pode me informar?`, 'html');
+            }
+        }
+    }
+
+    obterTiposDisponiveis() {
+        // Tipos padrão
+        const tiposPadrao = ['recepção', 'recepcao', 'recepcao médica', 'recepcao medica', 'recepcao-odonto', 'recepcao odonto', 'medicina', 'odonto', 'odontologia', 'laboratório', 'laboratorio', 'pós consulta', 'pos consulta', 'pos-consulta'];
+        
+        // Adicionar tipos personalizados
+        const tiposPersonalizados = this.tiposPersonalizados.map(t => t.nome.toLowerCase());
+        const tiposPersonalizadosValor = this.tiposPersonalizados.map(t => t.valor.toLowerCase());
+        
+        return [...tiposPadrao, ...tiposPersonalizados, ...tiposPersonalizadosValor];
+    }
+
+    verificarTipoExiste(tipoDigitado) {
+        const tipoLower = tipoDigitado.toLowerCase().trim();
+        
+        // Verificar tipos padrão
+        const tiposPadrao = {
+            'recepção': 'recepcao',
+            'recepcao': 'recepcao',
+            'recepcao médica': 'recepcao',
+            'recepcao medica': 'recepcao',
+            'recepcao-odonto': 'recepcao-odonto',
+            'recepcao odonto': 'recepcao-odonto',
+            'medicina': 'medicina',
+            'odonto': 'odonto',
+            'odontologia': 'odonto',
+            'laboratório': 'laboratorio',
+            'laboratorio': 'laboratorio',
+            'pós consulta': 'pos-consulta',
+            'pos consulta': 'pos-consulta',
+            'pos-consulta': 'pos-consulta'
+        };
+        
+        if (tiposPadrao[tipoLower]) {
+            return { existe: true, valor: tiposPadrao[tipoLower] };
+        }
+        
+        // Verificar tipos personalizados
+        const tipoPersonalizado = this.tiposPersonalizados.find(t => 
+            t.nome.toLowerCase() === tipoLower || 
+            t.valor.toLowerCase() === tipoLower
+        );
+        
+        if (tipoPersonalizado) {
+            return { existe: true, valor: tipoPersonalizado.valor };
+        }
+        
+        // Tipo não existe
+        return { existe: false, valor: null };
+    }
+
+    criarTipoPersonalizado(nomeTipo) {
+        const nomeFormatado = nomeTipo.trim();
+        const valorTipo = `tipo-${Date.now()}`;
+        
+        // Verificar se já existe
+        const jaExiste = this.tiposPersonalizados.some(t => 
+            t.nome.toLowerCase() === nomeFormatado.toLowerCase()
+        );
+        
+        if (jaExiste) {
+            const existente = this.tiposPersonalizados.find(t => 
+                t.nome.toLowerCase() === nomeFormatado.toLowerCase()
+            );
+            return existente.valor;
+        }
+        
+        // Criar novo tipo
+        const novoTipo = {
+            id: Date.now(),
+            nome: nomeFormatado,
+            valor: valorTipo,
+            dataCriacao: new Date().toISOString()
+        };
+        
+        this.tiposPersonalizados.push(novoTipo);
+        this.salvarTiposPersonalizados();
+        this.carregarTiposNoSelect();
+        
+        return valorTipo;
+    }
+
+    extrairDadosCredencial(mensagem) {
+        const dados = {};
+        const msg = mensagem.toLowerCase();
+        const tipos = this.obterTiposDisponiveis();
+        
+        // Padrão comum: "Empresa X, Tipo Y, Nome Z" ou "Empresa: X, Tipo: Y, Nome: Z"
+        const partes = mensagem.split(',').map(p => p.trim());
+        
+        // Extrair empresa - múltiplos padrões
+        let empresaMatch = mensagem.match(/(?:empresa|unidade)[\s:]+([^,\n]+)/i);
+        if (empresaMatch) {
+            dados.empresa = empresaMatch[1].trim();
+        } else if (partes.length >= 3) {
+            // Padrão "Empresa X, Tipo Y, Nome Z"
+            const primeiraParte = partes[0];
+            if (primeiraParte.toLowerCase().includes('empresa')) {
+                empresaMatch = primeiraParte.match(/empresa[\s:]+(.+)/i);
+                if (empresaMatch) {
+                    dados.empresa = empresaMatch[1].trim();
+                } else {
+                    // Se não encontrou padrão, a primeira parte pode ser a empresa
+                    dados.empresa = primeiraParte.replace(/empresa[\s:]+/i, '').trim();
+                }
+            } else if (primeiraParte && primeiraParte[0] === primeiraParte[0].toUpperCase() && 
+                       !tipos.some(t => primeiraParte.toLowerCase().includes(t))) {
+                // Primeira parte capitalizada que não é tipo = empresa
+                dados.empresa = primeiraParte;
+            }
+        } else if (partes.length === 1 && partes[0] && partes[0][0] === partes[0][0].toUpperCase()) {
+            // Se só uma parte e começa com maiúscula, pode ser empresa
+            if (!tipos.some(t => partes[0].toLowerCase().includes(t))) {
+                dados.empresa = partes[0];
+            }
+        }
+        
+        // Extrair tipo - múltiplos padrões
+        let tipoEncontrado = false;
+        for (const tipo of tipos) {
+            if (msg.includes(tipo)) {
+                const tipoVerificado = this.verificarTipoExiste(tipo);
+                if (tipoVerificado.existe) {
+                    dados.tipo = tipoVerificado.valor;
+                } else {
+                    dados.tipo = this.criarTipoPersonalizado(tipo);
+                    dados.tipoNovo = true;
+                }
+                tipoEncontrado = true;
+                break;
+            }
+        }
+        
+        // Se não encontrou tipo, tentar em formato "Empresa X, Tipo Y, Nome Z"
+        if (!tipoEncontrado && partes.length >= 2) {
+            for (let i = 0; i < partes.length; i++) {
+                const parte = partes[i].trim();
+                const parteLower = parte.toLowerCase();
+                
+                // Verificar se é um tipo conhecido
+                for (const tipo of tipos) {
+                    if (parteLower.includes(tipo) || parteLower === tipo || parteLower === tipo.replace('ó', 'o').replace('ã', 'a')) {
+                        const tipoVerificado = this.verificarTipoExiste(parte);
+                        if (tipoVerificado.existe) {
+                            dados.tipo = tipoVerificado.valor;
+                        } else {
+                            dados.tipo = this.criarTipoPersonalizado(parte);
+                            dados.tipoNovo = true;
+                        }
+                        tipoEncontrado = true;
+                        break;
+                    }
+                }
+                
+                // Se não encontrou tipo conhecido, mas a parte parece ser um tipo (capitalizada, não é empresa/nome)
+                if (!tipoEncontrado && parte && parte[0] === parte[0].toUpperCase() && 
+                    !parte.toLowerCase().includes('empresa') && 
+                    !parte.toLowerCase().includes('unidade') &&
+                    !parte.toLowerCase().includes('nome') &&
+                    parte.length > 2) {
+                    const tipoVerificado = this.verificarTipoExiste(parte);
+                    if (tipoVerificado.existe) {
+                        dados.tipo = tipoVerificado.valor;
+                        tipoEncontrado = true;
+                    } else {
+                        // Criar tipo automaticamente
+                        dados.tipo = this.criarTipoPersonalizado(parte);
+                        dados.tipoNovo = true;
+                        tipoEncontrado = true;
+                    }
+                    break;
+                }
+                
+                if (tipoEncontrado) break;
+            }
+        }
+        
+        // Se ainda não encontrou e temos 3 partes, a segunda geralmente é o tipo
+        if (!tipoEncontrado && partes.length === 3) {
+            const segundaParte = partes[1].trim();
+            const segundaParteLower = segundaParte.toLowerCase();
+            
+            // Verificar se o tipo existe
+            const tipoVerificado = this.verificarTipoExiste(segundaParte);
+            if (tipoVerificado.existe) {
+                dados.tipo = tipoVerificado.valor;
+                tipoEncontrado = true;
+            } else {
+                // Tipo não existe - criar automaticamente
+                dados.tipo = this.criarTipoPersonalizado(segundaParte);
+                dados.tipoNovo = true; // Flag para informar ao usuário
+                tipoEncontrado = true;
+            }
+        }
+        
+        // Se ainda não encontrou tipo, tentar detectar como tipo novo
+        if (!tipoEncontrado) {
+            // Procurar por palavras que podem ser tipos (não são empresa nem nome)
+            for (let i = 0; i < partes.length; i++) {
+                const parte = partes[i].trim();
+                if (parte && parte.length > 2 && 
+                    !parte.toLowerCase().includes('empresa') && 
+                    !parte.toLowerCase().includes('unidade') &&
+                    !parte.toLowerCase().includes('nome') &&
+                    !parte.toLowerCase().includes('especialidade') &&
+                    parte[0] === parte[0].toUpperCase() &&
+                    parte !== dados.empresa && parte !== dados.nome) {
+                    
+                    const tipoVerificado = this.verificarTipoExiste(parte);
+                    if (tipoVerificado.existe) {
+                        dados.tipo = tipoVerificado.valor;
+                        tipoEncontrado = true;
+                        break;
+                    } else {
+                        // Criar tipo automaticamente
+                        dados.tipo = this.criarTipoPersonalizado(parte);
+                        dados.tipoNovo = true;
+                        tipoEncontrado = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Extrair nome - múltiplos padrões
+        const nomeMatch = mensagem.match(/(?:nome|funcionário|profissional|funcionario)[\s:]+([^,\n]+)/i);
+        if (nomeMatch) {
+            dados.nome = nomeMatch[1].trim();
+        } else if (partes.length >= 3) {
+            // Padrão "Empresa X, Tipo Y, Nome Z" - a terceira parte geralmente é o nome
+            const terceiraParte = partes[2].trim();
+            if (terceiraParte && terceiraParte[0] === terceiraParte[0].toUpperCase() && 
+                !tipos.some(t => terceiraParte.toLowerCase().includes(t)) &&
+                !terceiraParte.toLowerCase().includes('empresa') && 
+                !terceiraParte.toLowerCase().includes('unidade') &&
+                !terceiraParte.toLowerCase().includes('tipo') &&
+                !terceiraParte.toLowerCase().includes('nome:')) {
+                dados.nome = terceiraParte;
+            } else {
+                // Se a terceira parte não servir, tentar a última
+                for (let i = partes.length - 1; i >= 0; i--) {
+                    const parte = partes[i].trim();
+                    if (parte && parte[0] === parte[0].toUpperCase() && 
+                        !tipos.some(t => parte.toLowerCase().includes(t)) &&
+                        !parte.toLowerCase().includes('empresa') && 
+                        !parte.toLowerCase().includes('unidade') &&
+                        !parte.toLowerCase().includes('tipo') &&
+                        !parte.toLowerCase().includes('nome:') &&
+                        parte !== dados.empresa) {
+                        dados.nome = parte;
+                        break;
+                    }
+                }
+            }
+        } else {
+            // Tentar identificar nomes próprios (palavras capitalizadas)
+            for (const palavra of partes) {
+                const p = palavra.trim();
+                if (p && p[0] === p[0].toUpperCase() && p.length > 2 && !p.includes(':') && 
+                    !tipos.some(t => p.toLowerCase().includes(t)) &&
+                    !p.toLowerCase().includes('empresa') && 
+                    !p.toLowerCase().includes('unidade') &&
+                    p !== dados.empresa) {
+                    if (!dados.nome) dados.nome = p;
+                }
+            }
+        }
+        
+        // Extrair especialidade
+        const especialidadeMatch = mensagem.match(/(?:especialidade|especialista)[\s:]+([^,\n]+)/i);
+        if (especialidadeMatch) {
+            dados.especialidade = especialidadeMatch[1].trim();
+        }
+        
+        dados.completo = !!(dados.empresa && dados.tipo && dados.nome);
+        return dados;
+    }
+
+    extrairMultiplosCadastros(mensagem) {
+        const cadastros = [];
+        const linhas = mensagem.split(/\n|;|e\s+/i).map(l => l.trim()).filter(l => l.length > 0);
+        
+        // Se a mensagem tem múltiplas linhas ou separadores, processar cada uma
+        if (linhas.length > 1) {
+            let empresaCompartilhada = null;
+            
+            for (const linha of linhas) {
+                const dados = this.extrairDadosCredencial(linha);
+                
+                // Se não tem empresa nesta linha, usar a compartilhada
+                if (!dados.empresa && empresaCompartilhada) {
+                    dados.empresa = empresaCompartilhada;
+                } else if (dados.empresa) {
+                    empresaCompartilhada = dados.empresa;
+                }
+                
+                if (dados.completo) {
+                    cadastros.push(dados);
+                }
+            }
+        } else {
+            // Tentar extrair múltiplos cadastros de uma única linha
+            // Padrão: "Empresa X, Tipo1 Nome1, Tipo2 Nome2, Tipo3 Nome3"
+            const partes = mensagem.split(',').map(p => p.trim());
+            
+            if (partes.length >= 4) {
+                // Primeira parte é empresa
+                let empresa = null;
+                const primeiraParte = partes[0];
+                if (primeiraParte.toLowerCase().includes('empresa')) {
+                    const match = primeiraParte.match(/empresa[\s:]+(.+)/i);
+                    if (match) {
+                        empresa = match[1].trim();
+                    }
+                } else if (primeiraParte[0] === primeiraParte[0].toUpperCase()) {
+                    empresa = primeiraParte;
+                }
+                
+                // Processar pares Tipo-Nome
+                for (let i = 1; i < partes.length; i += 2) {
+                    if (i + 1 < partes.length) {
+                        const tipoParte = partes[i].trim();
+                        const nomeParte = partes[i + 1].trim();
+                        
+                        if (tipoParte && nomeParte) {
+                            const dados = {
+                                empresa: empresa || this.millyDadosColetados.empresa,
+                                tipo: null,
+                                nome: nomeParte,
+                                especialidade: null
+                            };
+                            
+                            // Verificar e criar tipo se necessário
+                            const tipoVerificado = this.verificarTipoExiste(tipoParte);
+                            if (tipoVerificado.existe) {
+                                dados.tipo = tipoVerificado.valor;
+                            } else {
+                                dados.tipo = this.criarTipoPersonalizado(tipoParte);
+                                dados.tipoNovo = true;
+                            }
+                            
+                            dados.completo = !!(dados.empresa && dados.tipo && dados.nome);
+                            if (dados.completo) {
+                                cadastros.push(dados);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return cadastros;
+    }
+
+    extrairDadosTotem(mensagem) {
+        const dados = {};
+        const partes = mensagem.split(',').map(p => p.trim());
+        
+        // Extrair empresa - múltiplos padrões
+        let empresaMatch = mensagem.match(/(?:empresa|unidade)[\s:]+([^,\n]+)/i);
+        if (empresaMatch) {
+            dados.empresa = empresaMatch[1].trim();
+        } else if (partes.length >= 3) {
+            // Padrão "Empresa X, Senha Y, Ordem Z"
+            const primeiraParte = partes[0];
+            if (primeiraParte.toLowerCase().includes('empresa')) {
+                empresaMatch = primeiraParte.match(/empresa[\s:]+(.+)/i);
+                if (empresaMatch) {
+                    dados.empresa = empresaMatch[1].trim();
+                } else {
+                    dados.empresa = primeiraParte.replace(/empresa[\s:]+/i, '').trim();
+                }
+            } else if (primeiraParte && primeiraParte[0] === primeiraParte[0].toUpperCase()) {
+                // Primeira parte capitalizada pode ser empresa
+                dados.empresa = primeiraParte;
+            }
+        }
+        
+        // Extrair nome da senha - múltiplos padrões
+        let senhaMatch = mensagem.match(/(?:senha|nome da senha)[\s:]+([^,\n]+)/i);
+        if (senhaMatch) {
+            dados.nome = senhaMatch[1].trim().toUpperCase();
+        } else if (partes.length >= 2) {
+            // Padrão "Empresa X, Senha Y, Ordem Z" - segunda parte geralmente é a senha
+            const segundaParte = partes[1];
+            if (segundaParte.toLowerCase().includes('senha')) {
+                senhaMatch = segundaParte.match(/senha[\s:]+(.+)/i);
+                if (senhaMatch) {
+                    dados.nome = senhaMatch[1].trim().toUpperCase();
+                } else {
+                    dados.nome = segundaParte.replace(/senha[\s:]+/i, '').trim().toUpperCase();
+                }
+            } else if (segundaParte && segundaParte.length > 2) {
+                // Se não tem "senha:" mas tem texto, pode ser o nome da senha
+                dados.nome = segundaParte.toUpperCase();
+            }
+        }
+        
+        // Extrair ordem - múltiplos padrões
+        let ordemMatch = mensagem.match(/(?:ordem|posição|posicao)[\s:]+(\d+)/i);
+        if (ordemMatch) {
+            dados.ordem = parseInt(ordemMatch[1]);
+        } else if (partes.length >= 3) {
+            // Padrão "Empresa X, Senha Y, Ordem Z" - terceira parte pode ser ordem
+            const terceiraParte = partes[2];
+            const ordemNum = parseInt(terceiraParte);
+            if (!isNaN(ordemNum) && ordemNum >= 1 && ordemNum <= 12) {
+                dados.ordem = ordemNum;
+            } else {
+                ordemMatch = terceiraParte.match(/(?:ordem|posição|posicao)[\s:]+(\d+)/i);
+                if (ordemMatch) {
+                    dados.ordem = parseInt(ordemMatch[1]);
+                }
+            }
+        } else {
+            // Tentar encontrar número entre 1 e 12 na mensagem
+            const numeros = mensagem.match(/\b([1-9]|1[0-2])\b/g);
+            if (numeros && numeros.length > 0) {
+                dados.ordem = parseInt(numeros[0]);
+            }
+        }
+        
+        // Extrair cor
+        const corMatch = mensagem.match(/(?:cor|color)[\s:]+(#?[0-9a-f]{6})/i);
+        if (corMatch) {
+            dados.cor = corMatch[1].startsWith('#') ? corMatch[1] : '#' + corMatch[1];
+        }
+        
+        dados.completo = !!(dados.empresa && dados.nome && dados.ordem);
+        return dados;
+    }
+
+    verificarDadosFaltantesCredencial() {
+        const falta = [];
+        if (!this.millyDadosColetados.empresa) falta.push('Nome da empresa');
+        if (!this.millyDadosColetados.tipo) falta.push('Tipo de usuário');
+        if (!this.millyDadosColetados.nome) falta.push('Nome completo');
+        return falta;
+    }
+
+    verificarDadosFaltantesTotem() {
+        const falta = [];
+        if (!this.millyDadosColetados.empresa) falta.push('Nome da empresa');
+        if (!this.millyDadosColetados.nome) falta.push('Nome da senha');
+        if (!this.millyDadosColetados.ordem) falta.push('Ordem no totem (1-12)');
+        return falta;
+    }
+
+    executarCadastrosMultiplosMilly(cadastros) {
+        try {
+            let sucessos = 0;
+            let erros = 0;
+            
+            this.adicionarMensagemMilly(`Processando ${cadastros.length} cadastros... ⏳`, 'texto');
+            
+            for (const dados of cadastros) {
+                try {
+                    this.executarCadastroCredencialMilly(dados, false); // false = não mostrar mensagem individual
+                    sucessos++;
+                } catch (error) {
+                    console.error('Erro ao cadastrar:', error);
+                    erros++;
+                }
+            }
+            
+            // Atualizar tabela uma vez no final
+            this.atualizarTabela();
+            
+            // Mensagem final
+            if (sucessos > 0) {
+                this.adicionarMensagemMilly(`✅ ${sucessos} cadastro(s) realizado(s) com sucesso! 🎉`, 'texto');
+                if (erros > 0) {
+                    this.adicionarMensagemMilly(`⚠️ ${erros} cadastro(s) falharam. Verifique os dados.`, 'texto');
+                }
+                setTimeout(() => {
+                    this.adicionarMensagemMilly(`Você tem agora <strong>${this.credenciais.length}</strong> credenciais cadastradas.`, 'html');
+                }, 500);
+            } else {
+                this.adicionarMensagemMilly('❌ Não foi possível cadastrar nenhum registro. Verifique os dados informados.', 'texto');
+            }
+            
+            this.millyCadastroEmAndamento = null;
+            this.millyDadosColetados = {};
+            this.millyCadastrosMultiplos = [];
+            this.millyAguardandoConfirmacao = false;
+            
+        } catch (error) {
+            console.error('Erro ao processar múltiplos cadastros:', error);
+            this.adicionarMensagemMilly('❌ Ops! Ocorreu um erro ao processar os cadastros. Tente novamente.', 'texto');
+            this.millyCadastroEmAndamento = null;
+            this.millyDadosColetados = {};
+            this.millyCadastrosMultiplos = [];
+            this.millyAguardandoConfirmacao = false;
+        }
+    }
+
+    executarCadastroCredencialMilly(dados, mostrarMensagem = true) {
+        try {
+            // Verificar se o tipo existe, se não, criar
+            if (!dados.tipo) {
+                // Tentar extrair tipo dos dados
+                const tipoVerificado = this.verificarTipoExiste(dados.tipo || '');
+                if (!tipoVerificado.existe && dados.tipo) {
+                    dados.tipo = this.criarTipoPersonalizado(dados.tipo);
+                }
+            }
+            
+            // Mapear tipo (para compatibilidade)
+            let tipo = dados.tipo;
+            const tipoMap = {
+                'recepção': 'recepcao',
+                'recepcao': 'recepcao',
+                'medicina': 'medicina',
+                'odonto': 'odonto',
+                'odontologia': 'odonto',
+                'laboratório': 'laboratorio',
+                'laboratorio': 'laboratorio',
+                'pós consulta': 'pos-consulta',
+                'pos consulta': 'pos-consulta'
+            };
+            tipo = tipoMap[tipo] || tipo;
+            
+            // Salvar unidade se fornecida
+            if (dados.empresa) {
+                this.unidadeCredenciais = dados.empresa;
+                this.salvarUnidadeCredenciais();
+                this.atualizarUnidadeAtualCredenciaisInline();
+            }
+            
+            // Criar credencial
+            const credencial = {
+                id: Date.now(),
+                tipo: tipo,
+                unidade: this.unidadeCredenciais || dados.empresa,
+                dataInclusao: new Date().toISOString()
+            };
+            
+            // Adicionar dados específicos baseado no tipo
+            if (['recepcao', 'recepcao-odonto', 'laboratorio', 'pos-consulta'].includes(credencial.tipo)) {
+                credencial.funcionarios = [{
+                    nome: dados.nome,
+                    senhas: dados.especialidade || ''
+                }];
+            } else if (credencial.tipo === 'medicina' || credencial.tipo === 'odonto') {
+                credencial.profissionais = [{
+                    tratamento: credencial.tipo === 'medicina' ? 'Dr.' : 'Dra.',
+                    nome: dados.nome,
+                    especialidade: dados.especialidade || 'Geral'
+                }];
+            }
+            
+            // Validar
+            if (!this.validarCadastro(credencial)) {
+                this.adicionarMensagemMilly('⚠️ Não foi possível cadastrar. Verifique os dados informados.', 'texto');
+                this.millyCadastroEmAndamento = null;
+                this.millyDadosColetados = {};
+                return;
+            }
+            
+            // Salvar
+            this.credenciais.push(credencial);
+            this.salvarDados();
+            
+            if (mostrarMensagem) {
+                this.atualizarTabela();
+                this.adicionarMensagemMilly('✅ Credencial cadastrada com sucesso! 🎉', 'texto');
+                setTimeout(() => {
+                    this.adicionarMensagemMilly(`A credencial foi adicionada à tabela. Você tem agora <strong>${this.credenciais.length}</strong> credenciais cadastradas.`, 'html');
+                }, 500);
+                this.millyCadastroEmAndamento = null;
+                this.millyDadosColetados = {};
+                this.millyCadastrosMultiplos = [];
+                this.millyAguardandoConfirmacao = false;
+            }
+            
+        } catch (error) {
+            console.error('Erro ao cadastrar via Milly:', error);
+            this.adicionarMensagemMilly('❌ Ops! Ocorreu um erro ao cadastrar. Tente novamente.', 'texto');
+            this.millyCadastroEmAndamento = null;
+            this.millyDadosColetados = {};
+        }
+    }
+
+    executarCadastroTotemMilly(dados) {
+        try {
+            // Salvar unidade se fornecida
+            if (dados.empresa) {
+                this.unidadeTotem = dados.empresa;
+                this.salvarUnidadeTotem();
+                this.atualizarUnidadeAtual();
+            }
+            
+            // Criar senha do totem
+            const senhaTotem = {
+                id: (this.gerarId && typeof this.gerarId === 'function') ? this.gerarId() : Date.now(),
+                nome: dados.nome.toUpperCase(),
+                ordem: dados.ordem,
+                exibir: true,
+                exibirNoTotem: true, // Garantir compatibilidade
+                unidade: this.unidadeTotem || dados.empresa,
+                cor: dados.cor || '#0066cc',
+                dataCriacao: new Date().toISOString()
+            };
+            
+            // Validar
+            const validacao = this.validarSenhaTotemComMensagem(senhaTotem);
+            if (!validacao.valido) {
+                this.adicionarMensagemMilly(`⚠️ ${validacao.mensagem}`, 'texto');
+                setTimeout(() => {
+                    this.adicionarMensagemMilly('Por favor, corrija os dados e tente novamente. Posso te ajudar a coletar os dados corretos! 😊', 'texto');
+                }, 500);
+                // Não limpar o estado para permitir correção
+                return;
+            }
+            
+            // Salvar
+            this.senhasTotem.push(senhaTotem);
+            this.salvarSenhasTotem();
+            this.atualizarTabelaTotem();
+            
+            this.adicionarMensagemMilly('✅ Senha do totem cadastrada com sucesso! 🎉', 'texto');
+            setTimeout(() => {
+                this.adicionarMensagemMilly(`A senha foi adicionada. Você tem agora <strong>${this.senhasTotem.length}</strong> senhas cadastradas.`, 'html');
+            }, 500);
+            this.millyCadastroEmAndamento = null;
+            this.millyDadosColetados = {};
+            this.millyAguardandoConfirmacao = false;
+            
+        } catch (error) {
+            console.error('Erro ao cadastrar totem via Milly:', error);
+            this.adicionarMensagemMilly('❌ Ops! Ocorreu um erro ao cadastrar. Tente novamente.', 'texto');
+            this.millyCadastroEmAndamento = null;
+            this.millyDadosColetados = {};
+        }
     }
 
     alternarSecao(secao) {
@@ -371,7 +1555,7 @@ class SistemaCadastro {
 
     atualizarPreviewTotemModal() {
         const nomeSenha = document.getElementById('nomeSenhaTotem')?.value || 'NOME DA SENHA';
-        const corFundo = document.getElementById('corFundoTotem')?.value || '#667eea';
+        const corFundo = document.getElementById('corFundoTotem')?.value || '#0066cc';
         const previewSenha = document.getElementById('previewSenhaTotem');
         const previewTexto = document.getElementById('previewTextoTotem');
 
@@ -484,8 +1668,8 @@ class SistemaCadastro {
             this.senhaTotemEditando = null;
             form.reset();
             // Resetar valores padrão
-            document.getElementById('corFundoTotem').value = '#667eea';
-            document.getElementById('corFundoTextoTotem').value = '#667eea';
+            document.getElementById('corFundoTotem').value = '#0066cc';
+            document.getElementById('corFundoTextoTotem').value = '#0066cc';
             
             // Preencher unidade novamente após reset
             if (this.unidadeTotem) {
@@ -541,8 +1725,8 @@ class SistemaCadastro {
             exibirSwitch.checked = senhaTotem.exibir !== false; // padrão true
             this.atualizarVisibilidadeOrdemTotem();
         }
-        document.getElementById('corFundoTotem').value = senhaTotem.cor || '#667eea';
-        document.getElementById('corFundoTextoTotem').value = senhaTotem.cor || '#667eea';
+        document.getElementById('corFundoTotem').value = senhaTotem.cor || '#0066cc';
+        document.getElementById('corFundoTextoTotem').value = senhaTotem.cor || '#0066cc';
         document.getElementById('nomeSenhaTotem').value = senhaTotem.nome || '';
         setTimeout(() => this.atualizarPreviewTotemModal(), 100);
     }
@@ -1185,12 +2369,12 @@ class SistemaCadastro {
                     <td><strong>${senhaTotem.nome || ''}</strong></td>
                     <td>
                         <div class="detalhes-totem">
-                            <div class="cor-totem" style="background-color: ${senhaTotem.cor || '#667eea'}"></div>
-                            <span>${senhaTotem.cor || '#667eea'}</span>
+                            <div class="cor-totem" style="background-color: ${senhaTotem.cor || '#0066cc'}"></div>
+                            <span>${senhaTotem.cor || '#0066cc'}</span>
                         </div>
                     </td>
                     <td>
-                        <div class="preview-senha" style="background-color: ${senhaTotem.cor || '#667eea'}; color: ${this.obterCorTextoContraste(senhaTotem.cor || '#667eea')}; padding: 8px 16px; border-radius: 4px; font-size: 12px; text-align: center; font-weight: bold;">
+                        <div class="preview-senha" style="background-color: ${senhaTotem.cor || '#0066cc'}; color: ${this.obterCorTextoContraste(senhaTotem.cor || '#0066cc')}; padding: 8px 16px; border-radius: 4px; font-size: 12px; text-align: center; font-weight: bold;">
                             ${(senhaTotem.nome || '').toUpperCase()}
                         </div>
                     </td>
@@ -1639,7 +2823,7 @@ class SistemaCadastro {
             ordem: exibir ? parseInt(formData.get('ordemTotem') || '0') : null,
             exibir,
             unidade: this.unidadeTotem,
-            cor: formData.get('corFundoTotem') || '#667eea',
+            cor: formData.get('corFundoTotem') || '#0066cc',
             dataCriacao: new Date().toISOString()
         };
 
@@ -1729,6 +2913,54 @@ class SistemaCadastro {
         }
 
         return true;
+    }
+
+    validarSenhaTotemComMensagem(senhaTotem) {
+        if (!senhaTotem.unidade) {
+            return { valido: false, mensagem: 'Nome da empresa é obrigatório!' };
+        }
+
+        if (!senhaTotem.nome) {
+            return { valido: false, mensagem: 'Nome da senha é obrigatório!' };
+        }
+
+        if (!senhaTotem.cor) {
+            return { valido: false, mensagem: 'Cor de fundo é obrigatória!' };
+        }
+
+        // Ordem só é obrigatória se a senha for exibida no totem
+        if (senhaTotem.exibir !== false) {
+            if (!senhaTotem.ordem || senhaTotem.ordem < 1 || senhaTotem.ordem > 12) {
+                return { valido: false, mensagem: 'Ordem deve estar entre 1 e 12!' };
+            }
+        }
+
+        // Validar formato da cor
+        if (!/^#[0-9A-Fa-f]{6}$/.test(senhaTotem.cor)) {
+            return { valido: false, mensagem: 'Formato de cor inválido! Use o formato #RRGGBB' };
+        }
+
+        // Verificar se já existe nome duplicado (apenas para novos cadastros)
+        if (!this.senhaTotemEditando) {
+            const nomeExiste = this.senhasTotem.some(s => 
+                (s.nome || '').toLowerCase() === senhaTotem.nome.toLowerCase()
+            );
+            
+            if (nomeExiste) {
+                return { valido: false, mensagem: 'Já existe uma senha do totem com este nome!' };
+            }
+        }
+
+        if (senhaTotem.exibir !== false && senhaTotem.ordem) {
+            const ordemOcupada = this.senhasTotem.some(s => 
+                s.ordem === senhaTotem.ordem && s.id !== senhaTotem.id
+            );
+            if (ordemOcupada) {
+                return { valido: false, mensagem: 'Esta posição já está ocupada! Escolha outra ordem.' };
+            }
+        }
+
+        return { valido: true, mensagem: '' };
     }
 
     salvarSenhasTotem() {
@@ -1826,7 +3058,7 @@ class SistemaCadastro {
             ordem: exibir ? parseInt(formData.get('ordemTotem') || '0') : null,
             exibir,
             unidade: this.unidadeTotem,
-            cor: formData.get('corFundoTotem') || '#667eea',
+            cor: formData.get('corFundoTotem') || '#0066cc',
             dataCriacao: new Date().toISOString()
         };
 
@@ -2052,8 +3284,8 @@ class SistemaCadastro {
         if (form) {
             form.reset();
         }
-        document.getElementById('corFundoTotemInline').value = '#667eea';
-        document.getElementById('corFundoTextoTotemInline').value = '#667eea';
+        document.getElementById('corFundoTotemInline').value = '#0066cc';
+        document.getElementById('corFundoTextoTotemInline').value = '#0066cc';
         document.getElementById('exibirNoTotemInline').checked = true;
         this.configurarOpcoesOrdemInline();
         this.atualizarPreviewTotemInline();
@@ -2129,7 +3361,7 @@ class SistemaCadastro {
 
     atualizarPreviewTotemInline() {
         const nomeSenha = document.getElementById('nomeSenhaTotemInline')?.value || 'NOME DA SENHA';
-        const cor = document.getElementById('corFundoTotemInline')?.value || '#667eea';
+        const cor = document.getElementById('corFundoTotemInline')?.value || '#0066cc';
         const preview = document.getElementById('previewSenhaTotemInline');
         const previewTexto = document.getElementById('previewTextoTotemInline');
         
@@ -2605,7 +3837,7 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             return;
         }
 
-        const btnEnviar = document.getElementById('btnEnviarEmailModal');
+            const btnEnviar = document.getElementById('btnEnviarEmailModal');
         if (btnEnviar) {
             btnEnviar.classList.add('btn-loading');
             btnEnviar.disabled = true;
@@ -2631,10 +3863,10 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             
             // Adicionar arquivos Excel como anexos
             if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
-                this.arquivosParaEnvio.forEach((arquivo, index) => {
-                    const blob = new Blob([arquivo.dados], {
-                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                    });
+            this.arquivosParaEnvio.forEach((arquivo, index) => {
+                const blob = new Blob([arquivo.dados], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                });
                     formData.append(`attachment_${index + 1}`, blob, arquivo.nome);
                 });
             }
@@ -2646,29 +3878,56 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             });
 
             if (response.ok) {
-                const result = await response.json();
+                // Verificar o tipo de conteúdo antes de fazer parse JSON
+                const contentType = response.headers.get('content-type');
+                let result = null;
                 
-                // Fechar modal
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        const text = await response.text();
+                        if (text.trim()) {
+                            result = JSON.parse(text);
+                        }
+                    } catch (parseError) {
+                        console.warn('Resposta não é JSON válido, mas o envio pode ter sido bem-sucedido:', parseError);
+                        // Se não conseguir fazer parse, assumir sucesso se status for OK
+                        result = { success: true };
+                    }
+                } else {
+                    // Se não for JSON, assumir sucesso se status for OK
+                    result = { success: true };
+                }
+
+            // Fechar modal
                 const modalEmail = document.getElementById('modalEmail');
                 if (modalEmail) {
                     this.fecharModal(modalEmail);
                 }
-                
-                this.mostrarNotificacao('Email enviado com sucesso! ✅', 'success');
-                
-                setTimeout(() => {
+            
+            this.mostrarNotificacao('Email enviado com sucesso! ✅', 'success');
+            
+            setTimeout(() => {
                     this.mostrarNotificacao('O email foi enviado para ' + emailDestino, 'info');
-                }, 2000);
+            }, 2000);
             } else {
-                throw new Error('Erro ao enviar email. Status: ' + response.status);
+                const errorText = await response.text().catch(() => 'Erro desconhecido');
+                throw new Error('Erro ao enviar email. Status: ' + response.status + ' - ' + errorText);
             }
         } catch (error) {
             console.error('Erro ao enviar email:', error);
-            this.mostrarNotificacao('Erro ao enviar email. Tente novamente.', 'error');
+            let mensagemErro = 'Erro ao enviar email. Tente novamente.';
+            
+            if (error.message && error.message.includes('JSON')) {
+                mensagemErro = 'Erro ao processar resposta do servidor. O email pode ter sido enviado. Verifique sua caixa de entrada.';
+            } else if (error.message && error.message.includes('Status:')) {
+                mensagemErro = 'Erro ao enviar email. Verifique sua conexão e tente novamente.';
+            }
+            
+            this.mostrarNotificacao(mensagemErro, 'error');
         } finally {
             if (btnEnviar) {
-                btnEnviar.classList.remove('btn-loading');
-                btnEnviar.disabled = false;
+            btnEnviar.classList.remove('btn-loading');
+            btnEnviar.disabled = false;
             }
         }
     }
@@ -2937,107 +4196,6 @@ Por favor, anexe os arquivos baixados a este email antes de enviar.`;
     }
 
     // ===========================
-    // SISTEMA DE TUTORIAL DA MILLY
-    // ===========================
-
-    definirPassosTutorial() {
-        return [
-            {
-                titulo: "Bem-vindo ao Sistema! 👋",
-                mensagem: "Olá! Eu sou a Milly, sua assistente virtual!<br><br>Estou aqui para te ajudar a usar o sistema de cadastro de credenciais. Vou te mostrar como tudo funciona passo a passo!<br><br>Este sistema permite cadastrar credenciais de funcionários e configurar senhas para o totem de atendimento."
-            },
-            {
-                titulo: "Navegação Principal 🧭",
-                mensagem: "Aqui você tem duas abas principais:<br><br>• <strong>Credenciais:</strong> Para cadastrar funcionários e profissionais<br>• <strong>Senhas do Totem:</strong> Para configurar as senhas que aparecerão no totem<br><br>Use os botões no topo para alternar entre as seções. Atualmente você está na seção de Credenciais."
-            },
-            {
-                titulo: "Cadastrando Credenciais 📝",
-                mensagem: "Para cadastrar novas credenciais, clique no botão <strong>'Novo Cadastro'</strong>.<br><br>Você pode cadastrar diferentes tipos:<br>• <strong>Recepção:</strong> Funcionários da recepção<br>• <strong>Medicina/Odontologia:</strong> Médicos e dentistas<br>• <strong>Laboratório:</strong> Funcionários do laboratório<br>• <strong>Pós Consulta:</strong> Funcionários de pós-consulta"
-            },
-            {
-                titulo: "Tipos de Cadastro 🏥",
-                mensagem: "Cada tipo de cadastro tem campos específicos:<br><br><strong>Para Recepção/Laboratório:</strong><br>• Nome do funcionário<br>• Senhas que irá chamar<br><br><strong>Para Medicina/Odontologia:</strong><br>• Tratamento (Dr./Dra.)<br>• Nome completo<br>• Especialidade"
-            },
-            {
-                titulo: "Gerenciando Dados 📊",
-                mensagem: "Na tabela principal você pode:<br><br>• <strong>Editar:</strong> Clique no ícone de lápis para modificar um cadastro<br>• <strong>Excluir:</strong> Clique no ícone de lixeira para remover<br>• <strong>Buscar:</strong> Use a barra de busca para filtrar por nome ou tipo<br><br>O sistema conta cada linha como uma credencial individual!"
-            },
-            {
-                titulo: "Senhas do Totem 🎯",
-                mensagem: "Na aba 'Senhas do Totem' você pode:<br><br>• Configurar até 12 senhas diferentes<br>• Escolher cores personalizadas<br>• Definir a ordem de exibição<br>• Ativar/desativar senhas<br><br>Use o botão 'Nova Senha' para adicionar senhas ao totem."
-            },
-            {
-                titulo: "Exportação e Email 📧",
-                mensagem: "Você pode exportar seus dados de duas formas:<br><br>• <strong>Exportar Excel:</strong> Baixa arquivos Excel com os dados<br>• <strong>Enviar por Email:</strong> Envia os arquivos por email automaticamente<br><br>Os arquivos incluem todas as credenciais e senhas do totem organizadas por tipo."
-            },
-            {
-                titulo: "Visualização do Totem 🖥️",
-                mensagem: "Para ver como ficará o totem, clique em <strong>'Ver Totem'</strong> na aba de senhas.<br><br>Isso mostra uma prévia de como as senhas aparecerão para os pacientes, com as cores e ordem que você definiu.<br><br>Perfeito para testar antes de colocar em produção!"
-            },
-            {
-                titulo: "Tutorial Concluído! 🎉",
-                mensagem: "Parabéns! Você agora conhece todas as funcionalidades do sistema.<br><br>Se precisar de ajuda novamente, é só clicar no botão de ajuda no canto inferior direito.<br><br>Boa sorte com seus cadastros! Estou sempre aqui para ajudar! 😊"
-            }
-        ];
-    }
-
-    abrirTutorialMilly() {
-        this.tutorialAtual = 0;
-        this.atualizarTutorialMilly();
-        document.getElementById('modalMilly').style.display = 'block';
-    }
-
-    fecharTutorialMilly() {
-        document.getElementById('modalMilly').style.display = 'none';
-    }
-
-    proximoPassoTutorial() {
-        if (this.tutorialAtual < this.tutorialPassos.length - 1) {
-            this.tutorialAtual++;
-            this.atualizarTutorialMilly();
-        } else {
-            // Se estiver na última etapa, fechar o modal
-            this.fecharTutorialMilly();
-        }
-    }
-
-    passoTutorialAnterior() {
-        if (this.tutorialAtual > 0) {
-            this.tutorialAtual--;
-            this.atualizarTutorialMilly();
-        }
-    }
-
-    atualizarTutorialMilly() {
-        const passo = this.tutorialPassos[this.tutorialAtual];
-        const totalPassos = this.tutorialPassos.length;
-        
-        // Atualizar mensagem
-        document.getElementById('millyMessage').innerHTML = `
-            <strong>${passo.titulo}</strong><br><br>
-            ${passo.mensagem}
-        `;
-        
-        // Atualizar progresso
-        document.getElementById('millyProgress').textContent = `${this.tutorialAtual + 1} de ${totalPassos}`;
-        
-        // Atualizar botões
-        const btnAnterior = document.getElementById('btnMillyAnterior');
-        const btnProximo = document.getElementById('btnMillyProximo');
-        
-        btnAnterior.style.display = this.tutorialAtual === 0 ? 'none' : 'inline-flex';
-        
-        if (this.tutorialAtual === totalPassos - 1) {
-            btnProximo.innerHTML = 'Finalizar';
-        } else {
-            btnProximo.innerHTML = `
-                Próximo
-                <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-                </svg>
-            `;
-        }
-    }
 
     criarArquivoExcel(dados, nomeAba) {
         try {

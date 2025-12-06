@@ -6,15 +6,30 @@
 }
 
 :root {
-    /* Paleta de Cores Moderna */
-    --primary-600: #4f46e5;
-    --primary-700: #4338ca;
-    --primary-50: #eef2ff;
-    --primary-100: #e0e7ff;
+    /* Paleta de Cores Intelite - Azul, Branco e Cinza */
+    --intelite-blue-50: #e6f0ff;
+    --intelite-blue-100: #b3d4ff;
+    --intelite-blue-200: #80b8ff;
+    --intelite-blue-300: #4d9cff;
+    --intelite-blue-400: #1a80ff;
+    --intelite-blue-500: #0066cc;
+    --intelite-blue-600: #0052a3;
+    --intelite-blue-700: #003d7a;
+    --intelite-blue-800: #002952;
+    --intelite-blue-900: #001429;
     
-    --accent-500: #06b6d4;
-    --accent-600: #0891b2;
-    --accent-50: #ecfeff;
+    --primary-600: #0066cc;
+    --primary-700: #0052a3;
+    --primary-500: #1a80ff;
+    --primary-400: #4d9cff;
+    --primary-300: #80b8ff;
+    --primary-200: #b3d4ff;
+    --primary-100: #e0e7ff;
+    --primary-50: #e6f0ff;
+    
+    --accent-500: #0066cc;
+    --accent-600: #0052a3;
+    --accent-50: #e6f0ff;
     
     --success-500: #10b981;
     --success-600: #059669;
@@ -72,9 +87,9 @@
     /* Fontes */
     --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     
-    --brand-500: #667eea;
-    --brand-600: #5a6fd8;
-    --brand-700: #4f5fc4;
+    --brand-500: var(--intelite-blue-500);
+    --brand-600: var(--intelite-blue-600);
+    --brand-700: var(--intelite-blue-700);
     --success-500: #16a34a;
     --danger-500: #ef4444;
     --info-500: #0ea5e9;
@@ -82,18 +97,23 @@
 
 body {
     font-family: var(--font-sans);
-    background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+    background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 50%, var(--gray-100) 100%);
     min-height: 100vh;
     color: var(--gray-900);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    flex-direction: column;
 }
 
 .container {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: var(--space-6);
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Header Moderno */
@@ -101,14 +121,14 @@ header {
     background: var(--white);
     border-radius: var(--radius-2xl);
     margin-bottom: var(--space-8);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     overflow: hidden;
     border: 1px solid var(--gray-200);
 }
 
 /* Brand Section */
 .header-brand {
-    background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+    background: linear-gradient(135deg, var(--intelite-blue-600) 0%, var(--intelite-blue-700) 100%);
     padding: var(--space-6) var(--space-8);
     color: var(--white);
 }
@@ -159,13 +179,13 @@ header {
 
 .nav-tab:hover {
     background: var(--white);
-    color: var(--primary-600);
+    color: var(--intelite-blue-600);
 }
 
 .nav-tab.active {
     background: var(--white);
-    color: var(--primary-600);
-    border-bottom-color: var(--primary-600);
+    color: var(--intelite-blue-600);
+    border-bottom-color: var(--intelite-blue-600);
 }
 
 .nav-icon {
@@ -261,17 +281,17 @@ header {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--brand-500), #764ba2);
-    border-color: var(--brand-500);
+    background: linear-gradient(135deg, var(--intelite-blue-500), var(--intelite-blue-600));
+    border-color: var(--intelite-blue-500);
     color: #fff;
-    box-shadow: 0 8px 24px rgba(102,126,234,.35);
+    box-shadow: 0 8px 24px rgba(0,102,204,.35);
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--brand-600), #6a4190);
-    border-color: var(--brand-600);
+    background: linear-gradient(135deg, var(--intelite-blue-600), var(--intelite-blue-700));
+    border-color: var(--intelite-blue-600);
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(102,126,234,.35);
+    box-shadow: 0 8px 24px rgba(0,102,204,.45);
 }
 
 .btn-secondary {
@@ -297,17 +317,17 @@ header {
 }
 
 .btn-accent {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-color: #667eea;
+    background: linear-gradient(135deg, var(--intelite-blue-500) 0%, var(--intelite-blue-600) 100%);
+    border-color: var(--intelite-blue-500);
     color: var(--white);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4);
 }
 
 .btn-accent:hover:not(:disabled) {
-    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-    border-color: #5a6fd8;
+    background: linear-gradient(135deg, var(--intelite-blue-600) 0%, var(--intelite-blue-700) 100%);
+    border-color: var(--intelite-blue-600);
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 6px 16px rgba(0, 102, 204, 0.5);
 }
 
 .btn-success {
@@ -359,17 +379,22 @@ header {
     background: var(--white);
     border-radius: var(--radius-2xl);
     padding: var(--space-8);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     border: 1px solid var(--gray-200);
+    margin-bottom: var(--space-6);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Unidade Atual */
 .unidade-atual-container {
     margin-bottom: var(--space-6);
+    width: 100%;
 }
 
 .unidade-atual {
-    background: linear-gradient(135deg, var(--accent-500) 0%, var(--accent-600) 100%);
+    background: linear-gradient(135deg, var(--intelite-blue-500) 0%, var(--intelite-blue-600) 100%);
     color: var(--white);
     padding: var(--space-4) var(--space-6);
     border-radius: var(--radius-xl);
@@ -404,24 +429,25 @@ header {
 /* Barra de Busca */
 .search-bar {
     margin-bottom: var(--space-6);
+    width: 100%;
 }
 
 .search-bar input {
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
     padding: var(--space-3) var(--space-4);
     border: 2px solid var(--gray-200);
     border-radius: var(--radius-lg);
     font-size: 0.875rem;
     transition: all 0.2s ease;
-    background: var(--gray-50);
+    background: var(--white);
 }
 
 .search-bar input:focus {
     outline: none;
-    border-color: var(--primary-500);
+    border-color: var(--intelite-blue-500);
     background: var(--white);
-    box-shadow: 0 0 0 3px var(--primary-100);
+    box-shadow: 0 0 0 3px var(--intelite-blue-50);
 }
 
 .search-bar input::placeholder {
@@ -433,15 +459,15 @@ header {
     text-align: center;
     margin-bottom: var(--space-6);
     padding: var(--space-4);
-    background: var(--primary-50);
+    background: var(--intelite-blue-50);
     border-radius: var(--radius-lg);
     color: var(--gray-700);
     font-size: 0.875rem;
-    border: 1px solid var(--primary-200);
+    border: 1px solid var(--intelite-blue-200);
 }
 
 .totem-contador strong {
-    color: var(--primary-600);
+    color: var(--intelite-blue-600);
     font-weight: 600;
 }
 
@@ -461,6 +487,8 @@ header {
     border-radius: 12px;
     border: 1px solid var(--gray-200);
     background: var(--white);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 table {
@@ -469,12 +497,12 @@ table {
 }
 
 th {
-    background: #f8fafc;
+    background: linear-gradient(135deg, var(--intelite-blue-50) 0%, var(--gray-50) 100%);
     padding: var(--space-4) var(--space-6);
     text-align: left;
     font-weight: 700;
-    color: #334155;
-    border-bottom: 1px solid var(--gray-200);
+    color: var(--intelite-blue-700);
+    border-bottom: 2px solid var(--intelite-blue-200);
     font-size: 0.875rem;
 }
 
@@ -606,8 +634,8 @@ tr:last-child td {
 .profissionais-table select:focus,
 .profissionais-table input:focus {
     outline: none;
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 2px var(--primary-100);
+    border-color: var(--intelite-blue-500);
+    box-shadow: 0 0 0 2px var(--intelite-blue-50);
 }
 
 /* Tabela de Profissionais (3 colunas) - Medicina/Odonto */
@@ -689,16 +717,38 @@ tr:last-child td {
 
 /* Formulários Inline tipo Planilha */
 .formulario-inline {
-    background: var(--white);
-    border: 2px solid var(--gray-200);
+    background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+    border: 2px solid var(--intelite-blue-200);
     border-radius: var(--radius-xl);
     padding: var(--space-6);
     margin-bottom: var(--space-6);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.08);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Layout de Grid para Formulários Inline */
+.formulario-inline form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-5);
+    width: 100%;
+}
+
+@media (min-width: 1200px) {
+    .formulario-inline form {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .form-group-inline {
     margin-bottom: var(--space-4);
+    width: 100%;
+}
+
+/* Campos que devem ocupar toda a largura */
+.form-group-inline.full-width {
+    grid-column: 1 / -1;
 }
 
 .form-group-inline label {
@@ -718,7 +768,7 @@ tr:last-child td {
     font-size: 0.875rem;
     transition: all 0.2s ease;
     font-family: inherit;
-    background: var(--gray-50);
+    background: var(--white);
     min-height: 44px;
     box-sizing: border-box;
 }
@@ -726,9 +776,9 @@ tr:last-child td {
 .form-group-inline input:focus,
 .form-group-inline select:focus {
     outline: none;
-    border-color: var(--primary-500);
+    border-color: var(--intelite-blue-500);
     background: var(--white);
-    box-shadow: 0 0 0 4px rgba(102,126,234,.12);
+    box-shadow: 0 0 0 4px rgba(0,102,204,.12);
 }
 
 .form-group-inline small {
@@ -742,6 +792,8 @@ tr:last-child td {
     border-top: 1px solid var(--gray-200);
     margin-top: var(--space-4);
     padding-top: var(--space-4);
+    grid-column: 1 / -1;
+    width: 100%;
 }
 
 .form-actions-inline {
@@ -751,6 +803,8 @@ tr:last-child td {
     margin-top: var(--space-4);
     padding-top: var(--space-4);
     border-top: 1px solid var(--gray-200);
+    grid-column: 1 / -1;
+    width: 100%;
 }
 
 /* Modais */
@@ -774,7 +828,7 @@ tr:last-child td {
     width: 92%;
     max-width: 820px;
     border: 1px solid var(--gray-200);
-    box-shadow: 0 30px 70px rgba(0,0,0,.25);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
 
 .modal-small { max-width: 520px; }
@@ -792,7 +846,7 @@ tr:last-child td {
 /* Estado de foco consistente nos inputs dentro dos modais */
 .modal input, .modal select, .modal textarea { border: 2px solid var(--gray-200); }
 
-.modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--brand-500); box-shadow: 0 0 0 4px rgba(102,126,234,.12); }
+.modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--intelite-blue-500); box-shadow: 0 0 0 4px rgba(0,102,204,.12); }
 
 /* Formulários */
 form {
@@ -824,7 +878,7 @@ form {
     font-size: 0.875rem;
     transition: all 0.2s ease;
     font-family: inherit;
-    background: var(--gray-50);
+    background: var(--white);
     min-height: 44px;
     box-sizing: border-box;
 }
@@ -833,9 +887,9 @@ form {
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: var(--primary-500);
+    border-color: var(--intelite-blue-500);
     background: var(--white);
-    box-shadow: 0 0 0 4px rgba(102,126,234,.12);
+    box-shadow: 0 0 0 4px rgba(0,102,204,.12);
 }
 
 .form-group textarea {
@@ -891,7 +945,7 @@ form {
 
 /* Preview */
 .preview-senha {
-    background: var(--primary-600);
+    background: var(--intelite-blue-600);
     color: var(--white);
     padding: var(--space-4);
     border-radius: 10px;
@@ -944,7 +998,7 @@ form {
 }
 
 .totem-header {
-    background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+    background: linear-gradient(135deg, var(--intelite-blue-600) 0%, var(--intelite-blue-700) 100%);
     padding: var(--space-4) var(--space-6);
     display: flex;
     justify-content: space-between;
@@ -1683,12 +1737,12 @@ form {
 
 /* Estilo específico para o campo de email do remetente */
 #emailRemetente {
-    border-color: var(--primary-300);
+    border-color: var(--intelite-blue-300);
 }
 
 #emailRemetente:focus {
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 3px var(--primary-100);
+    border-color: var(--intelite-blue-500);
+    box-shadow: 0 0 0 3px var(--intelite-blue-50);
 }
 
 /* Loading state para o botão de enviar email */
@@ -1721,14 +1775,14 @@ form {
 /* Melhorias para o Modal de Email com FormSubmit */
 #modalEmail .form-group input[name="nome"],
 #modalEmail .form-group input[name="email"] {
-    border-color: var(--primary-300);
+    border-color: var(--intelite-blue-300);
     background: var(--white);
 }
 
 #modalEmail .form-group input[name="nome"]:focus,
 #modalEmail .form-group input[name="email"]:focus {
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 3px var(--primary-100);
+    border-color: var(--intelite-blue-500);
+    box-shadow: 0 0 0 3px var(--intelite-blue-50);
 }
 
 /* Indicador visual para campos obrigatórios */
@@ -1826,36 +1880,93 @@ form {
    =========================== */
 
 .footer {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--intelite-blue-700) 0%, var(--intelite-blue-800) 100%);
     color: white;
-    text-align: center;
-    padding: 20px 0;
+    padding: var(--space-8) 0;
     margin-top: auto;
-    margin-top: 40px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 3px solid var(--intelite-blue-500);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .footer-content {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 var(--space-6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.footer-logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-2);
+}
+
+.footer-logo {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+    opacity: 0.95;
+    transition: opacity 0.3s ease;
+}
+
+.footer-logo:hover {
+    opacity: 1;
+}
+
+.footer-text {
+    text-align: center;
 }
 
 .footer p {
     margin: 0;
     font-size: 14px;
     opacity: 0.9;
+    color: var(--white);
 }
 
 .footer strong {
     font-weight: 600;
-    color: #fff;
+    color: var(--white);
+}
+
+/* Responsividade para formulários inline */
+@media (max-width: 768px) {
+    .formulario-inline form {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+    
+    .form-group-inline.full-width {
+        grid-column: 1;
+    }
+    
+    .campos-especificos-inline {
+        grid-column: 1;
+    }
+    
+    .form-actions-inline {
+        grid-column: 1;
+    }
 }
 
 /* Responsividade do footer */
 @media (max-width: 768px) {
     .footer {
-        padding: 15px 0;
+        padding: var(--space-6) 0;
+    }
+    
+    .footer-content {
+        padding: 0 var(--space-4);
+        gap: var(--space-3);
+    }
+    
+    .footer-logo {
+        height: 40px;
     }
     
     .footer p {
@@ -2123,8 +2234,8 @@ form {
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
-        border-color: var(--primary-500) !important;
-        box-shadow: 0 0 0 4px rgba(102,126,234,.12) !important;
+        border-color: var(--intelite-blue-500) !important;
+        box-shadow: 0 0 0 4px rgba(0,102,204,.12) !important;
         outline: none !important;
     }
     
@@ -2379,7 +2490,7 @@ form {
     .form-group select:focus,
     .form-group textarea:focus {
         border-color: var(--primary-500) !important;
-        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1) !important;
+        box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1) !important;
         outline: none !important;
     }
     
@@ -2618,6 +2729,400 @@ form {
 }
 
 /* ===========================
+   ASSISTENTE MILLY - BOTÃO FLUTUANTE
+   ========================== */
+
+.btn-milly-flutuante {
+    position: fixed;
+    bottom: -25px;
+    right: -10px;
+    width: 140px;
+    height: 140px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    transition: all 0.3s ease;
+    padding: 0;
+    margin: 0;
+}
+
+.btn-milly-flutuante:hover {
+    transform: translateY(-5px) scale(1.05);
+}
+
+.btn-milly-flutuante:active {
+    transform: translateY(-2px) scale(1.02);
+}
+
+.milly-flutuante-img {
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+    pointer-events: none;
+}
+
+/* ===========================
+   MODAL DE CHAT DA MILLY
+   ========================== */
+
+.modal-milly-chat {
+    z-index: 1001;
+}
+
+.modal-milly-chat-content {
+    max-width: 500px;
+    width: 90%;
+    max-height: 85vh;
+    margin: 5% auto;
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.milly-chat-header {
+    background: linear-gradient(135deg, var(--intelite-blue-500) 0%, var(--intelite-blue-600) 100%);
+    padding: var(--space-4) var(--space-6);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--white);
+}
+
+.milly-chat-avatar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.milly-chat-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid var(--white);
+    object-fit: contain;
+    background: var(--white);
+}
+
+.milly-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.875rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.btn-fechar-chat {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: var(--white);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.btn-fechar-chat:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.btn-fechar-chat svg {
+    width: 20px;
+    height: 20px;
+}
+
+.milly-chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-6);
+    background: var(--gray-50);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    max-height: calc(85vh - 200px);
+}
+
+.milly-message-bubble,
+.user-message-bubble {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+    animation: slideInMessage 0.3s ease;
+}
+
+@keyframes slideInMessage {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.milly-message-bubble {
+    flex-direction: row;
+}
+
+.user-message-bubble {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: var(--white);
+    border: 2px solid var(--intelite-blue-200);
+}
+
+.message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.message-content {
+    flex: 1;
+    background: var(--white);
+    padding: var(--space-4);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    max-width: 80%;
+}
+
+.user-message-bubble .message-content {
+    background: var(--intelite-blue-500);
+    color: var(--white);
+}
+
+.message-content p {
+    margin: 0 0 var(--space-2) 0;
+    line-height: 1.6;
+    font-size: 0.875rem;
+}
+
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+
+.message-content ul {
+    margin: var(--space-2) 0;
+    padding-left: var(--space-5);
+}
+
+.message-content li {
+    margin-bottom: var(--space-1);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.milly-chat-input-container {
+    background: var(--white);
+    border-top: 1px solid var(--gray-200);
+    padding: var(--space-4);
+}
+
+.milly-chat-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
+.suggestion-btn {
+    padding: var(--space-2) var(--space-3);
+    background: var(--intelite-blue-50);
+    border: 1px solid var(--intelite-blue-200);
+    border-radius: 20px;
+    color: var(--intelite-blue-700);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.suggestion-btn:hover {
+    background: var(--intelite-blue-100);
+    border-color: var(--intelite-blue-300);
+    transform: translateY(-1px);
+}
+
+.milly-chat-input-wrapper {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+}
+
+.milly-chat-input {
+    flex: 1;
+    padding: var(--space-3) var(--space-4);
+    border: 2px solid var(--gray-200);
+    border-radius: 24px;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    background: var(--gray-50);
+    resize: none;
+    overflow-y: auto;
+    min-height: 44px;
+    max-height: 120px;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.milly-chat-input:focus {
+    outline: none;
+    border-color: var(--intelite-blue-500);
+    background: var(--white);
+    box-shadow: 0 0 0 3px var(--intelite-blue-50);
+}
+
+.btn-enviar-chat {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: linear-gradient(135deg, var(--intelite-blue-500) 0%, var(--intelite-blue-600) 100%);
+    border-radius: 50%;
+    color: var(--white);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-enviar-chat:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4);
+}
+
+.btn-enviar-chat:active {
+    transform: scale(0.95);
+}
+
+.btn-enviar-chat svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Responsividade do Chat da Milly */
+@media (max-width: 768px) {
+    .btn-milly-flutuante {
+        width: 120px;
+        height: 120px;
+        bottom: -20px;
+        right: -8px;
+    }
+
+    .milly-flutuante-img {
+        width: 120px;
+        height: 120px;
+    }
+
+    .modal-milly-chat-content {
+        width: 95%;
+        max-height: 90vh;
+        margin: 5% auto;
+    }
+
+    .milly-chat-header {
+        padding: var(--space-3) var(--space-4);
+    }
+
+    .milly-chat-img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .milly-chat-body {
+        padding: var(--space-4);
+        max-height: calc(90vh - 180px);
+    }
+
+    .message-content {
+        max-width: 85%;
+        font-size: 0.8rem;
+    }
+
+    .milly-chat-input-container {
+        padding: var(--space-3);
+    }
+
+    .suggestion-btn {
+        font-size: 0.7rem;
+        padding: var(--space-1) var(--space-2);
+    }
+}
+
+@media (max-width: 480px) {
+    .btn-milly-flutuante {
+        width: 100px;
+        height: 100px;
+        bottom: -15px;
+        right: -5px;
+    }
+
+    .milly-flutuante-img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .modal-milly-chat-content {
+        width: 98%;
+        max-height: 95vh;
+        margin: 2% auto;
+    }
+
+    .milly-chat-body {
+        padding: var(--space-3);
+        max-height: calc(95vh - 160px);
+    }
+
+    .message-content {
+        max-width: 90%;
+        padding: var(--space-3);
+    }
+
+    .milly-chat-input {
+        font-size: 16px; /* Evita zoom no iOS */
+    }
+}
+
+/* ===========================
    OTIMIZAÇÕES MOBILE & TOUCH
    ========================== */
 
@@ -2671,7 +3176,7 @@ form {
     textarea:focus {
         outline: none !important;
         border-color: var(--primary-500) !important;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1) !important;
     }
     
     /* Scroll suave em containers */
@@ -2866,7 +3371,7 @@ form {
 }
 
 input:checked + .slider {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--intelite-blue-500) 0%, var(--intelite-blue-600) 100%);
 }
 
 input:checked + .slider:before {
@@ -2934,253 +3439,4 @@ input:checked + .slider:before {
 .acoes-btn .btn { padding: 8px; width: 42px; height: 36px; display: inline-flex; align-items: center; justify-content: center; }
 .acoes-btn .btn .btn-icon { width: 16px; height: 16px; }
 
-/* ===========================
-   BOTÃO FLUTUANTE DE AJUDA
-   ========================== */
-
-.btn-ajuda-flutuante {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    color: white;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    animation: pulse 2s infinite;
-}
-
-.btn-ajuda-flutuante:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
-}
-
-.btn-ajuda-flutuante:active {
-    transform: translateY(0) scale(0.95);
-}
-
-.btn-ajuda-icon {
-    width: 28px;
-    height: 28px;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-    }
-    50% {
-        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6), 0 0 0 10px rgba(102, 126, 234, 0.1);
-    }
-    100% {
-        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-    }
-}
-
-/* ===========================
-   MODAL DA ASSISTENTE MILLY
-   ========================== */
-
-.modal-milly {
-    z-index: 1001;
-}
-
-.modal-milly-content {
-    max-width: 500px;
-    width: 90%;
-    margin: 5% auto;
-    border-radius: 20px;
-    overflow: hidden;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border: 2px solid #e2e8f0;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-}
-
-.milly-container {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-}
-
-.milly-avatar {
-    text-align: center;
-    padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.milly-image {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    border: 4px solid white;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    object-fit: cover;
-}
-
-.milly-dialog {
-    padding: 30px;
-    position: relative;
-}
-
-.milly-speech-bubble {
-    background: white;
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    position: relative;
-    border: 2px solid #e2e8f0;
-}
-
-.milly-speech-bubble::before {
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: 30px;
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 10px solid white;
-}
-
-.milly-speech-bubble::after {
-    content: '';
-    position: absolute;
-    top: -12px;
-    left: 28px;
-    width: 0;
-    height: 0;
-    border-left: 12px solid transparent;
-    border-right: 12px solid transparent;
-    border-bottom: 12px solid #e2e8f0;
-    z-index: -1;
-}
-
-.milly-message {
-    font-size: 16px;
-    line-height: 1.6;
-    color: #334155;
-    margin: 0;
-}
-
-.milly-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-}
-
-.milly-progress {
-    background: #e2e8f0;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #64748b;
-    flex: 1;
-    text-align: center;
-}
-
-.btn-milly-close {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #64748b;
-    transition: all 0.2s ease;
-    z-index: 10;
-}
-
-.btn-milly-close:hover {
-    background: #ef4444;
-    color: white;
-    transform: scale(1.1);
-}
-
-.btn-milly-close svg {
-    width: 16px;
-    height: 16px;
-}
-
-/* Responsividade do Modal da Milly */
-@media (max-width: 768px) {
-    .modal-milly-content {
-        width: 95%;
-        margin: 10% auto;
-    }
-    
-    .milly-avatar {
-        padding: 15px;
-    }
-    
-    .milly-image {
-        width: 100px;
-        height: 100px;
-    }
-    
-    .milly-dialog {
-        padding: 20px;
-    }
-    
-    .milly-message {
-        font-size: 14px;
-    }
-    
-    .milly-controls {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .milly-progress {
-        order: -1;
-    }
-}
-
-@media (max-width: 480px) {
-    .btn-ajuda-flutuante {
-        bottom: 20px;
-        right: 20px;
-        width: 50px;
-        height: 50px;
-    }
-    
-    .btn-ajuda-icon {
-        width: 24px;
-        height: 24px;
-    }
-    
-    .modal-milly-content {
-        width: 98%;
-        margin: 5% auto;
-    }
-    
-    .milly-image {
-        width: 80px;
-        height: 80px;
-    }
-    
-    .milly-dialog {
-        padding: 15px;
-    }
-    
-    .milly-speech-bubble {
-        padding: 15px;
-    }
-}
 

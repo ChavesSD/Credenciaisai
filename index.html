@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#0066cc">
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="shortcut icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
-    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-TileColor" content="#0066cc">
     <meta name="msapplication-TileImage" content="favicon.png">
     
     <title>Cadastro de Credenciais</title>
@@ -92,6 +92,19 @@
             <!-- Seção Cadastro de Credenciais -->
             <div id="secaoCredenciais" class="secao-conteudo active">
                 <div class="lista-container">
+                    <!-- Nome da Empresa Atual (aparece quando já definida) -->
+                    <div id="unidadeAtualCredenciaisInline" class="unidade-atual-container" style="display: none;">
+                        <div class="unidade-atual">
+                            <div>
+                                <strong>Empresa:</strong>
+                                <span id="unidadeAtualTextoCredenciaisInline"></span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="sistema.permitirAlterarUnidadeCredenciaisInline()">
+                                Alterar
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="search-bar">
                         <input type="text" id="searchInput" placeholder="Buscar por nome ou tipo...">
                     </div>
@@ -99,21 +112,8 @@
                     <!-- Formulário Inline de Cadastro -->
                     <div id="formularioInlineCredenciais" class="formulario-inline">
                         <form id="formCadastroInline">
-                            <!-- Nome da Empresa Atual (aparece quando já definida) -->
-                            <div id="unidadeAtualCredenciaisInline" class="unidade-atual-container" style="display: none;">
-                                <div class="unidade-atual">
-                                    <div>
-                                        <strong>Empresa:</strong>
-                                        <span id="unidadeAtualTextoCredenciaisInline"></span>
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-secondary" onclick="sistema.permitirAlterarUnidadeCredenciaisInline()">
-                                        Alterar
-                                    </button>
-                                </div>
-                            </div>
-
                             <!-- Campo de Nome da Empresa (aparece quando não definida) -->
-                            <div id="campoUnidadeCredenciaisInline" class="form-group-inline">
+                            <div id="campoUnidadeCredenciaisInline" class="form-group-inline full-width">
                                 <label for="unidadeCredenciaisInline">Nome da Empresa *</label>
                                 <input type="text" id="unidadeCredenciaisInline" name="unidadeCredenciais" placeholder="Ex: Clínica São Paulo, Hospital Central" required>
                                 <small>Nome da empresa ou instituição</small>
@@ -134,7 +134,7 @@
                             </div>
 
                             <!-- Campo para Novo Tipo Personalizado -->
-                            <div id="campoNovoTipoInline" class="form-group-inline" style="display: none;">
+                            <div id="campoNovoTipoInline" class="form-group-inline full-width" style="display: none;">
                                 <label for="novoTipoNomeInline">Nome do Novo Tipo *</label>
                                 <input type="text" id="novoTipoNomeInline" name="novoTipoNome" placeholder="Ex: Fisioterapia, Nutrição, etc...">
                                 <small>Digite o nome do novo tipo que será salvo para uso futuro</small>
@@ -234,13 +234,13 @@
                     <!-- Formulário Inline de Senha do Totem -->
                     <div id="formularioInlineTotem" class="formulario-inline">
                         <form id="formSenhaTotemInline">
-                            <div class="form-group-inline">
+                            <div class="form-group-inline full-width">
                                 <label for="unidadeTotemInline">Nome da Empresa *</label>
                                 <input type="text" id="unidadeTotemInline" name="unidadeTotem" placeholder="Ex: Clínica São Paulo, Hospital Central" required>
                                 <small>Nome da empresa ou instituição</small>
                             </div>
                             
-                            <div class="form-group-inline">
+                            <div class="form-group-inline full-width">
                                 <label for="nomeSenhaTotemInline">Nome da Senha *</label>
                                 <input type="text" id="nomeSenhaTotemInline" name="nomeSenhaTotem" placeholder="Ex: MEDICINA GERAL, CARDIOLOGIA, PEDIATRIA..." required>
                                 <small>Digite o nome da senha que aparecerá no totem</small>
@@ -270,13 +270,13 @@
                             <div class="form-group-inline">
                                 <label for="corFundoTotemInline">Cor de Fundo *</label>
                                 <div class="color-input-container">
-                                    <input type="color" id="corFundoTotemInline" name="corFundoTotem" value="#667eea" required>
-                                    <input type="text" id="corFundoTextoTotemInline" name="corFundoTextoTotem" value="#667eea" placeholder="#667eea" maxlength="7" required>
+                                    <input type="color" id="corFundoTotemInline" name="corFundoTotem" value="#0066cc" required>
+                                    <input type="text" id="corFundoTextoTotemInline" name="corFundoTextoTotem" value="#0066cc" placeholder="#0066cc" maxlength="7" required>
                                 </div>
                                 <small>Escolha a cor de fundo que a senha terá no totem</small>
                             </div>
                             
-                            <div class="form-group-inline">
+                            <div class="form-group-inline full-width">
                                 <label>Pré-visualização da Senha</label>
                                 <div id="previewSenhaTotemInline" class="preview-senha">
                                     <span id="previewTextoTotemInline">NOME DA SENHA</span>
@@ -473,8 +473,8 @@
                 <div class="form-group">
                     <label for="corFundoTotem">Cor de Fundo *</label>
                     <div class="color-input-container">
-                        <input type="color" id="corFundoTotem" name="corFundoTotem" value="#667eea" required>
-                        <input type="text" id="corFundoTextoTotem" name="corFundoTextoTotem" value="#667eea" placeholder="#667eea" maxlength="7" required>
+                        <input type="color" id="corFundoTotem" name="corFundoTotem" value="#0066cc" required>
+                        <input type="text" id="corFundoTextoTotem" name="corFundoTextoTotem" value="#0066cc" placeholder="#0066cc" maxlength="7" required>
                     </div>
                     <small>Escolha a cor de fundo que a senha terá no totem</small>
                 </div>
@@ -646,57 +646,61 @@
         </div>
     </div>
 
-    <!-- Botão Flutuante de Ajuda -->
-    <button id="btnAjuda" class="btn-ajuda-flutuante" title="Precisa de ajuda? Clique aqui!">
-        <svg class="btn-ajuda-icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
-        </svg>
+    <!-- Botão Flutuante da Assistente Milly -->
+    <button id="btnMillyAssistente" class="btn-milly-flutuante" title="Fale com a Milly, sua assistente virtual!">
+        <img src="Milly_semfundo.png" alt="Assistente Milly" class="milly-flutuante-img">
     </button>
 
-    <!-- Modal da Assistente Milly -->
-    <div id="modalMilly" class="modal modal-milly">
-        <div class="modal-content modal-milly-content">
-            <div class="milly-container">
-                <!-- Imagem da Milly -->
-                <div class="milly-avatar">
-                    <img src="Milly.png" alt="Assistente Milly" class="milly-image">
+    <!-- Modal de Conversação com a Milly -->
+    <div id="modalMillyChat" class="modal modal-milly-chat">
+        <div class="modal-content modal-milly-chat-content">
+            <div class="milly-chat-header">
+                <div class="milly-chat-avatar">
+                    <img src="Milly_semfundo.png" alt="Milly" class="milly-chat-img">
+                    <div class="milly-status">
+                        <span class="status-dot"></span>
+                        <span>Milly está online</span>
+                    </div>
                 </div>
-                
-                <!-- Conteúdo do diálogo -->
-                <div class="milly-dialog">
-                    <div class="milly-speech-bubble">
-                        <div id="millyMessage" class="milly-message">
-                            Olá! Eu sou a Milly, sua assistente virtual! 👋<br><br>
-                            Estou aqui para te ajudar a usar o sistema de cadastro de credenciais. 
-                            Vou te mostrar como tudo funciona passo a passo!
-                        </div>
+                <button id="btnFecharMillyChat" class="btn-fechar-chat">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="milly-chat-body" id="millyChatBody">
+                <div class="milly-message-bubble milly-message">
+                    <div class="message-avatar">
+                        <img src="Milly_semfundo.png" alt="Milly">
                     </div>
-                    
-                    <!-- Controles do tutorial -->
-                    <div class="milly-controls">
-                        <button id="btnMillyAnterior" class="btn btn-secondary btn-sm" style="display: none;">
-                            <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                            </svg>
-                            Anterior
-                        </button>
-                        
-                        <div class="milly-progress">
-                            <span id="millyProgress">1 de 8</span>
-                        </div>
-                        
-                        <button id="btnMillyProximo" class="btn btn-primary btn-sm">
-                            Próximo
-                            <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-                            </svg>
-                        </button>
+                    <div class="message-content">
+                        <p>Olá! 👋 Eu sou a Milly, sua assistente virtual!</p>
+                        <p>Estou aqui para te ajudar com:</p>
+                        <ul>
+                            <li>📝 Cadastrar credenciais e senhas do totem</li>
+                            <li>📊 Exportar dados para Excel</li>
+                            <li>📧 Enviar relatórios por email</li>
+                            <li>❓ Tirar dúvidas sobre o sistema</li>
+                        </ul>
+                        <p>Como posso te ajudar hoje?</p>
                     </div>
-                    
-                    <!-- Botão de fechar -->
-                    <button id="btnMillyFechar" class="btn-milly-close">
+                </div>
+            </div>
+            
+            <div class="milly-chat-input-container">
+                <div class="milly-chat-suggestions" id="millyChatSuggestions">
+                    <button class="suggestion-btn" data-action="cadastrar">Cadastrar credenciais</button>
+                    <button class="suggestion-btn" data-action="totem">Cadastrar senha do totem</button>
+                    <button class="suggestion-btn" data-action="exportar">Exportar Excel</button>
+                    <button class="suggestion-btn" data-action="email">Enviar por email</button>
+                    <button class="suggestion-btn" data-action="ajuda">Preciso de ajuda</button>
+                </div>
+                <div class="milly-chat-input-wrapper">
+                    <textarea id="millyChatInput" class="milly-chat-input" placeholder="Digite sua mensagem... (Shift+Enter para nova linha)" autocomplete="off" rows="1"></textarea>
+                    <button id="btnEnviarMillyChat" class="btn-enviar-chat">
                         <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                         </svg>
                     </button>
                 </div>
@@ -707,7 +711,12 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
-            <p>&copy; 2025 - Desenvolvido por <strong>Deyvison Chaves</strong></p>
+            <div class="footer-logo-container">
+                <img src="logo-intelite.png" alt="Intelite" class="footer-logo">
+            </div>
+            <div class="footer-text">
+                <p>&copy; 2025 - Desenvolvido por <strong>Deyvison Chaves</strong></p>
+            </div>
         </div>
     </footer>
 
