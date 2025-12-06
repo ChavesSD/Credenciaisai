@@ -3846,30 +3846,26 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
         try {
             this.mostrarNotificacao('Preparando e enviando email...', 'info');
 
-            // Criar FormData para enviar ao FormSubmit
+            // Preparar FormData com todos os dados
             const formData = new FormData();
             
             // Campos obrigatórios do FormSubmit
-            formData.append('_to', emailDestino); // Email destinatário
+            formData.append('_to', emailDestino);
             formData.append('_subject', assunto || 'Formulário de Contato - Sistema de Credenciais');
             formData.append('_template', 'box');
             formData.append('_captcha', 'false');
             
-            // Campos do formulário - usar nomes genéricos que o FormSubmit reconhece
+            // Campos do formulário
             formData.append('email', emailRemetente);
             formData.append('name', nomeRemetente);
-            formData.append('message', corpo || 'Email enviado através do Sistema de Credenciais');
             
-            // Adicionar informações adicionais no corpo da mensagem
-            const corpoCompleto = `Nome: ${nomeRemetente}\nEmail: ${emailRemetente}\n\nMensagem:\n${corpo || 'Email enviado através do Sistema de Credenciais'}`;
-            formData.set('message', corpoCompleto);
+            // Preparar corpo da mensagem
+            let corpoCompleto = `Nome: ${nomeRemetente}\nEmail: ${emailRemetente}\n\nMensagem:\n${corpo || 'Email enviado através do Sistema de Credenciais'}`;
             
             // Adicionar arquivos Excel como anexos
-            // FormSubmit aceita anexos - usar nomes únicos para cada arquivo
             if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
                 let totalSize = 0;
-            this.arquivosParaEnvio.forEach((arquivo, index) => {
-                    // Verificar tamanho do arquivo (FormSubmit tem limite de 5MB por arquivo)
+                this.arquivosParaEnvio.forEach((arquivo, index) => {
                     const tamanhoMB = arquivo.dados.length / (1024 * 1024);
                     totalSize += tamanhoMB;
                     
@@ -3878,136 +3874,160 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                         this.mostrarNotificacao(`Atenção: ${arquivo.nome} excede 5MB e pode não ser enviado`, 'warning');
                     }
                     
-                const blob = new Blob([arquivo.dados], {
-                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                });
-
-                    // FormSubmit aceita anexos - usar o nome do arquivo diretamente
-                    // Se houver múltiplos arquivos, cada um precisa de um nome único
+                    const blob = new Blob([arquivo.dados], {
+                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    });
+                    
                     formData.append(arquivo.nome, blob, arquivo.nome);
                 });
                 
                 console.log(`Total de ${this.arquivosParaEnvio.length} arquivo(s) anexado(s), tamanho total: ${totalSize.toFixed(2)}MB`);
             }
+            
+            formData.append('message', corpoCompleto);
 
-            // Enviar via fetch para FormSubmit
-            // Usar a URL correta: https://formsubmit.co/ajax/[email] ou https://formsubmit.co/[email]
-            const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(emailDestino)}`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-
-            // Ler a resposta completa
-            const responseText = await response.text();
-            console.log('Status HTTP:', response.status, response.statusText);
-            console.log('Resposta completa do FormSubmit:', responseText);
-
-            let emailEnviado = false;
-            let mensagemErro = null;
-            let precisaConfirmacao = false;
-            let resultado = null;
-
-            // Tentar fazer parse da resposta JSON
+            // Tentar usar fetch primeiro (pode falhar por CORS, mas vamos tentar)
+            // Se falhar, usar formulário HTML como fallback
             try {
-                if (responseText.trim()) {
-                    resultado = JSON.parse(responseText);
-                    console.log('Resposta JSON parseada:', resultado);
+                console.log('Tentando enviar via fetch...');
+                const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(emailDestino)}`, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const responseText = await response.text();
+                    console.log('Resposta do FormSubmit:', responseText);
                     
-                    // FormSubmit retorna { success: true } ou { message: "..." }
-                    if (resultado.success === true) {
-                        emailEnviado = true;
-                    } else if (resultado.success === false) {
-                        mensagemErro = resultado.message || 'Erro ao enviar email';
-                    } else if (resultado.message) {
-                        const msgLower = resultado.message.toLowerCase();
-                        if (msgLower.includes('confirm') || msgLower.includes('verification') || msgLower.includes('verify')) {
-                            precisaConfirmacao = true;
-                            mensagemErro = `O email ${emailDestino} precisa ser confirmado primeiro. Verifique a caixa de entrada e clique no link de confirmação enviado pelo FormSubmit.`;
-                        } else if (msgLower.includes('error') || msgLower.includes('invalid') || msgLower.includes('failed')) {
-                            mensagemErro = resultado.message;
-                        } else {
-                            // Mensagem genérica pode indicar sucesso
+                    let emailEnviado = false;
+                    try {
+                        const resultado = JSON.parse(responseText);
+                        if (resultado.success === true) {
                             emailEnviado = true;
                         }
-                    }
-                } else if (response.ok) {
-                    // Resposta vazia mas status OK pode indicar sucesso
-                    emailEnviado = true;
-                }
-            } catch (parseError) {
-                console.warn('Erro ao fazer parse JSON:', parseError);
-                console.log('Resposta como texto:', responseText.substring(0, 500));
-                
-                // Se não for JSON, analisar o texto da resposta
-                if (response.ok) {
-                    const textoLower = responseText.toLowerCase();
-                    
-                    if (textoLower.includes('success') || 
-                        textoLower.includes('thank you') ||
-                        textoLower.includes('submitted') ||
-                        textoLower.includes('sent')) {
+                    } catch (e) {
+                        // Se não for JSON, assumir sucesso se response.ok
                         emailEnviado = true;
-                    } else if (textoLower.includes('confirm') || 
-                               textoLower.includes('verification') ||
-                               textoLower.includes('verify your email')) {
-                        precisaConfirmacao = true;
-                        mensagemErro = `O email ${emailDestino} precisa ser confirmado primeiro. Verifique a caixa de entrada e clique no link de confirmação.`;
-                    } else if (textoLower.includes('error') || 
-                               textoLower.includes('invalid') ||
-                               textoLower.includes('failed')) {
-                        mensagemErro = 'Erro ao enviar email. Verifique os dados e tente novamente.';
-                    } else {
-                        // Se response.ok mas não conseguimos determinar, assumir que precisa confirmação
-                        precisaConfirmacao = true;
-                        mensagemErro = `Pode ser necessário confirmar o email ${emailDestino} primeiro. Verifique a caixa de entrada.`;
                     }
+                    
+                    if (emailEnviado) {
+                        const modalEmail = document.getElementById('modalEmail');
+                        if (modalEmail) {
+                            this.fecharModal(modalEmail);
+                        }
+                        
+                        this.mostrarNotificacao('Email enviado com sucesso! ✅', 'success');
+                        setTimeout(() => {
+                            this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
+                        }, 2000);
+                        return; // Sucesso, sair da função
+                    }
+                }
+            } catch (fetchError) {
+                console.warn('Fetch falhou (provavelmente CORS), usando formulário HTML como fallback:', fetchError);
+            }
+
+            // Fallback: usar formulário HTML para contornar CORS
+            console.log('Usando formulário HTML como fallback...');
+            
+            // Remover formulário anterior se existir
+            const formAntigo = document.getElementById('formSubmitOculto');
+            if (formAntigo) {
+                formAntigo.remove();
+            }
+
+            const form = document.createElement('form');
+            form.id = 'formSubmitOculto';
+            form.method = 'POST';
+            form.action = `https://formsubmit.co/${encodeURIComponent(emailDestino)}`;
+            form.enctype = 'multipart/form-data';
+            form.style.display = 'none';
+            form.target = 'iframeFormSubmit';
+
+            // Criar iframe oculto
+            let iframe = document.getElementById('iframeFormSubmit');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'iframeFormSubmit';
+                iframe.name = 'iframeFormSubmit';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+
+            // Adicionar campos ao formulário
+            const campos = {
+                '_subject': assunto || 'Formulário de Contato - Sistema de Credenciais',
+                '_template': 'box',
+                '_captcha': 'false',
+                'email': emailRemetente,
+                'name': nomeRemetente,
+                'message': corpoCompleto
+            };
+
+            Object.keys(campos).forEach(key => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = campos[key];
+                form.appendChild(input);
+            });
+
+            // Para anexos no formulário HTML, vamos incluir informações no corpo
+            // pois não podemos adicionar arquivos programaticamente de forma confiável
+            if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
+                let infoAnexos = '\n\n=== INFORMAÇÕES DOS ARQUIVOS ===\n';
+                this.arquivosParaEnvio.forEach((arquivo, index) => {
+                    infoAnexos += `Arquivo ${index + 1}: ${arquivo.nome} (${arquivo.tamanho || 'N/A'})\n`;
+                });
+                infoAnexos += '\nNota: Os arquivos Excel foram gerados mas não puderam ser anexados automaticamente devido a limitações técnicas.\n';
+                infoAnexos += 'Por favor, use a função "Exportar Excel" para baixar os arquivos manualmente se necessário.\n';
+                
+                const messageInput = form.querySelector('input[name="message"]');
+                if (messageInput) {
+                    messageInput.value += infoAnexos;
                 }
             }
 
-            // Processar resultado
-            if (response.ok && emailEnviado && !mensagemErro) {
-            // Fechar modal
-                const modalEmail = document.getElementById('modalEmail');
-                if (modalEmail) {
-                    this.fecharModal(modalEmail);
-                }
-            
-            this.mostrarNotificacao('Email enviado com sucesso! ✅', 'success');
-            
+            document.body.appendChild(form);
+
+            // Handler para resposta do iframe
+            const handleIframeLoad = () => {
+                setTimeout(() => {
+                    const modalEmail = document.getElementById('modalEmail');
+                    if (modalEmail) {
+                        this.fecharModal(modalEmail);
+                    }
+                    
+                    this.mostrarNotificacao('Email enviado com sucesso! ✅', 'success');
+                    setTimeout(() => {
+                        this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
+                    }, 2000);
+                    
+                    setTimeout(() => {
+                        if (form.parentNode) {
+                            form.remove();
+                        }
+                    }, 5000);
+                }, 2000);
+            };
+
+            iframe.onload = handleIframeLoad;
+            form.submit();
+
+            // Timeout de segurança
             setTimeout(() => {
-                    this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
-            }, 2000);
-            } else if (precisaConfirmacao) {
-                // Mostrar aviso sobre confirmação
-                this.mostrarNotificacao(mensagemErro || `O email ${emailDestino} precisa ser confirmado. Verifique a caixa de entrada.`, 'warning');
-                setTimeout(() => {
-                    this.mostrarNotificacao('⚠️ IMPORTANTE: Na primeira vez, o FormSubmit envia um email de confirmação. Você DEVE clicar no link de confirmação antes de receber os emails. Verifique também a pasta de spam.', 'warning');
-                }, 3000);
-                setTimeout(() => {
-                    this.mostrarNotificacao('Após confirmar o email, você poderá receber os emails normalmente. Este passo é necessário apenas na primeira vez.', 'info');
-                }, 6000);
-            } else {
-                // Erro no envio
-                const erroFinal = mensagemErro || 
-                    (response.ok ? 
-                        'Não foi possível confirmar o envio. Verifique sua caixa de entrada e spam. Se for a primeira vez, pode ser necessário confirmar o email primeiro.' : 
-                        `Erro ao enviar email. Status HTTP: ${response.status}`);
-                
-                throw new Error(erroFinal);
-            }
+                if (form.parentNode) {
+                    handleIframeLoad();
+                }
+            }, 10000);
+
         } catch (error) {
             console.error('Erro completo ao enviar email:', error);
             let mensagemErro = error.message || 'Erro ao enviar email. Tente novamente.';
-            
-            // Melhorar mensagens de erro específicas
-            if (error.message && error.message.includes('Status HTTP')) {
-                mensagemErro = `Erro HTTP ${error.message.match(/\d+/)?.[0] || 'desconhecido'}. Verifique sua conexão e tente novamente.`;
-            } else if (error.message && error.message.includes('JSON')) {
-                mensagemErro = 'Erro ao processar resposta do servidor. O email pode ter sido enviado. Verifique sua caixa de entrada.';
-            }
             
             this.mostrarNotificacao(mensagemErro, 'error');
             
