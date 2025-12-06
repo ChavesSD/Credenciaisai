@@ -3849,55 +3849,126 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             // Criar FormData para enviar ao FormSubmit
             const formData = new FormData();
             
-            // Campos do FormSubmit
-            formData.append('_to', emailDestino);
-            formData.append('_subject', assunto);
+            // Campos obrigatórios do FormSubmit
+            formData.append('_to', emailDestino); // Email destinatário
+            formData.append('_subject', assunto || 'Formulário de Contato - Sistema de Credenciais');
             formData.append('_template', 'box');
             formData.append('_captcha', 'false');
-            formData.append('_autoresponse', 'Recebemos sua mensagem! Obrigado pelo contato.');
             
-            // Campos do formulário
+            // Campos do formulário - usar nomes genéricos que o FormSubmit reconhece
             formData.append('email', emailRemetente);
-            formData.append('nome', nomeRemetente);
-            formData.append('mensagem', corpo);
+            formData.append('name', nomeRemetente);
+            formData.append('message', corpo || 'Email enviado através do Sistema de Credenciais');
+            
+            // Adicionar informações adicionais no corpo da mensagem
+            const corpoCompleto = `Nome: ${nomeRemetente}\nEmail: ${emailRemetente}\n\nMensagem:\n${corpo || 'Email enviado através do Sistema de Credenciais'}`;
+            formData.set('message', corpoCompleto);
             
             // Adicionar arquivos Excel como anexos
+            // FormSubmit aceita anexos - usar nomes únicos para cada arquivo
             if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
+                let totalSize = 0;
             this.arquivosParaEnvio.forEach((arquivo, index) => {
+                    // Verificar tamanho do arquivo (FormSubmit tem limite de 5MB por arquivo)
+                    const tamanhoMB = arquivo.dados.length / (1024 * 1024);
+                    totalSize += tamanhoMB;
+                    
+                    if (tamanhoMB > 5) {
+                        console.warn(`Arquivo ${arquivo.nome} excede 5MB (${tamanhoMB.toFixed(2)}MB) e pode não ser enviado`);
+                        this.mostrarNotificacao(`Atenção: ${arquivo.nome} excede 5MB e pode não ser enviado`, 'warning');
+                    }
+                    
                 const blob = new Blob([arquivo.dados], {
                     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 });
-                    formData.append(`attachment_${index + 1}`, blob, arquivo.nome);
+
+                    // FormSubmit aceita anexos - usar o nome do arquivo diretamente
+                    // Se houver múltiplos arquivos, cada um precisa de um nome único
+                    formData.append(arquivo.nome, blob, arquivo.nome);
                 });
+                
+                console.log(`Total de ${this.arquivosParaEnvio.length} arquivo(s) anexado(s), tamanho total: ${totalSize.toFixed(2)}MB`);
             }
 
             // Enviar via fetch para FormSubmit
-            const response = await fetch('https://formsubmit.co/ajax/suporte.intelite@gmail.com', {
+            // Usar a URL correta: https://formsubmit.co/ajax/[email] ou https://formsubmit.co/[email]
+            const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(emailDestino)}`, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
             });
 
-            if (response.ok) {
-                // Verificar o tipo de conteúdo antes de fazer parse JSON
-                const contentType = response.headers.get('content-type');
-                let result = null;
-                
-                if (contentType && contentType.includes('application/json')) {
-                    try {
-                        const text = await response.text();
-                        if (text.trim()) {
-                            result = JSON.parse(text);
-                        }
-                    } catch (parseError) {
-                        console.warn('Resposta não é JSON válido, mas o envio pode ter sido bem-sucedido:', parseError);
-                        // Se não conseguir fazer parse, assumir sucesso se status for OK
-                        result = { success: true };
-                    }
-                } else {
-                    // Se não for JSON, assumir sucesso se status for OK
-                    result = { success: true };
-                }
+            // Ler a resposta completa
+            const responseText = await response.text();
+            console.log('Status HTTP:', response.status, response.statusText);
+            console.log('Resposta completa do FormSubmit:', responseText);
 
+            let emailEnviado = false;
+            let mensagemErro = null;
+            let precisaConfirmacao = false;
+            let resultado = null;
+
+            // Tentar fazer parse da resposta JSON
+            try {
+                if (responseText.trim()) {
+                    resultado = JSON.parse(responseText);
+                    console.log('Resposta JSON parseada:', resultado);
+                    
+                    // FormSubmit retorna { success: true } ou { message: "..." }
+                    if (resultado.success === true) {
+                        emailEnviado = true;
+                    } else if (resultado.success === false) {
+                        mensagemErro = resultado.message || 'Erro ao enviar email';
+                    } else if (resultado.message) {
+                        const msgLower = resultado.message.toLowerCase();
+                        if (msgLower.includes('confirm') || msgLower.includes('verification') || msgLower.includes('verify')) {
+                            precisaConfirmacao = true;
+                            mensagemErro = `O email ${emailDestino} precisa ser confirmado primeiro. Verifique a caixa de entrada e clique no link de confirmação enviado pelo FormSubmit.`;
+                        } else if (msgLower.includes('error') || msgLower.includes('invalid') || msgLower.includes('failed')) {
+                            mensagemErro = resultado.message;
+                        } else {
+                            // Mensagem genérica pode indicar sucesso
+                            emailEnviado = true;
+                        }
+                    }
+                } else if (response.ok) {
+                    // Resposta vazia mas status OK pode indicar sucesso
+                    emailEnviado = true;
+                }
+            } catch (parseError) {
+                console.warn('Erro ao fazer parse JSON:', parseError);
+                console.log('Resposta como texto:', responseText.substring(0, 500));
+                
+                // Se não for JSON, analisar o texto da resposta
+                if (response.ok) {
+                    const textoLower = responseText.toLowerCase();
+                    
+                    if (textoLower.includes('success') || 
+                        textoLower.includes('thank you') ||
+                        textoLower.includes('submitted') ||
+                        textoLower.includes('sent')) {
+                        emailEnviado = true;
+                    } else if (textoLower.includes('confirm') || 
+                               textoLower.includes('verification') ||
+                               textoLower.includes('verify your email')) {
+                        precisaConfirmacao = true;
+                        mensagemErro = `O email ${emailDestino} precisa ser confirmado primeiro. Verifique a caixa de entrada e clique no link de confirmação.`;
+                    } else if (textoLower.includes('error') || 
+                               textoLower.includes('invalid') ||
+                               textoLower.includes('failed')) {
+                        mensagemErro = 'Erro ao enviar email. Verifique os dados e tente novamente.';
+                    } else {
+                        // Se response.ok mas não conseguimos determinar, assumir que precisa confirmação
+                        precisaConfirmacao = true;
+                        mensagemErro = `Pode ser necessário confirmar o email ${emailDestino} primeiro. Verifique a caixa de entrada.`;
+                    }
+                }
+            }
+
+            // Processar resultado
+            if (response.ok && emailEnviado && !mensagemErro) {
             // Fechar modal
                 const modalEmail = document.getElementById('modalEmail');
                 if (modalEmail) {
@@ -3907,23 +3978,45 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             this.mostrarNotificacao('Email enviado com sucesso! ✅', 'success');
             
             setTimeout(() => {
-                    this.mostrarNotificacao('O email foi enviado para ' + emailDestino, 'info');
+                    this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
             }, 2000);
+            } else if (precisaConfirmacao) {
+                // Mostrar aviso sobre confirmação
+                this.mostrarNotificacao(mensagemErro || `O email ${emailDestino} precisa ser confirmado. Verifique a caixa de entrada.`, 'warning');
+                setTimeout(() => {
+                    this.mostrarNotificacao('⚠️ IMPORTANTE: Na primeira vez, o FormSubmit envia um email de confirmação. Você DEVE clicar no link de confirmação antes de receber os emails. Verifique também a pasta de spam.', 'warning');
+                }, 3000);
+                setTimeout(() => {
+                    this.mostrarNotificacao('Após confirmar o email, você poderá receber os emails normalmente. Este passo é necessário apenas na primeira vez.', 'info');
+                }, 6000);
             } else {
-                const errorText = await response.text().catch(() => 'Erro desconhecido');
-                throw new Error('Erro ao enviar email. Status: ' + response.status + ' - ' + errorText);
+                // Erro no envio
+                const erroFinal = mensagemErro || 
+                    (response.ok ? 
+                        'Não foi possível confirmar o envio. Verifique sua caixa de entrada e spam. Se for a primeira vez, pode ser necessário confirmar o email primeiro.' : 
+                        `Erro ao enviar email. Status HTTP: ${response.status}`);
+                
+                throw new Error(erroFinal);
             }
         } catch (error) {
-            console.error('Erro ao enviar email:', error);
-            let mensagemErro = 'Erro ao enviar email. Tente novamente.';
+            console.error('Erro completo ao enviar email:', error);
+            let mensagemErro = error.message || 'Erro ao enviar email. Tente novamente.';
             
-            if (error.message && error.message.includes('JSON')) {
+            // Melhorar mensagens de erro específicas
+            if (error.message && error.message.includes('Status HTTP')) {
+                mensagemErro = `Erro HTTP ${error.message.match(/\d+/)?.[0] || 'desconhecido'}. Verifique sua conexão e tente novamente.`;
+            } else if (error.message && error.message.includes('JSON')) {
                 mensagemErro = 'Erro ao processar resposta do servidor. O email pode ter sido enviado. Verifique sua caixa de entrada.';
-            } else if (error.message && error.message.includes('Status:')) {
-                mensagemErro = 'Erro ao enviar email. Verifique sua conexão e tente novamente.';
             }
             
             this.mostrarNotificacao(mensagemErro, 'error');
+            
+            // Mostrar informações de debug no console
+            console.error('Detalhes do erro:', {
+                message: error.message,
+                stack: error.stack,
+                emailDestino: emailDestino
+            });
         } finally {
             if (btnEnviar) {
             btnEnviar.classList.remove('btn-loading');
