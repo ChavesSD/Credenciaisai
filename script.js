@@ -11,6 +11,7 @@ class SistemaCadastro {
         this.secaoAtual = 'credenciais';
         this.tutorialAtual = 0;
         this.tutorialPassos = this.definirPassosTutorial();
+        
         this.inicializar();
     }
 
@@ -1550,20 +1551,28 @@ class SistemaCadastro {
         const cores = {
             success: '#38a169',
             error: '#e53e3e',
+            warning: '#f59e0b',
             info: '#3182ce'
         };
         notificacao.style.background = cores[tipo] || cores.info;
+        notificacao.style.fontSize = '14px';
+        notificacao.style.lineHeight = '1.5';
+        notificacao.style.zIndex = '99999'; // Aumentar z-index para garantir visibilidade
 
         // Adicionar ao DOM
         document.body.appendChild(notificacao);
 
-        // Remover após 3 segundos
+        // Remover após 5 segundos (aumentado para garantir visibilidade)
         setTimeout(() => {
             if (notificacao.parentNode) {
                 notificacao.style.animation = 'slideOutRight 0.3s ease';
-                setTimeout(() => notificacao.remove(), 300);
+                setTimeout(() => {
+                    if (notificacao.parentNode) {
+                        notificacao.remove();
             }
-        }, 3000);
+                }, 300);
+            }
+        }, 5000);
     }
 
     carregarDados() {
@@ -2283,31 +2292,31 @@ class SistemaCadastro {
         const preencherSelect = (select) => {
             if (!select) return;
             select.innerHTML = '';
-            
-            // Adicionar opções padrão
-            this.optionsPadraoSelect.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt.value;
-                option.textContent = opt.text;
+        
+        // Adicionar opções padrão
+        this.optionsPadraoSelect.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.text;
                 select.appendChild(option);
-            });
+        });
 
-            // Adicionar tipos personalizados
-            this.tiposPersonalizados.forEach(tipo => {
-                const option = document.createElement('option');
-                option.value = tipo.valor;
-                option.textContent = tipo.nome;
-                option.style.color = '#28a745';
-                option.style.fontStyle = 'italic';
+        // Adicionar tipos personalizados
+        this.tiposPersonalizados.forEach(tipo => {
+            const option = document.createElement('option');
+            option.value = tipo.valor;
+            option.textContent = tipo.nome;
+            option.style.color = '#28a745';
+            option.style.fontStyle = 'italic';
                 select.appendChild(option);
-            });
+        });
 
-            // Adicionar opção "Novo Tipo" no final
-            const novoTipoOption = document.createElement('option');
-            novoTipoOption.value = 'novo-tipo';
-            novoTipoOption.textContent = '+ Novo Tipo';
-            novoTipoOption.style.color = '#007bff';
-            novoTipoOption.style.fontWeight = 'bold';
+        // Adicionar opção "Novo Tipo" no final
+        const novoTipoOption = document.createElement('option');
+        novoTipoOption.value = 'novo-tipo';
+        novoTipoOption.textContent = '+ Novo Tipo';
+        novoTipoOption.style.color = '#007bff';
+        novoTipoOption.style.fontWeight = 'bold';
             select.appendChild(novoTipoOption);
         };
 
@@ -2424,11 +2433,6 @@ class SistemaCadastro {
                 return;
             }
 
-            // Definir URL de redirecionamento baseada no ambiente
-            const baseUrl = window.location.origin;
-            const redirectUrl = `${baseUrl}/sucesso.html`;
-            document.getElementById('redirectUrl').value = redirectUrl;
-
             this.mostrarNotificacao('Preparando modal de envio...', 'info');
 
             // Preparar dados para o modal
@@ -2494,14 +2498,20 @@ Data de geração: ${dataFormatada}
 Total de credenciais: ${totalCredenciaisIndividuais}
 Total de senhas do totem: ${this.senhasTotem.length}`;
 
-            // Preencher campos do modal
-            document.getElementById('assuntoEmail').value = assunto;
-            document.getElementById('corpoEmail').value = corpo;
-            document.getElementById('totalCredenciais').value = `${totalCredenciaisIndividuais} credenciais, ${this.senhasTotem.length} senhas do totem`;
+            // Preencher campos do modal (com verificação de null)
+            const assuntoEmail = document.getElementById('assuntoEmail');
+            const corpoEmail = document.getElementById('corpoEmail');
+            const totalCredenciais = document.getElementById('totalCredenciais');
+            const emailRemetente = document.getElementById('emailRemetente');
+            const nomeRemetente = document.getElementById('nomeRemetente');
+            
+            if (assuntoEmail) assuntoEmail.value = assunto;
+            if (corpoEmail) corpoEmail.value = corpo;
+            if (totalCredenciais) totalCredenciais.value = `${totalCredenciaisIndividuais} credenciais, ${this.senhasTotem.length} senhas do totem`;
 
             // Limpar campos do remetente
-            document.getElementById('emailRemetente').value = '';
-            document.getElementById('nomeRemetente').value = '';
+            if (emailRemetente) emailRemetente.value = '';
+            if (nomeRemetente) nomeRemetente.value = '';
 
             // Gerar lista de anexos e campos de arquivo
             this.atualizarListaAnexos();
@@ -2586,101 +2596,142 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
         
         const emailRemetente = document.getElementById('emailRemetente').value.trim();
         const nomeRemetente = document.getElementById('nomeRemetente').value.trim();
+        const assunto = document.getElementById('assuntoEmail')?.value || '';
+        const corpo = document.getElementById('corpoEmail')?.value || '';
+        const emailDestino = document.getElementById('emailDestino')?.value || 'suporte.intelite@gmail.com';
         
         if (!emailRemetente || !nomeRemetente) {
             this.mostrarNotificacao('Por favor, preencha todos os campos obrigatórios!', 'error');
             return;
         }
 
-        // Detectar se está rodando localmente (file://) ou em servidor
-        const isLocalFile = window.location.protocol === 'file:';
-        
-        if (isLocalFile) {
-            // Usar método mailto para arquivos locais
-            this.enviarViaMailto(emailRemetente, nomeRemetente);
-            return;
-        }
-
-        // Continuar com FormSubmit se estiver em servidor
-        try {
-            const btnEnviar = document.getElementById('btnEnviarEmailModal');
+        const btnEnviar = document.getElementById('btnEnviarEmailModal');
+        if (btnEnviar) {
             btnEnviar.classList.add('btn-loading');
             btnEnviar.disabled = true;
+        }
 
-            this.mostrarNotificacao('Preparando envio...', 'info');
+        try {
+            this.mostrarNotificacao('Preparando e enviando email...', 'info');
 
-            // Primeiro envio do FormSubmit requer confirmação
-            // Vamos usar submissão direta do formulário em nova aba
-            const form = document.getElementById('formEmail');
+            // Criar FormData para enviar ao FormSubmit
+            const formData = new FormData();
             
-            // Criar uma cópia do formulário para submeter em nova aba
-            const tempForm = form.cloneNode(true);
-            tempForm.target = '_blank';
-            tempForm.style.display = 'none';
-            document.body.appendChild(tempForm);
-
-            // Adicionar arquivos ao formulário temporário
-            const camposArquivos = tempForm.querySelector('#camposArquivos');
-            camposArquivos.innerHTML = '';
-
-            this.arquivosParaEnvio.forEach((arquivo, index) => {
-                const blob = new Blob([arquivo.dados], {
-                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            // Campos do FormSubmit
+            formData.append('_to', emailDestino);
+            formData.append('_subject', assunto);
+            formData.append('_template', 'box');
+            formData.append('_captcha', 'false');
+            formData.append('_autoresponse', 'Recebemos sua mensagem! Obrigado pelo contato.');
+            
+            // Campos do formulário
+            formData.append('email', emailRemetente);
+            formData.append('nome', nomeRemetente);
+            formData.append('mensagem', corpo);
+            
+            // Adicionar arquivos Excel como anexos
+            if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
+                this.arquivosParaEnvio.forEach((arquivo, index) => {
+                    const blob = new Blob([arquivo.dados], {
+                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    });
+                    formData.append(`attachment_${index + 1}`, blob, arquivo.nome);
                 });
+            }
 
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.name = `arquivo_${index + 1}`;
-                input.style.display = 'none';
-
-                const dt = new DataTransfer();
-                const file = new File([blob], arquivo.nome, {
-                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                });
-                dt.items.add(file);
-                input.files = dt.files;
-
-                camposArquivos.appendChild(input);
+            // Enviar via fetch para FormSubmit
+            const response = await fetch('https://formsubmit.co/ajax/suporte.intelite@gmail.com', {
+                method: 'POST',
+                body: formData
             });
 
-            // Submeter formulário
-            tempForm.submit();
-            
-            // Remover formulário temporário
-            setTimeout(() => {
-                document.body.removeChild(tempForm);
-            }, 1000);
-
-            // Fechar modal
-            this.fecharModal(document.getElementById('modalEmail'));
-            
-            this.mostrarNotificacao('Email enviado com sucesso! ✅', 'success');
-            
-            setTimeout(() => {
-                this.mostrarNotificacao('O destinatário receberá suas planilhas em alguns instantes.', 'info');
-            }, 2000);
-            
-            setTimeout(() => {
-                this.mostrarNotificacao('Você pode fechar a aba que foi aberta.', 'info');
-            }, 4000);
-
+            if (response.ok) {
+                const result = await response.json();
+                
+                // Fechar modal
+                const modalEmail = document.getElementById('modalEmail');
+                if (modalEmail) {
+                    this.fecharModal(modalEmail);
+                }
+                
+                this.mostrarNotificacao('Email enviado com sucesso! ✅', 'success');
+                
+                setTimeout(() => {
+                    this.mostrarNotificacao('O email foi enviado para ' + emailDestino, 'info');
+                }, 2000);
+            } else {
+                throw new Error('Erro ao enviar email. Status: ' + response.status);
+            }
         } catch (error) {
             console.error('Erro ao enviar email:', error);
             this.mostrarNotificacao('Erro ao enviar email. Tente novamente.', 'error');
         } finally {
-            const btnEnviar = document.getElementById('btnEnviarEmailModal');
-            btnEnviar.classList.remove('btn-loading');
-            btnEnviar.disabled = false;
+            if (btnEnviar) {
+                btnEnviar.classList.remove('btn-loading');
+                btnEnviar.disabled = false;
+            }
         }
+    }
+
+    prepararAnexosParaFormSubmit() {
+        // Converter arquivos Excel para File objects e adicionar ao formulário
+        const camposArquivos = document.getElementById('camposArquivos');
+        if (!camposArquivos) return;
+
+        // Limpar campos anteriores
+        camposArquivos.innerHTML = '';
+
+        if (!this.arquivosParaEnvio || this.arquivosParaEnvio.length === 0) {
+            return;
+        }
+
+        this.arquivosParaEnvio.forEach((arquivo, index) => {
+            // Converter dados do arquivo para Blob
+            const blob = new Blob([arquivo.dados], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            
+            // Criar File object a partir do Blob
+            const file = new File([blob], arquivo.nome, { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+
+            // Criar input file e adicionar ao formulário
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.name = `anexo_${index + 1}`;
+            input.style.display = 'none';
+            
+            // Criar DataTransfer para adicionar o arquivo ao input
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            input.files = dataTransfer.files;
+            
+            camposArquivos.appendChild(input);
+        });
+    }
+    
+    blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
     }
 
     async enviarViaMailto(emailRemetente, nomeRemetente) {
         try {
             const btnEnviar = document.getElementById('btnEnviarEmailModal');
+            if (btnEnviar) {
             btnEnviar.classList.add('btn-loading');
             btnEnviar.disabled = true;
+            }
 
             this.mostrarNotificacao('Preparando arquivos para download...', 'info');
+            
+            // Pequeno delay para garantir que a notificação apareça
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             // Fazer download dos arquivos primeiro
             for (let i = 0; i < this.arquivosParaEnvio.length; i++) {
@@ -2720,6 +2771,9 @@ ${this.arquivosParaEnvio.map(arquivo => `- ${arquivo.nome} (${arquivo.tamanho})`
 
 Por favor, anexe os arquivos baixados a este email antes de enviar.`;
 
+            // Aguardar um pouco antes de abrir o email
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
             // Abrir cliente de email
             const emailUrl = `mailto:suporte.intelite@gmail.com?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
             
@@ -2729,23 +2783,49 @@ Por favor, anexe os arquivos baixados a este email antes de enviar.`;
             document.body.appendChild(linkEmail);
             linkEmail.click();
             document.body.removeChild(linkEmail);
+            
+            // Notificar que o email foi aberto
+            setTimeout(() => {
+                this.mostrarNotificacao('Cliente de email aberto! Verifique sua caixa de entrada.', 'info');
+            }, 2000);
 
             // Fechar modal
-            this.fecharModal(document.getElementById('modalEmail'));
+            const modalEmail = document.getElementById('modalEmail');
+            if (modalEmail) {
+                this.fecharModal(modalEmail);
+            }
 
-            this.mostrarNotificacao('Arquivos baixados! Cliente de email foi aberto.', 'success');
+            // Aguardar um pouco antes de mostrar a próxima notificação
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            this.mostrarNotificacao('Arquivos baixados com sucesso! ✅', 'success');
             
             setTimeout(() => {
-                this.mostrarNotificacao('IMPORTANTE: Anexe os arquivos baixados ao email antes de enviar!', 'warning');
-            }, 2000);
+                this.mostrarNotificacao('Cliente de email será aberto automaticamente...', 'info');
+            }, 1500);
+            
+            setTimeout(() => {
+                this.mostrarNotificacao('⚠️ IMPORTANTE: Anexe os arquivos baixados ao email antes de enviar!', 'warning');
+            }, 3000);
 
         } catch (error) {
             console.error('Erro ao enviar via mailto:', error);
             this.mostrarNotificacao('Erro ao preparar envio. Tente novamente.', 'error');
+            
+            // Tentar abrir email mesmo em caso de erro parcial
+            try {
+                const assunto = document.getElementById('assuntoEmail')?.value || 'Planilhas de Credenciais';
+                const emailUrl = `mailto:suporte.intelite@gmail.com?subject=${encodeURIComponent(assunto)}`;
+                window.location.href = emailUrl;
+            } catch (e) {
+                console.error('Erro ao abrir cliente de email:', e);
+            }
         } finally {
             const btnEnviar = document.getElementById('btnEnviarEmailModal');
+            if (btnEnviar) {
             btnEnviar.classList.remove('btn-loading');
             btnEnviar.disabled = false;
+            }
         }
     }
 

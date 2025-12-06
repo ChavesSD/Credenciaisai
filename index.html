@@ -544,13 +544,7 @@
                 <span class="close">&times;</span>
             </div>
             
-            <form id="formEmail" action="https://formsubmit.co/suporte.intelite@gmail.com" method="POST" enctype="multipart/form-data">
-                <!-- Campos ocultos do FormSubmit -->
-                <input type="hidden" name="_next" value="" id="redirectUrl">
-                <input type="hidden" name="_captcha" value="false">
-                <input type="hidden" name="_template" value="table">
-                <input type="hidden" name="_autoresponse" value="Obrigado! Recebemos suas planilhas de credenciais e entraremos em contato em breve.">
-                
+            <form id="formEmail">
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="emailDestino">Email de Destino</label>
@@ -630,27 +624,19 @@
                 </div>
                 
                 <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; border-left: 4px solid #0288d1; margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #01579b;">🚀 Para Envio Automático (Recomendado)</h4>
-                    <p style="margin: 0; font-size: 0.9em;">
-                        Use um servidor local: <br>
-                        <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">python -m http.server 8000</code><br>
-                        Depois acesse: <strong>http://localhost:8000</strong>
-                    </p>
-                </div>
-                
-                <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border-left: 4px solid #f57c00; margin-bottom: 15px;">
-                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📎 Usando Arquivo Local</h4>
+                    <h4 style="margin: 0 0 10px 0; color: #01579b;">📧 Envio via FormSubmit</h4>
                     <ul style="margin: 10px 0; padding-left: 20px; font-size: 0.9em;">
-                        <li>Sistema detecta automaticamente</li>
-                        <li>Baixa arquivos automaticamente</li>
-                        <li>Abre cliente de email com dados preenchidos</li>
-                        <li><strong>Você anexa</strong> os arquivos baixados</li>
+                        <li>✅ Envio <strong>automático e direto</strong> da página</li>
+                        <li>✅ <strong>Arquivos Excel anexados automaticamente</strong></li>
+                        <li>✅ Funciona em qualquer ambiente (local ou servidor)</li>
+                        <li>✅ Não requer configuração adicional</li>
+                        <li>✅ Email enviado para: <strong>suporte.intelite@gmail.com</strong></li>
                     </ul>
                 </div>
                 
                 <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid #0ea5e9; margin: 15px 0;">
                     <p style="margin: 0; font-size: 0.9em; color: #0c4a6e;">
-                        <strong>💡 Dica:</strong> Para melhor experiência, recomendamos usar o servidor local para envio automático com anexos.
+                        <strong>💡 Como funciona:</strong> Após preencher seu nome e email, o sistema enviará automaticamente os arquivos Excel para o destinatário. Você será redirecionado para uma página de confirmação.
                     </p>
                 </div>
             </div>
