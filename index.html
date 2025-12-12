@@ -95,10 +95,7 @@
                     <!-- Nome da Empresa Atual (aparece quando já definida) -->
                     <div id="unidadeAtualCredenciaisInline" class="unidade-atual-container" style="display: none;">
                         <div class="unidade-atual">
-                            <div>
-                                <strong>Empresa:</strong>
-                                <span id="unidadeAtualTextoCredenciaisInline"></span>
-                            </div>
+                            <strong>Empresa:</strong> <span id="unidadeAtualTextoCredenciaisInline"></span>
                             <button type="button" class="btn btn-sm btn-secondary" onclick="sistema.permitirAlterarUnidadeCredenciaisInline()">
                                 Alterar
                             </button>
@@ -318,7 +315,7 @@
     </div>
 
     <!-- Modal de Cadastro -->
-    <div id="modalCadastro" class="modal">
+    <div id="modalCadastro" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitulo">Novo Cadastro</h2>
@@ -429,7 +426,7 @@
     </div>
 
     <!-- Modal de Senha do Totem -->
-    <div id="modalSenhaTotem" class="modal">
+    <div id="modalSenhaTotem" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTituloTotem">Nova Senha do Totem</h2>
@@ -495,7 +492,7 @@
     </div>
 
     <!-- Modal do Totem -->
-    <div id="modalTotem" class="modal modal-totem">
+    <div id="modalTotem" class="modal modal-totem" style="display: none;">
         <div class="modal-content modal-totem-content">
             <div class="totem-container">
                 <!-- Background fixo do totem -->
@@ -519,7 +516,7 @@
     </div>
 
     <!-- Modal de Confirmação -->
-    <div id="modalConfirmacao" class="modal">
+    <div id="modalConfirmacao" class="modal" style="display: none;">
         <div class="modal-content modal-small">
             <div class="modal-header">
                 <h3>Confirmar Exclusão</h3>
@@ -537,7 +534,7 @@
     </div>
 
     <!-- Modal de Envio por Email -->
-    <div id="modalEmail" class="modal">
+    <div id="modalEmail" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Enviar por Email</h2>
@@ -616,7 +613,7 @@
     </div>
 
     <!-- Modal de Instruções FormSubmit -->
-    <div id="modalInstrucoes" class="modal">
+    <div id="modalInstrucoes" class="modal" style="display: none;">
         <div class="modal-content modal-small">
             <div class="modal-header">
                 <h3>📧 Como Enviar Emails</h3>
@@ -659,7 +656,7 @@
     </button>
 
     <!-- Modal de Conversação com a Milly -->
-    <div id="modalMillyChat" class="modal modal-milly-chat">
+    <div id="modalMillyChat" class="modal modal-milly-chat modal-fechado" style="display: none !important;">
         <div class="modal-content modal-milly-chat-content">
             <div class="milly-chat-header">
                 <div class="milly-chat-avatar">

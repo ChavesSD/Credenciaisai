@@ -157,28 +157,75 @@ class SistemaCadastro {
         const modalChat = document.getElementById('modalMillyChat');
         const suggestions = document.querySelectorAll('.suggestion-btn');
 
+        // Garantir que o modal comece fechado
+        if (modalChat) {
+            modalChat.style.display = 'none';
+        }
+
+        // Função para fechar o modal
+        const fecharModal = (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (modalChat) {
+                // Remover classe de aberto e adicionar classe de fechado
+                modalChat.classList.remove('modal-aberto');
+                modalChat.classList.add('modal-fechado');
+                // Forçar display none com !important via style
+                modalChat.style.setProperty('display', 'none', 'important');
+                modalChat.setAttribute('aria-hidden', 'true');
+                console.log('Modal da Milly fechado');
+                // Verificar se realmente fechou
+                setTimeout(() => {
+                    const computedStyle = window.getComputedStyle(modalChat);
+                    if (computedStyle.display !== 'none') {
+                        console.warn('Modal ainda visível, forçando fechamento...');
+                        modalChat.style.setProperty('display', 'none', 'important');
+                        modalChat.style.setProperty('visibility', 'hidden', 'important');
+                    }
+                }, 10);
+            }
+        };
+
         // Abrir modal
         if (btnMilly) {
-            btnMilly.addEventListener('click', () => {
-                modalChat.style.display = 'block';
-                inputChat.focus();
-                // Mensagem de boas-vindas apenas se o chat estiver vazio
-                const chatBody = document.getElementById('millyChatBody');
-                if (chatBody && chatBody.children.length === 0) {
-                    setTimeout(() => {
-                        this.adicionarMensagemMilly('Olá! Eu sou a Milly, sua assistente virtual! 😊', 'texto');
+            btnMilly.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (modalChat) {
+                    // Remover classe de fechado e adicionar classe de aberto
+                    modalChat.classList.remove('modal-fechado');
+                    modalChat.classList.add('modal-aberto');
+                    // Forçar display block
+                    modalChat.style.setProperty('display', 'block', 'important');
+                    modalChat.style.removeProperty('visibility');
+                    modalChat.setAttribute('aria-hidden', 'false');
+                    if (inputChat) {
+                        inputChat.focus();
+                    }
+                    // Mensagem de boas-vindas apenas se o chat estiver vazio
+                    const chatBody = document.getElementById('millyChatBody');
+                    if (chatBody && chatBody.children.length === 0) {
                         setTimeout(() => {
-                            this.adicionarMensagemMilly('Posso te ajudar com várias coisas:<br><br>• <strong>Cadastrar credenciais</strong> de funcionários e profissionais<br>• <strong>Cadastrar senhas do totem</strong> para exibição<br>• <strong>Exportar dados</strong> para Excel<br>• <strong>Enviar relatórios</strong> por email<br>• <strong>Ver estatísticas</strong> e visualizar o totem<br>• <strong>Tirar dúvidas</strong> sobre o sistema<br><br>O que você gostaria de fazer?', 'html');
-                        }, 500);
-                    }, 300);
+                            this.adicionarMensagemMilly('Olá! Eu sou a Milly, sua assistente virtual! 😊', 'texto');
+                            setTimeout(() => {
+                                this.adicionarMensagemMilly('Posso te ajudar com várias coisas:<br><br>• <strong>Cadastrar credenciais</strong> de funcionários e profissionais<br>• <strong>Cadastrar senhas do totem</strong> para exibição<br>• <strong>Exportar dados</strong> para Excel<br>• <strong>Enviar relatórios</strong> por email<br>• <strong>Ver estatísticas</strong> e visualizar o totem<br>• <strong>Tirar dúvidas</strong> sobre o sistema<br><br>O que você gostaria de fazer?', 'html');
+                            }, 500);
+                        }, 300);
+                    }
                 }
             });
         }
 
-        // Fechar modal
+        // Fechar modal - múltiplos eventos para garantir que funcione
         if (btnFechar) {
-            btnFechar.addEventListener('click', () => {
-                modalChat.style.display = 'none';
+            // Clique
+            btnFechar.addEventListener('click', fecharModal);
+            // Touch (mobile)
+            btnFechar.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                fecharModal(e);
             });
         }
 
@@ -220,11 +267,19 @@ class SistemaCadastro {
             });
         });
 
-        // Fechar ao clicar fora
+        // Fechar ao clicar fora (apenas no overlay, não no conteúdo)
         if (modalChat) {
             modalChat.addEventListener('click', (e) => {
                 if (e.target === modalChat) {
-                    modalChat.style.display = 'none';
+                    e.preventDefault();
+                    fecharModal(e);
+                }
+            });
+            // Touch para mobile
+            modalChat.addEventListener('touchend', (e) => {
+                if (e.target === modalChat) {
+                    e.preventDefault();
+                    fecharModal(e);
                 }
             });
         }
