@@ -4870,318 +4870,96 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             btnEnviar.disabled = true;
         }
 
-        // Verificar se EmailJS está carregado
-        if (typeof emailjs === 'undefined') {
-            this.mostrarNotificacao('⚠️ EmailJS não está carregado!', 'error');
-            setTimeout(() => {
-                let mensagem = '❌ <strong>EmailJS não foi carregado no navegador!</strong><br><br>';
-                mensagem += 'Isso pode acontecer se:<br>';
-                mensagem += '1. A conexão com a internet está bloqueada<br>';
-                mensagem += '2. O script do EmailJS não está sendo carregado<br>';
-                mensagem += '3. Há um bloqueador de anúncios bloqueando o script<br><br>';
-                mensagem += '💡 <strong>Solução:</strong> Recarregue a página e verifique o console (F12) para erros de carregamento.';
-                this.mostrarNotificacao(mensagem, 'warning');
-            }, 2000);
-            
-            if (btnEnviar) {
-                btnEnviar.classList.remove('btn-loading');
-                btnEnviar.disabled = false;
-            }
-            return;
-        }
-
-        // Verificar configuração do EmailJS (único método suportado para envio com anexos)
-        const emailjsConfig = this.obterConfigEmailJS();
-        const temAnexos = this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0;
-        
-        console.log('Verificando configuração EmailJS:', {
-            configExiste: !!emailjsConfig,
-            publicKey: emailjsConfig?.publicKey ? 'configurado' : 'não configurado',
-            serviceId: emailjsConfig?.serviceId || 'não configurado',
-            templateId: emailjsConfig?.templateId || 'não configurado',
-            emailjsCarregado: typeof emailjs !== 'undefined'
-        });
-        
-        // EmailJS é obrigatório (sempre haverá anexos)
-        if (!emailjsConfig || !emailjsConfig.publicKey || !emailjsConfig.serviceId || !emailjsConfig.templateId) {
-            this.mostrarNotificacao('⚠️ EmailJS não está configurado!', 'error');
-            setTimeout(() => {
-                let mensagem = '📎 <strong>EmailJS é obrigatório para enviar emails com anexos!</strong><br><br>';
-                mensagem += '💡 <strong>Como configurar EmailJS:</strong><br>';
-                mensagem += '1. Acesse: <a href="https://www.emailjs.com/" target="_blank">https://www.emailjs.com/</a><br>';
-                mensagem += '2. Crie uma conta gratuita (até 200 emails/mês)<br>';
-                mensagem += '3. Configure um Email Service e um Template<br>';
-                mensagem += '4. Abra o console do navegador (F12) e execute:<br>';
-                mensagem += '<code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; display: block; margin: 8px 0; font-size: 12px;">localStorage.setItem(\'emailjsConfig\', JSON.stringify({<br>';
-                mensagem += '&nbsp;&nbsp;publicKey: \'SUA_PUBLIC_KEY\',<br>';
-                mensagem += '&nbsp;&nbsp;serviceId: \'SEU_SERVICE_ID\',<br>';
-                mensagem += '&nbsp;&nbsp;templateId: \'SEU_TEMPLATE_ID\'<br>';
-                mensagem += '}));</code>';
-                mensagem += '5. Veja o arquivo <strong>CONFIGURACAO_EMAIL.md</strong> para instruções detalhadas<br><br>';
-                mensagem += '📥 <strong>Alternativa:</strong> Use "Exportar Excel" para baixar os arquivos manualmente';
-                this.mostrarNotificacao(mensagem, 'warning');
-            }, 2000);
-            
-            if (btnEnviar) {
-                btnEnviar.classList.remove('btn-loading');
-                btnEnviar.disabled = false;
-            }
-            return;
-        }
-
         try {
-            this.mostrarNotificacao('Preparando e enviando email com anexos...', 'info');
+            this.mostrarNotificacao('Preparando e enviando email com anexos via Netlify Forms...', 'info');
             
-            // Enviar via EmailJS (único método suportado)
-            await this.enviarViaEmailJS(emailRemetente, nomeRemetente, assunto, corpo, emailDestino);
+            const form = document.getElementById('formEmail');
+            if (!form) {
+                throw new Error('Formulário não encontrado');
+            }
+
+            // Preparar FormData com todos os campos
+            const formData = new FormData(form);
             
-            // Sucesso - fechar modal e mostrar mensagem
-                        const modalEmail = document.getElementById('modalEmail');
-                        if (modalEmail) {
-                            this.fecharModal(modalEmail);
-                        }
-            this.mostrarNotificacao('Email enviado com sucesso via EmailJS! ✅', 'success');
-            setTimeout(() => {
-                const numAnexos = this.arquivosParaEnvio?.length || 0;
-                let mensagem = `O email foi enviado para ${emailDestino}`;
-                if (numAnexos > 0) {
-                    mensagem += ` com ${numAnexos} anexo(s)`;
-                }
-                mensagem += '. Verifique também a pasta de spam.';
-                this.mostrarNotificacao(mensagem, 'info');
+            // Adicionar arquivos Excel como anexos
+            if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
+                console.log(`Preparando ${this.arquivosParaEnvio.length} anexo(s) para envio...`);
+                
+                this.arquivosParaEnvio.forEach((arquivo, index) => {
+                    try {
+                        // Converter Uint8Array para Blob
+                const blob = new Blob([arquivo.dados], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                });
+
+                        // Converter Blob para File
+                        const file = new File([blob], arquivo.nome, {
+                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            lastModified: Date.now()
+                        });
+                        
+                        // Adicionar ao FormData
+                        formData.append(`anexo_${index + 1}`, file);
+                        
+                        console.log(`✅ Anexo ${index + 1} preparado: ${arquivo.nome} (${this.formatarTamanhoArquivo(arquivo.tamanhoBytes || file.size)})`);
+                    } catch (error) {
+                        console.error(`❌ Erro ao preparar anexo ${index + 1} (${arquivo.nome}):`, error);
+                    }
+                });
+            }
+
+            // Enviar via Netlify Forms
+            console.log('Enviando formulário para Netlify Forms...');
+            const response = await fetch('/', {
+                    method: 'POST',
+                body: formData
+            });
+
+            console.log('Resposta Netlify Forms:', response.status, response.statusText);
+
+            if (response.ok) {
+                // Sucesso - fechar modal e mostrar mensagem
+                    const modalEmail = document.getElementById('modalEmail');
+                    if (modalEmail) {
+                        this.fecharModal(modalEmail);
+                    }
+            
+                this.mostrarNotificacao('Email enviado com sucesso via Netlify Forms! ✅', 'success');
+                    setTimeout(() => {
+                    const numAnexos = this.arquivosParaEnvio?.length || 0;
+                    let mensagem = `O email foi enviado para ${emailDestino}`;
+                    if (numAnexos > 0) {
+                        mensagem += ` com ${numAnexos} anexo(s)`;
+                    }
+                    mensagem += '. Verifique também a pasta de spam.';
+                    this.mostrarNotificacao(mensagem, 'info');
             }, 2000);
-            
+            } else {
+                const errorText = await response.text();
+                console.error('Erro na resposta Netlify:', errorText);
+                throw new Error(`Netlify Forms retornou status ${response.status}: ${response.statusText}`);
+            }
+
         } catch (error) {
-            console.error('Erro ao enviar email via EmailJS:', error);
+            console.error('Erro ao enviar email via Netlify Forms:', error);
             
             this.mostrarNotificacao('❌ Erro ao enviar email com anexos', 'error');
             setTimeout(() => {
-                let mensagem = '💡 <strong>O EmailJS falhou ao enviar os anexos.</strong><br><br>';
+                let mensagem = '💡 <strong>O envio via Netlify Forms falhou.</strong><br><br>';
                 mensagem += 'Verifique:<br>';
-                mensagem += '1. Se o EmailJS está configurado corretamente<br>';
-                mensagem += '2. Se o template do EmailJS está configurado para aceitar anexos<br>';
-                mensagem += '3. Se o tamanho dos arquivos não excede 50MB (limite do plano gratuito)<br>';
+                mensagem += '1. Se o site está hospedado no Netlify<br>';
+                mensagem += '2. Se o formulário está configurado corretamente no Netlify<br>';
+                mensagem += '3. Se o tamanho dos arquivos não excede os limites do Netlify<br>';
                 mensagem += '4. Os logs no console (F12) para mais detalhes<br><br>';
                 mensagem += '📥 <strong>Alternativa:</strong> Use "Exportar Excel" para baixar os arquivos manualmente';
                 this.mostrarNotificacao(mensagem, 'warning');
-                        }, 2000);
+            }, 2000);
         } finally {
             if (btnEnviar) {
-                btnEnviar.classList.remove('btn-loading');
-                btnEnviar.disabled = false;
+            btnEnviar.classList.remove('btn-loading');
+            btnEnviar.disabled = false;
             }
         }
-    }
-
-    obterConfigEmailJS() {
-        // Verificar se EmailJS está disponível e configurado
-        // Você pode configurar isso no localStorage ou como constante
-        try {
-            const config = localStorage.getItem('emailjsConfig');
-            if (config) {
-                return JSON.parse(config);
-            }
-            
-            // Configuração padrão - você precisa substituir pelos seus valores do EmailJS
-            // Para obter: https://www.emailjs.com/
-            // Para configurar, execute no console do navegador:
-            // localStorage.setItem('emailjsConfig', JSON.stringify({
-            //     publicKey: 'SUA_PUBLIC_KEY',
-            //     serviceId: 'SEU_SERVICE_ID',
-            //     templateId: 'SEU_TEMPLATE_ID'
-            // }));
-            return {
-                publicKey: '', // Sua Public Key do EmailJS
-                serviceId: '', // Seu Service ID
-                templateId: '' // Seu Template ID
-            };
-        } catch (error) {
-            console.error('Erro ao obter config EmailJS:', error);
-            return null;
-        }
-    }
-
-    async enviarViaEmailJS(emailRemetente, nomeRemetente, assunto, corpo, emailDestino) {
-        return new Promise(async (resolve, reject) => {
-            let formTemp = null;
-            let config = null;
-            try {
-                // Verificar se EmailJS está carregado (versão 4)
-                if (typeof emailjs === 'undefined') {
-                    throw new Error('EmailJS não está carregado. Verifique a conexão com a internet e se o script está incluído no HTML.');
-                }
-
-                config = this.obterConfigEmailJS();
-                if (!config || !config.publicKey || !config.serviceId || !config.templateId) {
-                    throw new Error('EmailJS não está configurado. Configure suas credenciais no localStorage.');
-                }
-
-                // Na versão 4 do EmailJS, usar init() com publicKey
-                emailjs.init({
-                    publicKey: config.publicKey
-                });
-
-                // Criar formulário temporário para envio com anexos
-                formTemp = document.createElement('form');
-                formTemp.style.display = 'none';
-                document.body.appendChild(formTemp);
-
-                // Adicionar campos de texto para os parâmetros do template
-                const camposTexto = {
-                    'to_email': emailDestino,
-                    'from_name': nomeRemetente,
-                    'from_email': emailRemetente,
-                    'subject': assunto || 'Formulário de Contato - Sistema de Credenciais',
-                    'message': corpo || 'Email enviado através do Sistema de Credenciais',
-                    'reply_to': emailRemetente
-                };
-
-                Object.keys(camposTexto).forEach(key => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                    input.value = camposTexto[key];
-                    formTemp.appendChild(input);
-            });
-
-                // Adicionar informações sobre anexos no corpo se houver
-            if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
-                    let infoAnexos = '\n\n=== ARQUIVOS ANEXADOS ===\n';
-                this.arquivosParaEnvio.forEach((arquivo, index) => {
-                        infoAnexos += `Arquivo ${index + 1}: ${arquivo.nome}\n`;
-                });
-                
-                    // Atualizar campo message com informações dos anexos
-                    const messageInput = formTemp.querySelector('input[name="message"]');
-                if (messageInput) {
-                    messageInput.value += infoAnexos;
-                }
-
-                    // Converter arquivos Excel (Uint8Array) para File objects e adicionar ao formulário
-                    let anexosPreparados = 0;
-                    this.arquivosParaEnvio.forEach((arquivo, index) => {
-                        try {
-                            // Verificar se os dados do arquivo existem
-                            if (!arquivo.dados || !arquivo.nome) {
-                                console.warn(`Arquivo ${index + 1} inválido: dados ou nome ausentes`);
-                                return;
-                            }
-
-                            // Converter Uint8Array para Blob
-                            const blob = new Blob([arquivo.dados], {
-                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                            });
-                            
-                            // Verificar se o Blob foi criado corretamente
-                            if (blob.size === 0) {
-                                console.warn(`Arquivo ${index + 1} (${arquivo.nome}) está vazio`);
-                                return;
-                            }
-                            
-                            // Converter Blob para File
-                            const file = new File([blob], arquivo.nome, {
-                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                                lastModified: Date.now()
-                            });
-
-                            // Verificar se o File foi criado corretamente
-                            if (!file || file.size === 0) {
-                                console.warn(`Falha ao criar File object para ${arquivo.nome}`);
-                                return;
-                            }
-
-                            // Criar input de arquivo
-                            const fileInput = document.createElement('input');
-                            fileInput.type = 'file';
-                            // EmailJS aceita anexos com nomes como 'attachment', 'attachment_1', 'file', etc.
-                            // Usaremos um nome simples que o EmailJS reconhece
-                            fileInput.name = index === 0 ? 'attachment' : `attachment_${index + 1}`;
-                            
-                            // Criar DataTransfer para adicionar o arquivo
-                            const dataTransfer = new DataTransfer();
-                            dataTransfer.items.add(file);
-                            fileInput.files = dataTransfer.files;
-                            
-                            // Verificar se o arquivo foi adicionado ao input
-                            if (fileInput.files.length === 0) {
-                                console.warn(`Falha ao adicionar arquivo ${arquivo.nome} ao input`);
-                                return;
-                            }
-                            
-                            formTemp.appendChild(fileInput);
-                            anexosPreparados++;
-                            
-                            console.log(`✅ Anexo ${index + 1} preparado: ${arquivo.nome} (${this.formatarTamanhoArquivo(arquivo.tamanhoBytes || file.size)})`);
-        } catch (error) {
-                            console.error(`❌ Erro ao preparar anexo ${index + 1} (${arquivo.nome}):`, error);
-                        }
-                    });
-                    
-                    if (anexosPreparados === 0) {
-                        console.warn('⚠️ Nenhum anexo foi preparado com sucesso. O email será enviado sem anexos.');
-                    } else {
-                        console.log(`📎 Total de ${anexosPreparados} anexo(s) preparado(s) para envio`);
-                    }
-                }
-
-                console.log('Enviando via EmailJS com formulário (incluindo anexos)...');
-                console.log('Configuração:', {
-                    serviceId: config.serviceId,
-                    templateId: config.templateId,
-                    publicKey: config.publicKey ? '***' : 'não configurado',
-                    numAnexos: this.arquivosParaEnvio?.length || 0
-                });
-
-                // Enviar email usando sendForm (versão 4 - API: sendForm(serviceId, templateId, formElement))
-                const response = await emailjs.sendForm(
-                    config.serviceId,
-                    config.templateId,
-                    formTemp
-                );
-
-                console.log('Resposta EmailJS:', response);
-                console.log('Status:', response?.status);
-                console.log('Text:', response?.text);
-                
-                // Limpar formulário temporário
-                if (formTemp && formTemp.parentNode) {
-                    formTemp.parentNode.removeChild(formTemp);
-                }
-                
-                // Na versão 4, verificar resposta
-                if (response && (response.status === 200 || response.text)) {
-                    resolve(response);
-                } else {
-                    reject(new Error(`EmailJS retornou resposta inválida: ${JSON.stringify(response)}`));
-                }
-            } catch (error) {
-                console.error('Erro ao enviar via EmailJS:', error);
-                console.error('Detalhes do erro:', {
-                    message: error.message,
-                    stack: error.stack,
-                    config: {
-                        publicKey: config?.publicKey ? '***' : 'não configurado',
-                        serviceId: config?.serviceId || 'não configurado',
-                        templateId: config?.templateId || 'não configurado'
-                    }
-                });
-                
-                // Limpar formulário temporário em caso de erro
-                if (formTemp && formTemp.parentNode) {
-                    formTemp.parentNode.removeChild(formTemp);
-                }
-                
-                // Melhorar mensagem de erro
-                let mensagemErro = error.message || 'Erro desconhecido ao enviar email';
-                if (error.message && error.message.includes('carregado')) {
-                    mensagemErro = 'EmailJS não está carregado. Verifique se o script está incluído no HTML e se há conexão com a internet.';
-                } else if (error.message && error.message.includes('configurado')) {
-                    mensagemErro = 'EmailJS não está configurado. Configure as credenciais no localStorage.';
-                }
-                
-                reject(new Error(mensagemErro));
-            }
-        });
     }
 
     prepararAnexosParaFormSubmit() {
