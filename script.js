@@ -4894,56 +4894,80 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
         try {
             this.mostrarNotificacao('Preparando e enviando email com anexos via FormSubmit...', 'info');
             
-            // Preparar FormData para FormSubmit
-            const formData = new FormData();
+            // Primeiro, adicionar arquivos como inputs de arquivo no formulário HTML
+            const camposArquivos = document.getElementById('camposArquivos');
+            const form = document.getElementById('formEmail');
+            
+            if (camposArquivos && form) {
+                // Limpar campos anteriores
+                camposArquivos.innerHTML = '';
+                
+                if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
+                    console.log(`Preparando ${this.arquivosParaEnvio.length} anexo(s) para envio via FormSubmit...`);
+                    
+                    this.arquivosParaEnvio.forEach((arquivo, index) => {
+                        try {
+                            // Converter Uint8Array para Blob
+                            const blob = new Blob([arquivo.dados], {
+                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                            });
+                            
+                            // Converter Blob para File
+                            const file = new File([blob], arquivo.nome, {
+                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                lastModified: Date.now()
+                            });
+                            
+                            // Criar input file e adicionar ao formulário
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.name = `attachment_${index + 1}`;
+                            input.style.display = 'none';
+                            
+                            // Criar DataTransfer para adicionar o arquivo ao input
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            input.files = dataTransfer.files;
+                            
+                            camposArquivos.appendChild(input);
+                            
+                            const tamanhoBytes = arquivo.tamanhoBytes || file.size;
+                            const tamanhoMB = tamanhoBytes / (1024 * 1024);
+                            
+                            console.log(`✅ Anexo ${index + 1} preparado: ${arquivo.nome} (${this.formatarTamanhoArquivo(tamanhoBytes)})`);
+                            
+                            if (tamanhoMB > 5) {
+                                console.warn(`⚠️ Arquivo ${arquivo.nome} excede 5MB (${tamanhoMB.toFixed(2)}MB) e pode não ser enviado`);
+                            }
+                        } catch (error) {
+                            console.error(`❌ Erro ao preparar anexo ${index + 1} (${arquivo.nome}):`, error);
+                        }
+                    });
+                }
+            }
+            
+            // Preparar FormData a partir do formulário (incluindo os arquivos adicionados)
+            const formData = new FormData(form);
             
             // Campos obrigatórios do FormSubmit
-            formData.append('_to', emailDestino);
-            formData.append('_subject', assunto || 'Planilhas de Credenciais');
-            formData.append('_template', 'box');
-            formData.append('_captcha', 'false');
-            
-            // Campos do formulário
-            formData.append('email', emailRemetente);
-            formData.append('name', nomeRemetente);
+            formData.set('_to', emailDestino);
+            formData.set('_subject', assunto || 'Planilhas de Credenciais');
+            formData.set('_template', 'box');
+            formData.set('_captcha', 'false');
             
             // Preparar corpo da mensagem
             let corpoCompleto = `Nome: ${nomeRemetente}\nEmail: ${emailRemetente}\n\nMensagem:\n${corpo || 'Email enviado através do Sistema de Credenciais'}`;
+            formData.set('message', corpoCompleto);
             
-            // Adicionar arquivos Excel como anexos
-            if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
-                console.log(`Preparando ${this.arquivosParaEnvio.length} anexo(s) para envio via FormSubmit...`);
-                let totalSize = 0;
-                
-                this.arquivosParaEnvio.forEach((arquivo, index) => {
-                    try {
-                        // Converter Uint8Array para Blob
-                        const blob = new Blob([arquivo.dados], {
-                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                        });
-                        
-                        // Calcular tamanho
-                        const tamanhoBytes = arquivo.tamanhoBytes || blob.size;
-                        const tamanhoMB = tamanhoBytes / (1024 * 1024);
-                        totalSize += tamanhoMB;
-                        
-                        if (tamanhoMB > 5) {
-                            console.warn(`Arquivo ${arquivo.nome} excede 5MB (${tamanhoMB.toFixed(2)}MB) e pode não ser enviado`);
-                        }
-                        
-                        // Adicionar ao FormData
-                        formData.append(arquivo.nome, blob, arquivo.nome);
-                        
-                        console.log(`✅ Anexo ${index + 1} preparado: ${arquivo.nome} (${this.formatarTamanhoArquivo(tamanhoBytes)})`);
-                    } catch (error) {
-                        console.error(`❌ Erro ao preparar anexo ${index + 1} (${arquivo.nome}):`, error);
-                    }
-                });
-                
-                console.log(`Total de ${this.arquivosParaEnvio.length} arquivo(s) anexado(s), tamanho total: ${totalSize.toFixed(2)}MB`);
+            // Log detalhado do FormData para debug
+            console.log('FormData preparado:');
+            for (let [key, value] of formData.entries()) {
+                if (value instanceof File) {
+                    console.log(`  ${key}: File - ${value.name} (${value.size} bytes, type: ${value.type})`);
+                } else {
+                    console.log(`  ${key}: ${value}`);
+                }
             }
-            
-            formData.append('message', corpoCompleto);
 
             // Enviar via FormSubmit
             console.log('Enviando via FormSubmit...');
