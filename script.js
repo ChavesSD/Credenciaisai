@@ -4976,19 +4976,19 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
     async enviarViaEmailJS(emailRemetente, nomeRemetente, assunto, corpo, emailDestino) {
         return new Promise(async (resolve, reject) => {
             let formTemp = null;
+            let config = null;
             try {
-                // Verificar se EmailJS está carregado
+                // Verificar se EmailJS está carregado (versão 4)
                 if (typeof emailjs === 'undefined') {
-                    throw new Error('EmailJS não está carregado. Verifique a conexão com a internet.');
+                    throw new Error('EmailJS não está carregado. Verifique a conexão com a internet e se o script está incluído no HTML.');
                 }
 
-                const config = this.obterConfigEmailJS();
+                config = this.obterConfigEmailJS();
                 if (!config || !config.publicKey || !config.serviceId || !config.templateId) {
                     throw new Error('EmailJS não está configurado. Configure suas credenciais no localStorage.');
                 }
 
-                // Inicializar EmailJS
-                emailjs.init(config.publicKey);
+                // Na versão 4 do EmailJS, não é necessário init() - a publicKey é passada diretamente
 
                 // Criar formulário temporário para envio com anexos
                 formTemp = document.createElement('form');
@@ -5095,8 +5095,9 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
 
                 console.log('Enviando via EmailJS com formulário (incluindo anexos)...');
 
-                // Enviar email usando sendForm (suporta anexos)
+                // Enviar email usando sendForm (versão 4 - publicKey é o primeiro parâmetro)
                 const response = await emailjs.sendForm(
+                    config.publicKey,
                     config.serviceId,
                     config.templateId,
                     formTemp
@@ -5109,20 +5110,38 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                     formTemp.parentNode.removeChild(formTemp);
                 }
                 
-                if (response.status === 200) {
+                // Na versão 4, a resposta é diferente - verificar se foi bem-sucedido
+                if (response && response.text) {
                     resolve(response);
                 } else {
-                    reject(new Error(`EmailJS retornou status ${response.status}`));
+                    reject(new Error('EmailJS não retornou uma resposta válida'));
                 }
             } catch (error) {
                 console.error('Erro ao enviar via EmailJS:', error);
+                console.error('Detalhes do erro:', {
+                    message: error.message,
+                    stack: error.stack,
+                    config: {
+                        publicKey: config?.publicKey ? '***' : 'não configurado',
+                        serviceId: config?.serviceId || 'não configurado',
+                        templateId: config?.templateId || 'não configurado'
+                    }
+                });
                 
                 // Limpar formulário temporário em caso de erro
                 if (formTemp && formTemp.parentNode) {
                     formTemp.parentNode.removeChild(formTemp);
                 }
                 
-                reject(error);
+                // Melhorar mensagem de erro
+                let mensagemErro = error.message || 'Erro desconhecido ao enviar email';
+                if (error.message && error.message.includes('carregado')) {
+                    mensagemErro = 'EmailJS não está carregado. Verifique se o script está incluído no HTML e se há conexão com a internet.';
+                } else if (error.message && error.message.includes('configurado')) {
+                    mensagemErro = 'EmailJS não está configurado. Configure as credenciais no localStorage.';
+                }
+                
+                reject(new Error(mensagemErro));
             }
         });
     }
