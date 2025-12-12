@@ -4870,9 +4870,37 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             btnEnviar.disabled = true;
         }
 
+        // Verificar se EmailJS está carregado
+        if (typeof emailjs === 'undefined') {
+            this.mostrarNotificacao('⚠️ EmailJS não está carregado!', 'error');
+            setTimeout(() => {
+                let mensagem = '❌ <strong>EmailJS não foi carregado no navegador!</strong><br><br>';
+                mensagem += 'Isso pode acontecer se:<br>';
+                mensagem += '1. A conexão com a internet está bloqueada<br>';
+                mensagem += '2. O script do EmailJS não está sendo carregado<br>';
+                mensagem += '3. Há um bloqueador de anúncios bloqueando o script<br><br>';
+                mensagem += '💡 <strong>Solução:</strong> Recarregue a página e verifique o console (F12) para erros de carregamento.';
+                this.mostrarNotificacao(mensagem, 'warning');
+            }, 2000);
+            
+            if (btnEnviar) {
+                btnEnviar.classList.remove('btn-loading');
+                btnEnviar.disabled = false;
+            }
+            return;
+        }
+
         // Verificar configuração do EmailJS (único método suportado para envio com anexos)
         const emailjsConfig = this.obterConfigEmailJS();
         const temAnexos = this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0;
+        
+        console.log('Verificando configuração EmailJS:', {
+            configExiste: !!emailjsConfig,
+            publicKey: emailjsConfig?.publicKey ? 'configurado' : 'não configurado',
+            serviceId: emailjsConfig?.serviceId || 'não configurado',
+            templateId: emailjsConfig?.templateId || 'não configurado',
+            emailjsCarregado: typeof emailjs !== 'undefined'
+        });
         
         // EmailJS é obrigatório (sempre haverá anexos)
         if (!emailjsConfig || !emailjsConfig.publicKey || !emailjsConfig.serviceId || !emailjsConfig.templateId) {
@@ -4988,7 +5016,10 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                     throw new Error('EmailJS não está configurado. Configure suas credenciais no localStorage.');
                 }
 
-                // Na versão 4 do EmailJS, não é necessário init() - a publicKey é passada diretamente
+                // Na versão 4 do EmailJS, usar init() com publicKey
+                emailjs.init({
+                    publicKey: config.publicKey
+                });
 
                 // Criar formulário temporário para envio com anexos
                 formTemp = document.createElement('form');
@@ -5094,27 +5125,34 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                 }
 
                 console.log('Enviando via EmailJS com formulário (incluindo anexos)...');
+                console.log('Configuração:', {
+                    serviceId: config.serviceId,
+                    templateId: config.templateId,
+                    publicKey: config.publicKey ? '***' : 'não configurado',
+                    numAnexos: this.arquivosParaEnvio?.length || 0
+                });
 
-                // Enviar email usando sendForm (versão 4 - publicKey é o primeiro parâmetro)
+                // Enviar email usando sendForm (versão 4 - API: sendForm(serviceId, templateId, formElement))
                 const response = await emailjs.sendForm(
-                    config.publicKey,
                     config.serviceId,
                     config.templateId,
                     formTemp
                 );
 
                 console.log('Resposta EmailJS:', response);
+                console.log('Status:', response?.status);
+                console.log('Text:', response?.text);
                 
                 // Limpar formulário temporário
                 if (formTemp && formTemp.parentNode) {
                     formTemp.parentNode.removeChild(formTemp);
                 }
                 
-                // Na versão 4, a resposta é diferente - verificar se foi bem-sucedido
-                if (response && response.text) {
+                // Na versão 4, verificar resposta
+                if (response && (response.status === 200 || response.text)) {
                     resolve(response);
                 } else {
-                    reject(new Error('EmailJS não retornou uma resposta válida'));
+                    reject(new Error(`EmailJS retornou resposta inválida: ${JSON.stringify(response)}`));
                 }
             } catch (error) {
                 console.error('Erro ao enviar via EmailJS:', error);
