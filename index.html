@@ -611,6 +611,20 @@
         </div>
     </div>
 
+    <!-- Formulário oculto para Netlify Forms detectar durante o build -->
+    <form name="credenciais-email" netlify netlify-honeypot="bot-field" enctype="multipart/form-data" style="display: none;">
+        <input type="hidden" name="form-name" value="credenciais-email">
+        <input type="hidden" name="bot-field">
+        <input type="email" name="emailDestino">
+        <input type="email" name="email">
+        <input type="text" name="nome">
+        <input type="text" name="subject">
+        <textarea name="mensagem"></textarea>
+        <input type="text" name="total_registros">
+        <input type="file" name="anexo_1">
+        <input type="file" name="anexo_2">
+    </form>
+
     <!-- Modal de Instruções FormSubmit -->
     <div id="modalInstrucoes" class="modal">
         <div class="modal-content modal-small">

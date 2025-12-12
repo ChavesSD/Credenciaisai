@@ -4881,6 +4881,19 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             // Preparar FormData com todos os campos
             const formData = new FormData(form);
             
+            // Garantir que form-name está presente (obrigatório para Netlify Forms)
+            if (!formData.has('form-name')) {
+                formData.append('form-name', 'credenciais-email');
+            }
+            
+            console.log('FormData preparado:', {
+                formName: formData.get('form-name'),
+                email: formData.get('email'),
+                nome: formData.get('nome'),
+                subject: formData.get('subject'),
+                numAnexos: this.arquivosParaEnvio?.length || 0
+            });
+            
             // Adicionar arquivos Excel como anexos
             if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
                 console.log(`Preparando ${this.arquivosParaEnvio.length} anexo(s) para envio...`);
@@ -4910,12 +4923,18 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
 
             // Enviar via Netlify Forms
             console.log('Enviando formulário para Netlify Forms...');
+            console.log('URL:', window.location.origin + '/');
+            
             const response = await fetch('/', {
-                    method: 'POST',
-                body: formData
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
             });
 
             console.log('Resposta Netlify Forms:', response.status, response.statusText);
+            console.log('Headers:', Object.fromEntries(response.headers.entries()));
 
             if (response.ok) {
                 // Sucesso - fechar modal e mostrar mensagem
@@ -4937,6 +4956,12 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             } else {
                 const errorText = await response.text();
                 console.error('Erro na resposta Netlify:', errorText);
+                
+                // Erro 404 geralmente significa que o formulário não foi detectado pelo Netlify
+                if (response.status === 404) {
+                    throw new Error('Formulário não encontrado pelo Netlify. O formulário precisa estar no HTML estático e o site precisa ser feito deploy no Netlify para que o formulário seja detectado.');
+                }
+                
                 throw new Error(`Netlify Forms retornou status ${response.status}: ${response.statusText}`);
             }
 
@@ -4946,11 +4971,25 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             this.mostrarNotificacao('❌ Erro ao enviar email com anexos', 'error');
             setTimeout(() => {
                 let mensagem = '💡 <strong>O envio via Netlify Forms falhou.</strong><br><br>';
-                mensagem += 'Verifique:<br>';
-                mensagem += '1. Se o site está hospedado no Netlify<br>';
-                mensagem += '2. Se o formulário está configurado corretamente no Netlify<br>';
-                mensagem += '3. Se o tamanho dos arquivos não excede os limites do Netlify<br>';
-                mensagem += '4. Os logs no console (F12) para mais detalhes<br><br>';
+                
+                if (error.message && error.message.includes('404')) {
+                    mensagem += '⚠️ <strong>Erro 404 - Formulário não encontrado:</strong><br>';
+                    mensagem += 'O Netlify não detectou o formulário. Isso pode acontecer se:<br>';
+                    mensagem += '1. O site não foi feito deploy no Netlify após adicionar o formulário<br>';
+                    mensagem += '2. O formulário não está presente no HTML estático<br>';
+                    mensagem += '3. O Netlify ainda não processou o formulário<br><br>';
+                    mensagem += '💡 <strong>Solução:</strong><br>';
+                    mensagem += '1. Faça um novo deploy no Netlify (push para o GitHub ou deploy manual)<br>';
+                    mensagem += '2. Aguarde alguns minutos após o deploy<br>';
+                    mensagem += '3. Verifique no dashboard do Netlify se o formulário aparece em "Forms"<br><br>';
+                } else {
+                    mensagem += 'Verifique:<br>';
+                    mensagem += '1. Se o site está hospedado no Netlify<br>';
+                    mensagem += '2. Se o formulário está configurado corretamente no Netlify<br>';
+                    mensagem += '3. Se o tamanho dos arquivos não excede os limites do Netlify (10MB por arquivo)<br>';
+                    mensagem += '4. Os logs no console (F12) para mais detalhes<br><br>';
+                }
+                
                 mensagem += '📥 <strong>Alternativa:</strong> Use "Exportar Excel" para baixar os arquivos manualmente';
                 this.mostrarNotificacao(mensagem, 'warning');
             }, 2000);
