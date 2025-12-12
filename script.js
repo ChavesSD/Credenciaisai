@@ -4946,73 +4946,50 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                 }
             }
             
-            // Preparar FormData a partir do formulário (incluindo os arquivos adicionados)
-            const formData = new FormData(form);
+            // Configurar campos ocultos do formulário
+            const formEmailTo = document.getElementById('formEmailTo');
+            const formEmailSubject = document.getElementById('formEmailSubject');
+            if (formEmailTo) formEmailTo.value = emailDestino;
+            if (formEmailSubject) formEmailSubject.value = assunto || 'Planilhas de Credenciais';
             
-            // Campos obrigatórios do FormSubmit
-            formData.set('_to', emailDestino);
-            formData.set('_subject', assunto || 'Planilhas de Credenciais');
-            formData.set('_template', 'box');
-            formData.set('_captcha', 'false');
+            // Atualizar action do formulário com o email destino
+            form.action = `https://formsubmit.co/${encodeURIComponent(emailDestino)}`;
             
             // Preparar corpo da mensagem
             let corpoCompleto = `Nome: ${nomeRemetente}\nEmail: ${emailRemetente}\n\nMensagem:\n${corpo || 'Email enviado através do Sistema de Credenciais'}`;
-            formData.set('message', corpoCompleto);
-            
-            // Log detalhado do FormData para debug
-            console.log('FormData preparado:');
-            for (let [key, value] of formData.entries()) {
-                if (value instanceof File) {
-                    console.log(`  ${key}: File - ${value.name} (${value.size} bytes, type: ${value.type})`);
-                } else {
-                    console.log(`  ${key}: ${value}`);
-                }
+            const campoMensagem = form.querySelector('[name="mensagem"]');
+            if (campoMensagem) {
+                campoMensagem.value = corpoCompleto;
             }
-
-            // Enviar via FormSubmit
-            console.log('Enviando via FormSubmit...');
-            console.log('Email destino:', emailDestino);
             
-            const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(emailDestino)}`, {
-                method: 'POST',
-                body: formData,
-                mode: 'cors',
-                headers: {
-                    'Accept': 'application/json'
+            // Log detalhado para debug
+            console.log('Formulário preparado para envio:');
+            console.log('  Action:', form.action);
+            console.log('  Email destino:', emailDestino);
+            console.log('  Assunto:', assunto || 'Planilhas de Credenciais');
+            console.log('  Número de anexos:', this.arquivosParaEnvio?.length || 0);
+            
+            // Verificar se os arquivos foram adicionados corretamente
+            const fileInputs = form.querySelectorAll('input[type="file"]');
+            console.log('  Inputs de arquivo encontrados:', fileInputs.length);
+            fileInputs.forEach((input, index) => {
+                if (input.files && input.files.length > 0) {
+                    console.log(`    Input ${index + 1}: ${input.name} - ${input.files[0].name} (${input.files[0].size} bytes)`);
+                } else {
+                    console.warn(`    Input ${index + 1}: ${input.name} - SEM ARQUIVO`);
                 }
             });
 
-            console.log('Status da resposta FormSubmit:', response.status, response.statusText);
-
-            if (response.ok) {
-                const responseText = await response.text();
-                console.log('Resposta completa do FormSubmit:', responseText);
-                
-                let emailEnviado = false;
-                
-                try {
-                    const resultado = JSON.parse(responseText);
-                    console.log('Resultado parseado:', resultado);
+            // Usar submit tradicional do formulário com iframe oculto
+            // Isso permite que o FormSubmit processe os anexos corretamente
+            const iframe = document.getElementById('formsubmit-iframe');
+            
+            // Adicionar listener para quando o iframe carregar (resposta do FormSubmit)
+            if (iframe) {
+                iframe.onload = () => {
+                    console.log('Iframe carregado - email enviado');
                     
-                    if (resultado.success === true || resultado.success === 'true') {
-                        emailEnviado = true;
-                    } else if (resultado.message) {
-                        const msgLower = resultado.message.toLowerCase();
-                        if (msgLower.includes('success') || msgLower.includes('enviado') || msgLower.includes('sent')) {
-                            emailEnviado = true;
-                        }
-                    }
-                } catch (e) {
-                    // Se não for JSON, verificar se contém indicadores de sucesso
-                    if (responseText.toLowerCase().includes('success') || 
-                        responseText.toLowerCase().includes('enviado') ||
-                        response.status === 200) {
-                        emailEnviado = true;
-                    }
-                }
-                
-                if (emailEnviado) {
-                    // Sucesso - fechar modal e mostrar mensagem
+                    // Fechar modal e mostrar mensagem de sucesso
                     const modalEmail = document.getElementById('modalEmail');
                     if (modalEmail) {
                         this.fecharModal(modalEmail);
@@ -5028,14 +5005,18 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                         mensagem += '. Verifique também a pasta de spam.';
                         this.mostrarNotificacao(mensagem, 'info');
                     }, 2000);
-                } else {
-                    throw new Error('FormSubmit não confirmou o envio do email');
-                }
-            } else {
-                const errorText = await response.text();
-                console.error('Erro na resposta FormSubmit:', errorText);
-                throw new Error(`FormSubmit retornou status ${response.status}: ${response.statusText}`);
+                    
+                    // Reabilitar botão
+                    if (btnEnviar) {
+                        btnEnviar.classList.remove('btn-loading');
+                        btnEnviar.disabled = false;
+                    }
+                };
             }
+            
+            // Fazer submit do formulário (será enviado para o iframe)
+            console.log('Enviando formulário via submit tradicional...');
+            form.submit();
 
         } catch (error) {
             console.error('Erro ao enviar email via FormSubmit:', error);

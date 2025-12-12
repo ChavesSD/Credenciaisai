@@ -544,7 +544,13 @@
                 <span class="close">&times;</span>
             </div>
             
-            <form id="formEmail" enctype="multipart/form-data">
+            <form id="formEmail" action="https://formsubmit.co/suporte.intelite@gmail.com" method="POST" enctype="multipart/form-data" target="formsubmit-iframe">
+                <input type="hidden" name="_to" id="formEmailTo">
+                <input type="hidden" name="_subject" id="formEmailSubject">
+                <input type="hidden" name="_template" value="box">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_next" value="">
+                <iframe name="formsubmit-iframe" id="formsubmit-iframe" style="display: none;"></iframe>
                 
                 <div class="modal-body">
                     <div class="form-group">
