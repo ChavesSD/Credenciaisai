@@ -15,6 +15,16 @@ class SistemaCadastro {
         this.millyDadosColetados = {};
         this.millyAguardandoConfirmacao = false;
         this.millyCadastrosMultiplos = []; // Array para múltiplos cadastros
+        this.millyEtapaCadastro = null; // 'empresa', 'tipo', 'quantidade', 'dados', 'confirmacao'
+        this.millyEmpresaArmazenada = this.carregarEmpresaArmazenada(); // Empresa armazenada para próximos cadastros
+        this.millyQuantidadeCadastros = 0; // Quantidade de cadastros a fazer
+        this.millyCadastrosAtuais = []; // Array com os cadastros sendo coletados
+        this.millyIndiceCadastroAtual = 0; // Índice do cadastro atual sendo coletado
+        // Estados para totem
+        this.millyEtapaTotem = null; // 'empresa', 'quantidade', 'nome', 'exibir', 'posicao', 'cor', 'confirmacao'
+        this.millyQuantidadeTotem = 0; // Quantidade de senhas a cadastrar
+        this.millySenhasTotemAtuais = []; // Array com as senhas sendo coletadas
+        this.millyIndiceSenhaAtual = 0; // Índice da senha atual sendo coletada
         
         this.inicializar();
     }
@@ -292,21 +302,50 @@ class SistemaCadastro {
                 const confirmacao = msg.includes('sim') || msg.includes('confirmar') || msg.includes('ok') || msg.includes('pode') || msg === 's';
                 if (confirmacao) {
                     if (this.millyCadastroEmAndamento === 'credencial') {
-                        if (this.millyCadastrosMultiplos.length > 1) {
+                        if (this.millyCadastrosAtuais && this.millyCadastrosAtuais.length > 0) {
+                            // Executar cadastros coletados
+                            this.executarCadastrosColetadosMilly();
+                        } else if (this.millyCadastrosMultiplos.length > 1) {
                             this.executarCadastrosMultiplosMilly(this.millyCadastrosMultiplos);
                         } else {
                             this.executarCadastroCredencialMilly(this.millyDadosColetados);
                         }
                     } else if (this.millyCadastroEmAndamento === 'totem') {
-                        this.executarCadastroTotemMilly(this.millyDadosColetados);
+                        if (this.millySenhasTotemAtuais && this.millySenhasTotemAtuais.length > 0) {
+                            // Executar senhas coletadas
+                            this.executarSenhasTotemColetadasMilly();
+                        } else {
+                            this.executarCadastroTotemMilly(this.millyDadosColetados);
+                        }
                     }
                     this.millyAguardandoConfirmacao = false;
                 } else {
                     this.adicionarMensagemMilly('Cadastro cancelado. Posso ajudar com mais alguma coisa?', 'texto');
-                    this.millyCadastroEmAndamento = null;
-                    this.millyDadosColetados = {};
-                    this.millyCadastrosMultiplos = [];
-                    this.millyAguardandoConfirmacao = false;
+                    this.limparEstadoCadastroMilly();
+                }
+                return;
+            }
+            
+            // Verificar se está perguntando se deseja mais cadastros
+            if (this.millyEtapaCadastro === 'perguntar-mais') {
+                const querMais = msg.includes('sim') || msg.includes('s') || msg.includes('quero') || msg.includes('desejo');
+                if (querMais) {
+                    // Reiniciar fluxo, mas manter empresa armazenada
+                    this.millyEtapaCadastro = 'tipo';
+                    this.millyDadosColetados = { empresa: this.millyEmpresaArmazenada };
+                    this.millyCadastrosAtuais = [];
+                    this.millyIndiceCadastroAtual = 0;
+                    this.millyQuantidadeCadastros = 0;
+                    this.adicionarMensagemMilly('Ótimo! Vamos cadastrar mais! 😊', 'texto');
+                    setTimeout(() => {
+                        this.adicionarMensagemMilly('Qual o <strong>Tipo de Cadastro</strong> você deseja fazer?', 'html');
+                        setTimeout(() => {
+                            this.mostrarTiposDisponiveisMilly();
+                        }, 500);
+                    }, 500);
+                } else {
+                    this.adicionarMensagemMilly('Perfeito! Cadastros finalizados. Posso ajudar com mais alguma coisa?', 'texto');
+                    this.limparEstadoCadastroMilly();
                 }
                 return;
             }
@@ -438,6 +477,10 @@ class SistemaCadastro {
                     }
                 }, 1000);
             }
+            // Comandos de limpar cache
+            else if (msg.includes('limpar cache') || msg.includes('limpar') && (msg.includes('tipos') || msg.includes('empresa') || msg.includes('dados'))) {
+                this.processarLimparCacheMilly(msg);
+            }
             // Comandos de ajuda - melhorado
             else if (temAjuda || msg === 'ajuda' || msg === 'help') {
                 this.adicionarMensagemMilly('Claro! Posso te ajudar com várias coisas! 😊', 'texto');
@@ -449,6 +492,7 @@ class SistemaCadastro {
                             <li>📊 <strong>Exportação:</strong> Exportar dados para Excel</li>
                             <li>📧 <strong>Email:</strong> Enviar relatórios por email</li>
                             <li>🖥️ <strong>Visualização:</strong> Ver o totem e estatísticas</li>
+                            <li>🗑️ <strong>Limpar Cache:</strong> Limpar empresa armazenada e tipos personalizados</li>
                             <li>❓ <strong>Dúvidas:</strong> Explicar como usar cada funcionalidade</li>
                         </ul>
                         <p>O que você gostaria de fazer ou saber?</p>
@@ -545,150 +589,860 @@ class SistemaCadastro {
     iniciarCadastroCredencialMilly(mensagem) {
         this.millyCadastroEmAndamento = 'credencial';
         this.millyDadosColetados = {};
+        this.millyCadastrosAtuais = [];
+        this.millyIndiceCadastroAtual = 0;
+        this.millyQuantidadeCadastros = 0;
         
-        this.adicionarMensagemMilly('Vou te ajudar a cadastrar credenciais! 📝', 'texto');
+        // Verificar se já tem empresa armazenada
+        if (this.millyEmpresaArmazenada) {
+            this.millyDadosColetados.empresa = this.millyEmpresaArmazenada;
+            this.millyEtapaCadastro = 'tipo';
+            this.adicionarMensagemMilly('Vou te ajudar a cadastrar credenciais! 📝', 'texto');
+            setTimeout(() => {
+                this.adicionarMensagemMilly(`✅ Empresa armazenada: <strong>${this.millyEmpresaArmazenada}</strong><br><br>Qual o <strong>Tipo de Cadastro</strong> você deseja fazer?`, 'html');
+                setTimeout(() => {
+                    this.mostrarTiposDisponiveisMilly();
+                }, 500);
+            }, 500);
+        } else {
+            this.millyEtapaCadastro = 'empresa';
+            this.adicionarMensagemMilly('Vou te ajudar a cadastrar credenciais! 📝', 'texto');
+            setTimeout(() => {
+                this.adicionarMensagemMilly('Me informe o <strong>nome da empresa</strong>.<br><br>💡 <small>A partir do momento que for informado, não precisará mais informar - ficará armazenado para próximos cadastros!</small>', 'html');
+            }, 500);
+        }
+    }
+
+    mostrarTiposDisponiveisMilly() {
+        // Obter tipos padrão
+        const tiposPadrao = [
+            { valor: 'recepcao', nome: 'Recepção Médica' },
+            { valor: 'recepcao-odonto', nome: 'Recepção Odonto' },
+            { valor: 'medicina', nome: 'Médico(a)' },
+            { valor: 'odonto', nome: 'Dentista' },
+            { valor: 'laboratorio', nome: 'Laboratório' },
+            { valor: 'pos-consulta', nome: 'Pós Consulta' }
+        ];
+        
+        let mensagem = '<strong>Selecione o tipo de cadastro:</strong><br><br>';
+        mensagem += '<div class="milly-tipos-container" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">';
+        
+        // Adicionar botões para tipos padrão
+        tiposPadrao.forEach((tipo) => {
+            mensagem += `<button class="milly-tipo-btn" data-tipo-valor="${tipo.valor}" data-tipo-nome="${tipo.nome}" style="padding: 10px 16px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${tipo.nome}</button>`;
+        });
+        
+        // Adicionar botões para tipos personalizados
+        if (this.tiposPersonalizados && this.tiposPersonalizados.length > 0) {
+            this.tiposPersonalizados.forEach(tipo => {
+                mensagem += `<button class="milly-tipo-btn milly-tipo-personalizado" data-tipo-valor="${tipo.valor}" data-tipo-nome="${tipo.nome}" style="padding: 10px 16px; background-color: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${tipo.nome} <span style="font-size: 0.85em; opacity: 0.9;">(personalizado)</span></button>`;
+            });
+        }
+        
+        mensagem += '</div>';
+        mensagem += '<br><div style="margin-top: 8px; padding: 8px; background-color: #f8f9fa; border-radius: 4px; border-left: 3px solid #007bff;"><strong>Ou digite o nome de um novo tipo</strong> para criar um novo tipo de cadastro.</div>';
+        
+        this.adicionarMensagemMilly(mensagem, 'html');
+        
+        // Adicionar event listeners aos botões após inserir no DOM
         setTimeout(() => {
-            this.adicionarMensagemMilly('Me informe os dados no seguinte formato:<br><br><strong>Empresa: [nome]<br>Tipo: [tipo]<br>Nome: [nome completo]<br>Especialidade: [se aplicável]</strong><br><br>Ou me diga os dados separadamente que eu vou coletando! 😊', 'html');
-        }, 500);
+            const chatBody = document.getElementById('millyChatBody');
+            if (chatBody) {
+                const buttons = chatBody.querySelectorAll('.milly-tipo-btn');
+                buttons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const tipoValor = button.getAttribute('data-tipo-valor');
+                        const tipoNome = button.getAttribute('data-tipo-nome');
+                        
+                        // Simular envio de mensagem com o tipo selecionado
+                        this.processarSelecaoTipo(tipoValor, tipoNome);
+                    });
+                    
+                    // Adicionar hover effect
+                    button.addEventListener('mouseenter', function() {
+                        if (!this.disabled) {
+                            this.style.opacity = '0.9';
+                            this.style.transform = 'scale(1.05)';
+                            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                        }
+                    });
+                    button.addEventListener('mouseleave', function() {
+                        if (!this.disabled) {
+                            this.style.opacity = '1';
+                            this.style.transform = 'scale(1)';
+                            this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                        }
+                    });
+                    
+                    // Adicionar click effect
+                    button.addEventListener('mousedown', function() {
+                        if (!this.disabled) {
+                            this.style.transform = 'scale(0.98)';
+                        }
+                    });
+                    button.addEventListener('mouseup', function() {
+                        if (!this.disabled) {
+                            this.style.transform = 'scale(1.05)';
+                        }
+                    });
+                });
+            }
+        }, 100);
+    }
+
+    processarSelecaoTipo(tipoValor, tipoNome) {
+        // Marcar botão como selecionado visualmente
+        const chatBody = document.getElementById('millyChatBody');
+        if (chatBody) {
+            const buttons = chatBody.querySelectorAll('.milly-tipo-btn');
+            buttons.forEach(btn => {
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.disabled = true;
+            });
+        }
         
-        // Tentar extrair dados da mensagem inicial
-        const dados = this.extrairDadosCredencial(mensagem);
-        if (dados.empresa) this.millyDadosColetados.empresa = dados.empresa;
-        if (dados.tipo) this.millyDadosColetados.tipo = dados.tipo;
-        if (dados.nome) this.millyDadosColetados.nome = dados.nome;
-        if (dados.especialidade) this.millyDadosColetados.especialidade = dados.especialidade;
+        // Processar a seleção
+        this.millyDadosColetados.tipo = tipoValor;
+        this.millyEtapaCadastro = 'quantidade';
+        
+        this.adicionarMensagemMilly(`✅ Tipo selecionado: <strong>${tipoNome}</strong>`, 'html');
+        setTimeout(() => {
+            this.adicionarMensagemMilly('Quantos cadastros desse tipo você deseja fazer?', 'texto');
+        }, 500);
     }
 
     iniciarCadastroTotemMilly(mensagem) {
         this.millyCadastroEmAndamento = 'totem';
         this.millyDadosColetados = {};
+        this.millySenhasTotemAtuais = [];
+        this.millyIndiceSenhaAtual = 0;
+        this.millyQuantidadeTotem = 0;
         
-        // Tentar extrair dados da mensagem inicial
-        const dados = this.extrairDadosTotem(mensagem);
-        if (dados.empresa) this.millyDadosColetados.empresa = dados.empresa;
-        if (dados.nome) this.millyDadosColetados.nome = dados.nome;
-        if (dados.ordem) this.millyDadosColetados.ordem = dados.ordem;
-        if (dados.cor) this.millyDadosColetados.cor = dados.cor;
-        
-        // Verificar se já temos dados suficientes
-        const falta = this.verificarDadosFaltantesTotem();
-        if (falta.length === 0) {
-            // Dados completos - mostrar resumo e pedir confirmação
-            this.adicionarMensagemMilly('Perfeito! Vou cadastrar com os seguintes dados:', 'texto');
+        // Verificar se já tem empresa armazenada
+        if (this.millyEmpresaArmazenada) {
+            this.millyDadosColetados.empresa = this.millyEmpresaArmazenada;
+            this.millyEtapaTotem = 'quantidade';
+            this.adicionarMensagemMilly('Vou te ajudar a cadastrar senhas do totem! 🎯', 'texto');
             setTimeout(() => {
-                const resumo = `
-                    <ul>
-                        <li><strong>Empresa:</strong> ${this.millyDadosColetados.empresa}</li>
-                        <li><strong>Senha:</strong> ${this.millyDadosColetados.nome}</li>
-                        <li><strong>Ordem:</strong> ${this.millyDadosColetados.ordem}</li>
-                        ${this.millyDadosColetados.cor ? `<li><strong>Cor:</strong> ${this.millyDadosColetados.cor}</li>` : ''}
-                    </ul>
-                    <p>Posso cadastrar agora? (Digite "sim" ou "confirmar")</p>
-                `;
-                this.adicionarMensagemMilly(resumo, 'html');
-                this.millyAguardandoConfirmacao = true;
+                this.adicionarMensagemMilly(`✅ Empresa armazenada: <strong>${this.millyEmpresaArmazenada}</strong><br><br>Quantas senhas você deseja cadastrar?`, 'html');
             }, 500);
         } else {
-            this.adicionarMensagemMilly('Vou te ajudar a cadastrar uma senha do totem! 🎯', 'texto');
+            this.millyEtapaTotem = 'empresa';
+            this.adicionarMensagemMilly('Vou te ajudar a cadastrar senhas do totem! 🎯', 'texto');
             setTimeout(() => {
-                let mensagemInstrucao = 'Preciso das seguintes informações:<br><br>';
-                mensagemInstrucao += '<ol>';
-                if (!this.millyDadosColetados.empresa) {
-                    mensagemInstrucao += '<li><strong>Nome da empresa</strong></li>';
-                }
-                if (!this.millyDadosColetados.nome) {
-                    mensagemInstrucao += '<li><strong>Nome da senha</strong> (ex: MEDICINA GERAL, CARDIOLOGIA)</li>';
-                }
-                if (!this.millyDadosColetados.ordem) {
-                    mensagemInstrucao += '<li><strong>Ordem no totem</strong> (número de 1 a 12)</li>';
-                }
-                mensagemInstrucao += '<li><strong>Cor de fundo</strong> (opcional, padrão: azul)</li>';
-                mensagemInstrucao += '</ol>';
-                mensagemInstrucao += '<br>Você pode me informar tudo de uma vez ou separadamente! 😊';
-                this.adicionarMensagemMilly(mensagemInstrucao, 'html');
+                this.adicionarMensagemMilly('Me informe o <strong>nome da empresa</strong>.<br><br>💡 <small>A partir do momento que for informado, não precisará mais informar - ficará armazenado para próximos cadastros!</small>', 'html');
             }, 500);
         }
     }
 
-    processarDadosCadastroMilly(mensagem) {
-        if (this.millyCadastroEmAndamento === 'credencial') {
-            const dados = this.extrairDadosCredencial(mensagem);
+    processarEtapaEmpresa(mensagem) {
+        const mensagemLower = mensagem.toLowerCase().trim();
+        let empresa = mensagem.trim();
+        
+        // Tentar extrair empresa da mensagem
+        const dados = this.extrairDadosCredencial(mensagem);
+        if (dados.empresa) {
+            empresa = dados.empresa;
+        }
+        
+        if (empresa && empresa.length > 2) {
+            this.millyDadosColetados.empresa = empresa;
+            this.salvarEmpresaArmazenada(empresa);
+            this.millyEtapaCadastro = 'tipo';
             
-            if (dados.empresa) this.millyDadosColetados.empresa = dados.empresa;
-            if (dados.tipo) {
-                // Verificar se o tipo existe, se não, criar automaticamente
-                const tipoVerificado = this.verificarTipoExiste(dados.tipo);
-                if (tipoVerificado.existe) {
-                    this.millyDadosColetados.tipo = tipoVerificado.valor;
+            this.adicionarMensagemMilly(`✅ Empresa <strong>${empresa}</strong> armazenada com sucesso! 💾`, 'html');
+            setTimeout(() => {
+                this.adicionarMensagemMilly('Qual o <strong>Tipo de Cadastro</strong> você deseja fazer?', 'html');
+                setTimeout(() => {
+                    this.mostrarTiposDisponiveisMilly();
+                }, 500);
+            }, 500);
+        } else {
+            this.adicionarMensagemMilly('Por favor, informe um nome de empresa válido (mínimo 3 caracteres).', 'texto');
+        }
+    }
+
+    processarEtapaTipo(mensagem) {
+        // Se o usuário digitou algo, tratar como criação de novo tipo
+        // (já que os tipos existentes são selecionados via botões)
+        const nomeTipo = mensagem.trim();
+        if (nomeTipo && nomeTipo.length > 2) {
+            // Verificar se já existe um tipo com esse nome
+            const tipoVerificado = this.verificarTipoExiste(nomeTipo);
+            if (tipoVerificado.existe) {
+                // Tipo já existe - usar ele
+                this.millyDadosColetados.tipo = tipoVerificado.valor;
+                this.millyEtapaCadastro = 'quantidade';
+                
+                // Obter nome do tipo para exibição
+                let tipoDisplay = nomeTipo;
+                const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === tipoVerificado.valor);
+                if (tipoPersonalizado) {
+                    tipoDisplay = tipoPersonalizado.nome;
                 } else {
-                    // Tipo não existe - criar automaticamente
-                    const nomeTipo = dados.tipo;
-                    this.millyDadosColetados.tipo = this.criarTipoPersonalizado(nomeTipo);
-                    this.millyDadosColetados.tipoNovo = true;
-                    this.adicionarMensagemMilly(`✅ Tipo "<strong>${nomeTipo}</strong>" não existia, então criei automaticamente! 🆕`, 'html');
+                    // Buscar no mapeamento de tipos padrão
+                    const tiposDisplay = {
+                        'recepcao': 'Recepção Médica',
+                        'recepcao-odonto': 'Recepção Odonto',
+                        'medicina': 'Médico(a)',
+                        'odonto': 'Dentista',
+                        'laboratorio': 'Laboratório',
+                        'pos-consulta': 'Pós Consulta'
+                    };
+                    tipoDisplay = tiposDisplay[tipoVerificado.valor] || tipoDisplay;
+                }
+                
+                this.adicionarMensagemMilly(`✅ Tipo selecionado: <strong>${tipoDisplay}</strong>`, 'html');
+                setTimeout(() => {
+                    this.adicionarMensagemMilly('Quantos cadastros desse tipo você deseja fazer?', 'texto');
+                }, 500);
+            } else {
+                // Tipo não existe - criar novo tipo
+                this.millyDadosColetados.tipo = this.criarTipoPersonalizado(nomeTipo);
+                this.millyDadosColetados.tipoNovo = true;
+                this.millyEtapaCadastro = 'quantidade';
+                
+                this.adicionarMensagemMilly(`✅ Novo tipo "<strong>${nomeTipo}</strong>" criado com sucesso! 🆕`, 'html');
+                setTimeout(() => {
+                    this.adicionarMensagemMilly('Quantos cadastros desse tipo você deseja fazer?', 'texto');
+                }, 500);
+            }
+        } else {
+            this.adicionarMensagemMilly('Por favor, informe um nome de tipo válido (mínimo 3 caracteres) ou clique em um dos botões acima.', 'texto');
+        }
+    }
+
+    processarEtapaQuantidade(mensagem) {
+        const quantidade = parseInt(mensagem.trim());
+        
+        if (isNaN(quantidade) || quantidade < 1) {
+            this.adicionarMensagemMilly('Por favor, informe um número válido (ex: 1, 2, 3...).', 'texto');
+            return;
+        }
+        
+        this.millyQuantidadeCadastros = quantidade;
+        this.millyCadastrosAtuais = [];
+        this.millyIndiceCadastroAtual = 0;
+        this.millyEtapaCadastro = 'dados';
+        
+        this.adicionarMensagemMilly(`✅ Vou cadastrar <strong>${quantidade}</strong> cadastro(s)! 📝`, 'html');
+        setTimeout(() => {
+            this.explicarPadraoCadastro();
+        }, 500);
+    }
+
+    explicarPadraoCadastro() {
+        const tipo = this.millyDadosColetados.tipo;
+        const isMedicinaOdonto = tipo === 'medicina' || tipo === 'odonto';
+        const isRecepcao = tipo === 'recepcao' || tipo === 'recepcao-odonto';
+        
+        let mensagem = '<strong>O padrão de cadastro será assim:</strong><br><br>';
+        
+        if (isMedicinaOdonto) {
+            mensagem += '<strong>Tratamento - Nome e Sobrenome - Especialidade</strong><br><br>';
+            mensagem += '<strong>Exemplo:</strong><br>';
+            mensagem += '• <strong>Dr.</strong> - <strong>João Silva</strong> - <strong>Cardiologia</strong><br>';
+            mensagem += '• <strong>Dra.</strong> - <strong>Maria Santos</strong> - <strong>Pediatria</strong><br><br>';
+        } else if (isRecepcao) {
+            mensagem += '<strong>Nome e Sobrenome - Senhas que irá chamar</strong><br><br>';
+            mensagem += '<strong>Exemplo:</strong><br>';
+            mensagem += '• <strong>Ana Costa</strong> - <strong>Recepção Geral, Atendimento</strong><br>';
+            mensagem += '• <strong>Pedro Lima</strong> - <strong>Triagem, Agendamento</strong><br><br>';
+        } else {
+            mensagem += '<strong>Tratamento - Nome e Sobrenome - Senhas que irá chamar</strong><br><br>';
+            mensagem += '<strong>Exemplo:</strong><br>';
+            mensagem += '• <strong>Sr.</strong> - <strong>Ana Costa</strong> - <strong>Recepção Geral, Atendimento</strong><br>';
+            mensagem += '• <strong>Sra.</strong> - <strong>Pedro Lima</strong> - <strong>Triagem, Agendamento</strong><br><br>';
+        }
+        
+        mensagem += 'Agora me informe os dados do <strong>cadastro 1 de ' + this.millyQuantidadeCadastros + '</strong>:<br>';
+        mensagem += '<small>💡 Você pode informar um cadastro por vez ou múltiplos separados por linha</small>';
+        
+        this.adicionarMensagemMilly(mensagem, 'html');
+    }
+
+    extrairDadosDeLinha(linha, tipo) {
+        const isMedicinaOdonto = tipo === 'medicina' || tipo === 'odonto';
+        const isRecepcao = tipo === 'recepcao' || tipo === 'recepcao-odonto';
+        
+        let dados = {
+            empresa: this.millyDadosColetados.empresa,
+            tipo: tipo
+        };
+        
+        linha = linha.trim();
+        if (!linha) return null;
+        
+        if (isMedicinaOdonto) {
+            // Padrão: Tratamento - Nome - Especialidade ou Tratamento Nome Especialidade
+            // Primeiro tentar com hífen
+            const partesHifen = linha.split('-').map(p => p.trim());
+            
+            if (partesHifen.length >= 2) {
+                dados.tratamento = partesHifen[0].trim();
+                dados.nome = partesHifen[1].trim();
+                dados.especialidade = partesHifen.length >= 3 ? partesHifen[2].trim() : 'Geral';
+            } else {
+                // Tentar sem hífen: "Dr. Nome Especialidade", "Dr Nome", "Dr. Nome" ou "Dr Nome Especialidade"
+                const matchTratamento = linha.match(/^(Dr\.?|Dra\.?|Sr\.?|Sra\.?)\s+(.+)$/i);
+                if (matchTratamento) {
+                    // Normalizar tratamento (adicionar ponto se não tiver)
+                    let tratamento = matchTratamento[1].trim();
+                    if (!tratamento.endsWith('.')) {
+                        tratamento += '.';
+                    }
+                    dados.tratamento = tratamento;
+                    
+                    const resto = matchTratamento[2].trim();
+                    // Tentar separar nome e especialidade (pode ter espaço, hífen ou múltiplos espaços)
+                    const partesResto = resto.split(/\s+-\s+|\s{2,}/);
+                    if (partesResto.length >= 2) {
+                        dados.nome = partesResto[0].trim();
+                        dados.especialidade = partesResto.slice(1).join(' ').trim() || 'Geral';
+                    } else {
+                        // Se não tiver separação clara, tudo é nome (especialidade será padrão)
+                        dados.nome = resto;
+                        dados.especialidade = 'Geral';
+                    }
+                } else {
+                    // Sem tratamento explícito, usar padrão
+                    const dadosExtraidos = this.extrairDadosCredencial(linha);
+                    dados.nome = dadosExtraidos.nome || linha.trim();
+                    dados.especialidade = dadosExtraidos.especialidade || 'Geral';
+                    dados.tratamento = tipo === 'medicina' ? 'Dr.' : 'Dra.';
                 }
             }
-            if (dados.nome) this.millyDadosColetados.nome = dados.nome;
-            if (dados.especialidade) this.millyDadosColetados.especialidade = dados.especialidade;
+        } else if (isRecepcao) {
+            // Padrão: Nome - Senhas (sem tratamento)
+            const partes = linha.split('-').map(p => p.trim());
             
-            // Verificar se temos dados suficientes
-            const falta = this.verificarDadosFaltantesCredencial();
-            if (falta.length === 0) {
-                // Mostrar resumo e confirmar
-                this.adicionarMensagemMilly(`Perfeito! Vou cadastrar com os seguintes dados:`, 'texto');
-                setTimeout(() => {
-                    let tipoDisplay = this.millyDadosColetados.tipo;
-                    // Buscar nome do tipo se for personalizado
-                    const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === this.millyDadosColetados.tipo);
-                    if (tipoPersonalizado) {
-                        tipoDisplay = tipoPersonalizado.nome;
-                    }
-                    
-                    const resumo = `
-                        <ul>
-                            <li><strong>Empresa:</strong> ${this.millyDadosColetados.empresa}</li>
-                            <li><strong>Tipo:</strong> ${tipoDisplay}${this.millyDadosColetados.tipoNovo ? ' <span style="color: #28a745;">(novo tipo criado)</span>' : ''}</li>
-                            <li><strong>Nome:</strong> ${this.millyDadosColetados.nome}</li>
-                            ${this.millyDadosColetados.especialidade ? `<li><strong>Especialidade:</strong> ${this.millyDadosColetados.especialidade}</li>` : ''}
-                        </ul>
-                        <p>Posso cadastrar agora? (Digite "sim" ou "confirmar")</p>
-                    `;
-                    this.adicionarMensagemMilly(resumo, 'html');
-                    this.millyAguardandoConfirmacao = true;
-                }, 500);
+            if (partes.length >= 2) {
+                dados.nome = partes[0].trim();
+                dados.especialidade = partes[1].trim(); // Senhas
             } else {
-                this.adicionarMensagemMilly(`Ainda preciso de: <strong>${falta.join(', ')}</strong>. Pode me informar?`, 'html');
+                const dadosExtraidos = this.extrairDadosCredencial(linha);
+                dados.nome = dadosExtraidos.nome || linha.trim();
+                dados.especialidade = dadosExtraidos.especialidade || '';
             }
-        } else if (this.millyCadastroEmAndamento === 'totem') {
-            const dados = this.extrairDadosTotem(mensagem);
+        } else {
+            // Padrão: Tratamento - Nome - Senhas ou Tratamento Nome Senhas
+            // Primeiro tentar com hífen
+            const partesHifen = linha.split('-').map(p => p.trim());
             
-            if (dados.empresa) this.millyDadosColetados.empresa = dados.empresa;
-            if (dados.nome) this.millyDadosColetados.nome = dados.nome;
-            if (dados.ordem) this.millyDadosColetados.ordem = dados.ordem;
-            if (dados.cor) this.millyDadosColetados.cor = dados.cor;
-            
-            // Verificar se temos dados suficientes
-            const falta = this.verificarDadosFaltantesTotem();
-            if (falta.length === 0) {
-                // Mostrar resumo e confirmar
-                this.adicionarMensagemMilly(`Perfeito! Vou cadastrar com os seguintes dados:`, 'texto');
-                setTimeout(() => {
-                    const resumo = `
-                        <ul>
-                            <li><strong>Empresa:</strong> ${this.millyDadosColetados.empresa}</li>
-                            <li><strong>Senha:</strong> ${this.millyDadosColetados.nome}</li>
-                            <li><strong>Ordem:</strong> ${this.millyDadosColetados.ordem}</li>
-                            ${this.millyDadosColetados.cor ? `<li><strong>Cor:</strong> ${this.millyDadosColetados.cor}</li>` : ''}
-                        </ul>
-                        <p>Posso cadastrar agora? (Digite "sim" ou "confirmar")</p>
-                    `;
-                    this.adicionarMensagemMilly(resumo, 'html');
-                    this.millyAguardandoConfirmacao = true;
-                }, 500);
+            if (partesHifen.length >= 3) {
+                dados.tratamento = partesHifen[0].trim();
+                dados.nome = partesHifen[1].trim();
+                dados.especialidade = partesHifen[2].trim();
+            } else if (partesHifen.length >= 2) {
+                const primeiraParte = partesHifen[0].trim();
+                if (primeiraParte.match(/^(Sr|Sra|Sr\.|Sra\.|Dr|Dra|Dr\.|Dra\.)$/i)) {
+                    dados.tratamento = primeiraParte.replace(/\.$/, '') + '.';
+                    dados.nome = partesHifen[1].trim();
+                    dados.especialidade = '';
+                } else {
+                    dados.tratamento = 'Sr.';
+                    dados.nome = partesHifen[0].trim();
+                    dados.especialidade = partesHifen[1].trim();
+                }
             } else {
-                this.adicionarMensagemMilly(`Ainda preciso de: <strong>${falta.join(', ')}</strong>. Pode me informar?`, 'html');
+                // Tentar sem hífen: "Dr. Nome Senhas", "Sr. Nome", "Dr Nome" ou "Sr Nome Senhas"
+                const matchTratamento = linha.match(/^(Dr\.?|Dra\.?|Sr\.?|Sra\.?)\s+(.+)$/i);
+                if (matchTratamento) {
+                    // Normalizar tratamento (adicionar ponto se não tiver)
+                    let tratamento = matchTratamento[1].trim();
+                    if (!tratamento.endsWith('.')) {
+                        tratamento += '.';
+                    }
+                    dados.tratamento = tratamento;
+                    
+                    const resto = matchTratamento[2].trim();
+                    // Tentar separar nome e senhas (pode ter espaço, hífen ou múltiplos espaços)
+                    const partesResto = resto.split(/\s+-\s+|\s{2,}/);
+                    if (partesResto.length >= 2) {
+                        dados.nome = partesResto[0].trim();
+                        dados.especialidade = partesResto.slice(1).join(' ').trim();
+                    } else {
+                        // Se não tiver separação clara, tudo é nome (senhas vazias)
+                        dados.nome = resto;
+                        dados.especialidade = '';
+                    }
+                } else {
+                    const dadosExtraidos = this.extrairDadosCredencial(linha);
+                    dados.nome = dadosExtraidos.nome || linha.trim();
+                    dados.especialidade = dadosExtraidos.especialidade || '';
+                    dados.tratamento = 'Sr.';
+                }
             }
         }
+        
+        if (!dados.nome || dados.nome.length < 3) {
+            return null;
+        }
+        
+        return dados;
+    }
+
+    processarEtapaDados(mensagem) {
+        const tipo = this.millyDadosColetados.tipo;
+        
+        // Separar por linhas para aceitar múltiplos cadastros
+        const linhas = mensagem.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        
+        // Se tiver múltiplas linhas, processar todas
+        if (linhas.length > 1) {
+            let cadastrosValidos = 0;
+            let cadastrosInvalidos = 0;
+            
+            for (const linha of linhas) {
+                const dados = this.extrairDadosDeLinha(linha, tipo);
+                if (dados) {
+                    this.millyCadastrosAtuais.push(dados);
+                    cadastrosValidos++;
+                } else {
+                    cadastrosInvalidos++;
+                }
+            }
+            
+            if (cadastrosValidos > 0) {
+                this.millyIndiceCadastroAtual += cadastrosValidos;
+                
+                if (cadastrosInvalidos > 0) {
+                    this.adicionarMensagemMilly(`✅ ${cadastrosValidos} cadastro(s) coletado(s)! ${cadastrosInvalidos > 0 ? `⚠️ ${cadastrosInvalidos} linha(s) inválida(s) ignorada(s).` : ''}`, 'html');
+                } else {
+                    this.adicionarMensagemMilly(`✅ ${cadastrosValidos} cadastro(s) coletado(s)!`, 'texto');
+                }
+                
+                if (this.millyIndiceCadastroAtual >= this.millyQuantidadeCadastros) {
+                    // Todos os cadastros foram coletados
+                    setTimeout(() => {
+                        this.mostrarResumoCadastros();
+                    }, 500);
+                } else {
+                    // Ainda há mais cadastros
+                    setTimeout(() => {
+                        this.adicionarMensagemMilly(`Agora me informe os dados do <strong>cadastro ${this.millyIndiceCadastroAtual + 1} de ${this.millyQuantidadeCadastros}</strong> (ou múltiplos separados por linha):`, 'html');
+                    }, 500);
+                }
+            } else {
+                this.adicionarMensagemMilly('Nenhum cadastro válido encontrado. Por favor, verifique o formato dos dados.', 'texto');
+            }
+            return;
+        }
+        
+        // Processar linha única
+        const dados = this.extrairDadosDeLinha(mensagem, tipo);
+        
+        if (!dados || !dados.nome || dados.nome.length < 3) {
+            this.adicionarMensagemMilly('Por favor, informe um nome válido (mínimo 3 caracteres).', 'texto');
+            return;
+        }
+        
+        // Adicionar aos cadastros atuais
+        this.millyCadastrosAtuais.push(dados);
+        this.millyIndiceCadastroAtual++;
+        
+        if (this.millyIndiceCadastroAtual < this.millyQuantidadeCadastros) {
+            // Ainda há mais cadastros
+            this.adicionarMensagemMilly(`✅ Cadastro ${this.millyIndiceCadastroAtual} coletado!`, 'texto');
+            setTimeout(() => {
+                this.adicionarMensagemMilly(`Agora me informe os dados do <strong>cadastro ${this.millyIndiceCadastroAtual + 1} de ${this.millyQuantidadeCadastros}</strong> (ou múltiplos separados por linha):`, 'html');
+            }, 500);
+        } else {
+            // Todos os cadastros foram coletados
+            this.adicionarMensagemMilly(`✅ Todos os ${this.millyQuantidadeCadastros} cadastro(s) coletados!`, 'texto');
+            setTimeout(() => {
+                this.mostrarResumoCadastros();
+            }, 500);
+        }
+    }
+
+    mostrarResumoCadastros() {
+        let mensagem = '<strong>Resumo dos cadastros:</strong><br><br>';
+        mensagem += '<ul>';
+        
+        this.millyCadastrosAtuais.forEach((cadastro, index) => {
+            mensagem += `<li><strong>Cadastro ${index + 1}:</strong><br>`;
+            mensagem += `&nbsp;&nbsp;• Empresa: ${cadastro.empresa}<br>`;
+            
+            let tipoDisplay = cadastro.tipo;
+            const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === cadastro.tipo);
+            if (tipoPersonalizado) {
+                tipoDisplay = tipoPersonalizado.nome;
+            } else {
+                const tiposDisplay = {
+                    'recepcao': 'Recepção Médica',
+                    'recepcao-odonto': 'Recepção Odonto',
+                    'medicina': 'Médico(a)',
+                    'odonto': 'Dentista',
+                    'laboratorio': 'Laboratório',
+                    'pos-consulta': 'Pós Consulta'
+                };
+                tipoDisplay = tiposDisplay[cadastro.tipo] || tipoDisplay;
+            }
+            
+            mensagem += `&nbsp;&nbsp;• Tipo: ${tipoDisplay}<br>`;
+            
+            // Só mostrar tratamento se não for recepção
+            if (cadastro.tipo !== 'recepcao' && cadastro.tipo !== 'recepcao-odonto') {
+                mensagem += `&nbsp;&nbsp;• Tratamento: ${cadastro.tratamento || (cadastro.tipo === 'medicina' ? 'Dr.' : cadastro.tipo === 'odonto' ? 'Dra.' : 'Sr.')}<br>`;
+            }
+            mensagem += `&nbsp;&nbsp;• Nome: ${cadastro.nome}<br>`;
+            if (cadastro.especialidade) {
+                mensagem += `&nbsp;&nbsp;• ${cadastro.tipo === 'medicina' || cadastro.tipo === 'odonto' ? 'Especialidade' : 'Senhas'}: ${cadastro.especialidade}<br>`;
+            }
+            mensagem += '</li>';
+        });
+        
+        mensagem += '</ul>';
+        mensagem += '<br>Posso cadastrar agora? (Digite "sim" ou "confirmar")';
+        
+        this.adicionarMensagemMilly(mensagem, 'html');
+        this.millyEtapaCadastro = 'confirmacao';
+        this.millyAguardandoConfirmacao = true;
+    }
+
+    processarDadosCadastroMilly(mensagem) {
+        if (this.millyCadastroEmAndamento === 'credencial') {
+            // Processar por etapas
+            if (this.millyEtapaCadastro === 'empresa') {
+                this.processarEtapaEmpresa(mensagem);
+            } else if (this.millyEtapaCadastro === 'tipo') {
+                this.processarEtapaTipo(mensagem);
+            } else if (this.millyEtapaCadastro === 'quantidade') {
+                this.processarEtapaQuantidade(mensagem);
+            } else if (this.millyEtapaCadastro === 'dados') {
+                this.processarEtapaDados(mensagem);
+            } else if (this.millyEtapaCadastro === 'confirmacao') {
+                // Já está sendo tratado no processarMensagemMilly
+                return;
+            }
+        } else if (this.millyCadastroEmAndamento === 'totem') {
+            // Processar por etapas do totem
+            if (this.millyEtapaTotem === 'empresa') {
+                this.processarEtapaEmpresaTotem(mensagem);
+            } else if (this.millyEtapaTotem === 'quantidade') {
+                this.processarEtapaQuantidadeTotem(mensagem);
+            } else if (this.millyEtapaTotem === 'nome') {
+                this.processarEtapaNomeTotem(mensagem);
+            } else if (this.millyEtapaTotem === 'exibir') {
+                this.processarEtapaExibirTotem(mensagem);
+            } else if (this.millyEtapaTotem === 'posicao') {
+                this.processarEtapaPosicaoTotem(mensagem);
+            } else if (this.millyEtapaTotem === 'cor') {
+                this.processarEtapaCorTotem(mensagem);
+            } else if (this.millyEtapaTotem === 'confirmacao') {
+                // Já está sendo tratado no processarMensagemMilly
+                return;
+            }
+        }
+    }
+
+    processarEtapaEmpresaTotem(mensagem) {
+        let empresa = mensagem.trim();
+        
+        // Tentar extrair empresa da mensagem
+        const dados = this.extrairDadosTotem(mensagem);
+        if (dados.empresa) {
+            empresa = dados.empresa;
+        }
+        
+        if (empresa && empresa.length > 2) {
+            this.millyDadosColetados.empresa = empresa;
+            this.salvarEmpresaArmazenada(empresa);
+            this.millyEtapaTotem = 'quantidade';
+            
+            this.adicionarMensagemMilly(`✅ Empresa <strong>${empresa}</strong> armazenada com sucesso! 💾`, 'html');
+            setTimeout(() => {
+                this.adicionarMensagemMilly('Quantas senhas você deseja cadastrar?', 'texto');
+            }, 500);
+        } else {
+            this.adicionarMensagemMilly('Por favor, informe um nome de empresa válido (mínimo 3 caracteres).', 'texto');
+        }
+    }
+
+    processarEtapaQuantidadeTotem(mensagem) {
+        const quantidade = parseInt(mensagem.trim());
+        
+        if (isNaN(quantidade) || quantidade < 1) {
+            this.adicionarMensagemMilly('Por favor, informe um número válido (ex: 1, 2, 3...).', 'texto');
+            return;
+        }
+        
+        this.millyQuantidadeTotem = quantidade;
+        this.millySenhasTotemAtuais = [];
+        this.millyIndiceSenhaAtual = 0;
+        this.millyEtapaTotem = 'nome';
+        
+        this.adicionarMensagemMilly(`✅ Vou cadastrar <strong>${quantidade}</strong> senha(s)! 📝`, 'html');
+        setTimeout(() => {
+            this.adicionarMensagemMilly(`Qual o <strong>nome da senha ${this.millyIndiceSenhaAtual + 1} de ${this.millyQuantidadeTotem}</strong>?<br><br><small>Exemplo: MEDICINA GERAL, CARDIOLOGIA, PEDIATRIA</small>`, 'html');
+        }, 500);
+    }
+
+    processarEtapaNomeTotem(mensagem) {
+        const nomeSenha = mensagem.trim().toUpperCase();
+        
+        if (!nomeSenha || nomeSenha.length < 3) {
+            this.adicionarMensagemMilly('Por favor, informe um nome de senha válido (mínimo 3 caracteres).', 'texto');
+            return;
+        }
+        
+        // Criar objeto da senha atual
+        if (!this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual]) {
+            this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual] = {
+                empresa: this.millyDadosColetados.empresa,
+                nome: nomeSenha
+            };
+        } else {
+            this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual].nome = nomeSenha;
+        }
+        
+        this.millyEtapaTotem = 'exibir';
+        
+        this.adicionarMensagemMilly(`✅ Nome da senha: <strong>${nomeSenha}</strong>`, 'html');
+        setTimeout(() => {
+            let mensagem = 'Esta senha será <strong>exibida no totem</strong>?<br><br>';
+            mensagem += '<div class="milly-exibir-container" style="display: flex; gap: 12px; margin: 12px 0;">';
+            mensagem += `<button class="milly-exibir-btn milly-exibir-sim" data-exibir="true" style="padding: 12px 24px; background-color: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1;">✅ Sim</button>`;
+            mensagem += `<button class="milly-exibir-btn milly-exibir-nao" data-exibir="false" style="padding: 12px 24px; background-color: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1;">❌ Não</button>`;
+            mensagem += '</div>';
+            mensagem += '<small>Ou digite "sim" ou "não"</small>';
+            
+            this.adicionarMensagemMilly(mensagem, 'html');
+            
+            // Adicionar event listeners aos botões após inserir no DOM
+            setTimeout(() => {
+                const chatBody = document.getElementById('millyChatBody');
+                if (chatBody) {
+                    const buttons = chatBody.querySelectorAll('.milly-exibir-btn');
+                    buttons.forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const exibir = button.getAttribute('data-exibir') === 'true';
+                            
+                            // Desabilitar botões
+                            buttons.forEach(btn => {
+                                btn.style.opacity = '0.5';
+                                btn.style.cursor = 'not-allowed';
+                                btn.disabled = true;
+                            });
+                            
+                            // Processar seleção
+                            this.processarSelecaoExibirTotem(exibir);
+                        });
+                        
+                        // Adicionar hover effect
+                        button.addEventListener('mouseenter', function() {
+                            if (!this.disabled) {
+                                this.style.opacity = '0.9';
+                                this.style.transform = 'scale(1.05)';
+                                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                            }
+                        });
+                        button.addEventListener('mouseleave', function() {
+                            if (!this.disabled) {
+                                this.style.opacity = '1';
+                                this.style.transform = 'scale(1)';
+                                this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                            }
+                        });
+                    });
+                }
+            }, 100);
+        }, 500);
+    }
+
+    processarSelecaoExibirTotem(exibir) {
+        if (!this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual]) {
+            this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual] = {
+                empresa: this.millyDadosColetados.empresa
+            };
+        }
+        
+        this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual].exibir = exibir;
+        this.millyEtapaTotem = 'posicao';
+        
+        if (exibir) {
+            this.adicionarMensagemMilly(`✅ A senha será <strong>exibida no totem</strong>`, 'html');
+            setTimeout(() => {
+                this.adicionarMensagemMilly(`Qual a <strong>posição</strong> no totem? (número de 1 a 12)`, 'html');
+            }, 500);
+        } else {
+            this.adicionarMensagemMilly(`✅ A senha será apenas <strong>registrada</strong> (não exibida no totem)`, 'html');
+            // Se não vai exibir, pular posição e cor
+            this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual].ordem = null;
+            this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual].cor = null;
+            
+            // Avançar para próxima senha ou finalizar
+            this.avancarParaProximaSenhaTotem();
+        }
+    }
+
+    processarEtapaExibirTotem(mensagem) {
+        const resposta = mensagem.toLowerCase().trim();
+        const exibir = resposta.includes('sim') || resposta === 's' || resposta.includes('exibir') || resposta === 'e';
+        
+        this.processarSelecaoExibirTotem(exibir);
+    }
+
+    processarEtapaPosicaoTotem(mensagem) {
+        const posicao = parseInt(mensagem.trim());
+        
+        if (isNaN(posicao) || posicao < 1 || posicao > 12) {
+            this.adicionarMensagemMilly('Por favor, informe um número válido entre 1 e 12.', 'texto');
+            return;
+        }
+        
+        if (!this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual]) {
+            this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual] = {
+                empresa: this.millyDadosColetados.empresa
+            };
+        }
+        
+        this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual].ordem = posicao;
+        this.millyEtapaTotem = 'cor';
+        
+        this.adicionarMensagemMilly(`✅ Posição: <strong>${posicao}</strong>`, 'html');
+        setTimeout(() => {
+            let mensagem = 'Qual a <strong>cor de fundo</strong> da senha?<br><br>';
+            mensagem += '<div class="milly-cor-container" style="margin: 16px 0;">';
+            mensagem += '<label style="display: block; margin-bottom: 8px; font-weight: 600;">Selecione a cor:</label>';
+            mensagem += `<input type="color" id="millyColorPicker_${this.millyIndiceSenhaAtual}" value="#007bff" style="width: 100%; height: 60px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; margin-bottom: 12px;">`;
+            mensagem += '<div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">';
+            mensagem += `<span id="millyColorValue_${this.millyIndiceSenhaAtual}" style="font-weight: 600; color: #333;">#007bff</span>`;
+            mensagem += `<button class="milly-confirmar-cor-btn" data-senha-index="${this.millyIndiceSenhaAtual}" style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s ease;">Confirmar Cor</button>`;
+            mensagem += '</div>';
+            mensagem += '</div>';
+            mensagem += '<div style="margin-top: 12px; padding: 8px; background-color: #f8f9fa; border-radius: 4px; border-left: 3px solid #007bff;">';
+            mensagem += '<small>Ou digite o nome da cor (ex: azul, vermelho, verde) ou o código hexadecimal (ex: #007bff)<br>Se não informar, usarei azul como padrão</small>';
+            mensagem += '</div>';
+            
+            this.adicionarMensagemMilly(mensagem, 'html');
+            
+            // Adicionar event listeners após inserir no DOM
+            setTimeout(() => {
+                const colorPicker = document.getElementById(`millyColorPicker_${this.millyIndiceSenhaAtual}`);
+                const colorValue = document.getElementById(`millyColorValue_${this.millyIndiceSenhaAtual}`);
+                const confirmBtn = document.querySelector(`.milly-confirmar-cor-btn[data-senha-index="${this.millyIndiceSenhaAtual}"]`);
+                
+                if (colorPicker && colorValue) {
+                    // Atualizar valor exibido quando a cor mudar
+                    colorPicker.addEventListener('input', function() {
+                        colorValue.textContent = this.value.toUpperCase();
+                        colorValue.style.color = this.value;
+                    });
+                }
+                
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const cor = colorPicker.value;
+                        this.processarSelecaoCorTotem(cor);
+                    });
+                }
+            }, 100);
+        }, 500);
+    }
+
+    processarSelecaoCorTotem(cor) {
+        // Garantir que a cor está no formato hexadecimal
+        if (!cor.startsWith('#')) {
+            // Tentar converter nome da cor para hexadecimal
+            const coresNomes = {
+                'azul': '#007bff',
+                'vermelho': '#dc3545',
+                'verde': '#28a745',
+                'amarelo': '#ffc107',
+                'laranja': '#fd7e14',
+                'roxo': '#6f42c1',
+                'rosa': '#e83e8c',
+                'cinza': '#6c757d',
+                'preto': '#000000',
+                'branco': '#ffffff'
+            };
+            cor = coresNomes[cor.toLowerCase()] || cor;
+            
+            // Se ainda não tem #, adicionar
+            if (!cor.startsWith('#')) {
+                cor = '#' + cor;
+            }
+        }
+        
+        // Normalizar para maiúsculas
+        cor = cor.toUpperCase();
+        
+        if (!this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual]) {
+            this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual] = {
+                empresa: this.millyDadosColetados.empresa
+            };
+        }
+        
+        this.millySenhasTotemAtuais[this.millyIndiceSenhaAtual].cor = cor;
+        
+        this.adicionarMensagemMilly(`✅ Cor definida: <strong>${cor}</strong> <span style="display: inline-block; width: 20px; height: 20px; background-color: ${cor}; border: 1px solid #ddd; border-radius: 4px; vertical-align: middle; margin-left: 8px;"></span>`, 'html');
+        
+        // Avançar para próxima senha ou finalizar
+        this.avancarParaProximaSenhaTotem();
+    }
+
+    processarEtapaCorTotem(mensagem) {
+        let cor = mensagem.trim();
+        
+        // Se não informou cor ou informou vazio, usar padrão
+        if (!cor || cor.length === 0) {
+            cor = '#007bff'; // Azul padrão
+        }
+        
+        this.processarSelecaoCorTotem(cor);
+    }
+
+    avancarParaProximaSenhaTotem() {
+        this.millyIndiceSenhaAtual++;
+        
+        if (this.millyIndiceSenhaAtual < this.millyQuantidadeTotem) {
+            // Ainda há mais senhas
+            setTimeout(() => {
+                this.adicionarMensagemMilly(`✅ Senha ${this.millyIndiceSenhaAtual} coletada!`, 'texto');
+                setTimeout(() => {
+                    this.millyEtapaTotem = 'nome';
+                    this.adicionarMensagemMilly(`Qual o <strong>nome da senha ${this.millyIndiceSenhaAtual + 1} de ${this.millyQuantidadeTotem}</strong>?<br><br><small>Exemplo: MEDICINA GERAL, CARDIOLOGIA, PEDIATRIA</small>`, 'html');
+                }, 500);
+            }, 500);
+        } else {
+            // Todas as senhas foram coletadas
+            setTimeout(() => {
+                this.adicionarMensagemMilly(`✅ Todas as ${this.millyQuantidadeTotem} senha(s) coletadas!`, 'texto');
+                setTimeout(() => {
+                    this.mostrarResumoSenhasTotem();
+                }, 500);
+            }, 500);
+        }
+    }
+
+    mostrarResumoSenhasTotem() {
+        let mensagem = '<strong>Resumo das senhas:</strong><br><br>';
+        mensagem += '<ul>';
+        
+        this.millySenhasTotemAtuais.forEach((senha, index) => {
+            mensagem += `<li><strong>Senha ${index + 1}:</strong><br>`;
+            mensagem += `&nbsp;&nbsp;• Empresa: ${senha.empresa}<br>`;
+            mensagem += `&nbsp;&nbsp;• Nome: ${senha.nome}<br>`;
+            mensagem += `&nbsp;&nbsp;• Exibir no totem: ${senha.exibir ? 'Sim' : 'Não'}<br>`;
+            if (senha.exibir) {
+                mensagem += `&nbsp;&nbsp;• Posição: ${senha.ordem}<br>`;
+                mensagem += `&nbsp;&nbsp;• Cor: ${senha.cor || '#007bff'}<br>`;
+            }
+            mensagem += '</li>';
+        });
+        
+        mensagem += '</ul>';
+        mensagem += '<br>Posso cadastrar agora? (Digite "sim" ou "confirmar")';
+        
+        this.adicionarMensagemMilly(mensagem, 'html');
+        this.millyEtapaTotem = 'confirmacao';
+        this.millyAguardandoConfirmacao = true;
     }
 
     obterTiposDisponiveis() {
@@ -1138,6 +1892,77 @@ class SistemaCadastro {
         return falta;
     }
 
+    executarCadastrosColetadosMilly() {
+        try {
+            let sucessos = 0;
+            let erros = 0;
+            
+            this.adicionarMensagemMilly(`Processando ${this.millyCadastrosAtuais.length} cadastro(s)... ⏳`, 'texto');
+            
+            for (const dados of this.millyCadastrosAtuais) {
+                try {
+                    // Converter dados para o formato esperado
+                    const dadosFormatados = {
+                        empresa: dados.empresa,
+                        tipo: dados.tipo,
+                        nome: dados.nome,
+                        especialidade: dados.especialidade,
+                        tratamento: dados.tratamento
+                    };
+                    
+                    this.executarCadastroCredencialMilly(dadosFormatados, false); // false = não mostrar mensagem individual
+                    sucessos++;
+                } catch (error) {
+                    console.error('Erro ao cadastrar:', error);
+                    erros++;
+                }
+            }
+            
+            // Atualizar tabela uma vez no final
+            this.atualizarTabela();
+            
+            // Mensagem final
+            if (sucessos > 0) {
+                this.adicionarMensagemMilly(`✅ ${sucessos} cadastro(s) realizado(s) com sucesso! 🎉`, 'texto');
+                if (erros > 0) {
+                    this.adicionarMensagemMilly(`⚠️ ${erros} cadastro(s) falharam. Verifique os dados.`, 'texto');
+                }
+                setTimeout(() => {
+                    this.adicionarMensagemMilly(`Você tem agora <strong>${this.credenciais.length}</strong> credenciais cadastradas.`, 'html');
+                    setTimeout(() => {
+                        this.perguntarMaisCadastros();
+                    }, 500);
+                }, 500);
+            } else {
+                this.adicionarMensagemMilly('❌ Não foi possível cadastrar nenhum registro. Verifique os dados informados.', 'texto');
+                this.perguntarMaisCadastros();
+            }
+            
+        } catch (error) {
+            console.error('Erro ao processar cadastros coletados:', error);
+            this.adicionarMensagemMilly('❌ Ops! Ocorreu um erro ao processar os cadastros. Tente novamente.', 'texto');
+            this.perguntarMaisCadastros();
+        }
+    }
+
+    perguntarMaisCadastros() {
+        setTimeout(() => {
+            this.adicionarMensagemMilly('Deseja realizar mais algum cadastro?<br><br>• Digite <strong>"sim"</strong> para cadastrar mais (mesmo tipo ou outro tipo)<br>• Digite <strong>"não"</strong> ou <strong>"finalizar"</strong> para encerrar', 'html');
+            this.millyEtapaCadastro = 'perguntar-mais';
+        }, 500);
+    }
+
+    limparEstadoCadastroMilly() {
+        this.millyCadastroEmAndamento = null;
+        this.millyDadosColetados = {};
+        this.millyCadastrosMultiplos = [];
+        this.millyAguardandoConfirmacao = false;
+        this.millyEtapaCadastro = null;
+        this.millyQuantidadeCadastros = 0;
+        this.millyCadastrosAtuais = [];
+        this.millyIndiceCadastroAtual = 0;
+    }
+
     executarCadastrosMultiplosMilly(cadastros) {
         try {
             let sucessos = 0;
@@ -1166,23 +1991,19 @@ class SistemaCadastro {
                 }
                 setTimeout(() => {
                     this.adicionarMensagemMilly(`Você tem agora <strong>${this.credenciais.length}</strong> credenciais cadastradas.`, 'html');
+                    setTimeout(() => {
+                        this.perguntarMaisCadastros();
+                    }, 500);
                 }, 500);
             } else {
                 this.adicionarMensagemMilly('❌ Não foi possível cadastrar nenhum registro. Verifique os dados informados.', 'texto');
+                this.perguntarMaisCadastros();
             }
-            
-            this.millyCadastroEmAndamento = null;
-            this.millyDadosColetados = {};
-            this.millyCadastrosMultiplos = [];
-            this.millyAguardandoConfirmacao = false;
             
         } catch (error) {
             console.error('Erro ao processar múltiplos cadastros:', error);
             this.adicionarMensagemMilly('❌ Ops! Ocorreu um erro ao processar os cadastros. Tente novamente.', 'texto');
-            this.millyCadastroEmAndamento = null;
-            this.millyDadosColetados = {};
-            this.millyCadastrosMultiplos = [];
-            this.millyAguardandoConfirmacao = false;
+            this.perguntarMaisCadastros();
         }
     }
 
@@ -1228,14 +2049,22 @@ class SistemaCadastro {
             };
             
             // Adicionar dados específicos baseado no tipo
-            if (['recepcao', 'recepcao-odonto', 'laboratorio', 'pos-consulta'].includes(credencial.tipo)) {
+            if (['recepcao', 'recepcao-odonto'].includes(credencial.tipo)) {
+                // Recepção não precisa de tratamento
                 credencial.funcionarios = [{
+                    nome: dados.nome,
+                    senhas: dados.especialidade || ''
+                }];
+            } else if (['laboratorio', 'pos-consulta'].includes(credencial.tipo)) {
+                // Outros tipos precisam de tratamento
+                credencial.funcionarios = [{
+                    tratamento: dados.tratamento || 'Sr.',
                     nome: dados.nome,
                     senhas: dados.especialidade || ''
                 }];
             } else if (credencial.tipo === 'medicina' || credencial.tipo === 'odonto') {
                 credencial.profissionais = [{
-                    tratamento: credencial.tipo === 'medicina' ? 'Dr.' : 'Dra.',
+                    tratamento: dados.tratamento || (credencial.tipo === 'medicina' ? 'Dr.' : 'Dra.'),
                     nome: dados.nome,
                     especialidade: dados.especialidade || 'Geral'
                 }];
@@ -1270,6 +2099,89 @@ class SistemaCadastro {
             this.adicionarMensagemMilly('❌ Ops! Ocorreu um erro ao cadastrar. Tente novamente.', 'texto');
             this.millyCadastroEmAndamento = null;
             this.millyDadosColetados = {};
+        }
+    }
+
+    executarSenhasTotemColetadasMilly() {
+        try {
+            let sucessos = 0;
+            let erros = 0;
+            
+            this.adicionarMensagemMilly(`Processando ${this.millySenhasTotemAtuais.length} senha(s)... ⏳`, 'texto');
+            
+            // Salvar unidade se fornecida
+            if (this.millyDadosColetados.empresa) {
+                this.unidadeTotem = this.millyDadosColetados.empresa;
+                this.salvarUnidadeTotem();
+                this.atualizarUnidadeAtual();
+            }
+            
+            for (const dados of this.millySenhasTotemAtuais) {
+                try {
+                    // Criar senha do totem
+                    const senhaTotem = {
+                        id: (this.gerarId && typeof this.gerarId === 'function') ? this.gerarId() : Date.now(),
+                        nome: dados.nome.toUpperCase(),
+                        ordem: dados.exibir ? dados.ordem : null,
+                        exibir: dados.exibir || false,
+                        exibirNoTotem: dados.exibir || false,
+                        unidade: this.unidadeTotem || dados.empresa,
+                        cor: dados.exibir ? (dados.cor || '#0066cc') : null,
+                        dataCriacao: new Date().toISOString()
+                    };
+                    
+                    // Validar
+                    const validacao = this.validarSenhaTotemComMensagem(senhaTotem);
+                    if (validacao.valido) {
+                        this.senhasTotem.push(senhaTotem);
+                        sucessos++;
+                    } else {
+                        erros++;
+                    }
+                } catch (error) {
+                    console.error('Erro ao cadastrar senha:', error);
+                    erros++;
+                }
+            }
+            
+            // Salvar todas de uma vez
+            if (sucessos > 0) {
+                this.salvarSenhasTotem();
+                this.atualizarTabelaTotem();
+            }
+            
+            // Mensagem final
+            if (sucessos > 0) {
+                this.adicionarMensagemMilly(`✅ ${sucessos} senha(s) cadastrada(s) com sucesso! 🎉`, 'texto');
+                if (erros > 0) {
+                    this.adicionarMensagemMilly(`⚠️ ${erros} senha(s) falharam. Verifique os dados.`, 'texto');
+                }
+                setTimeout(() => {
+                    this.adicionarMensagemMilly(`Você tem agora <strong>${this.senhasTotem.length}</strong> senhas cadastradas.`, 'html');
+                }, 500);
+            } else {
+                this.adicionarMensagemMilly('❌ Não foi possível cadastrar nenhuma senha. Verifique os dados informados.', 'texto');
+            }
+            
+            // Limpar estado
+            this.millyCadastroEmAndamento = null;
+            this.millyDadosColetados = {};
+            this.millySenhasTotemAtuais = [];
+            this.millyIndiceSenhaAtual = 0;
+            this.millyQuantidadeTotem = 0;
+            this.millyEtapaTotem = null;
+            this.millyAguardandoConfirmacao = false;
+            
+        } catch (error) {
+            console.error('Erro ao processar senhas coletadas:', error);
+            this.adicionarMensagemMilly('❌ Ops! Ocorreu um erro ao processar as senhas. Tente novamente.', 'texto');
+            this.millyCadastroEmAndamento = null;
+            this.millyDadosColetados = {};
+            this.millySenhasTotemAtuais = [];
+            this.millyIndiceSenhaAtual = 0;
+            this.millyQuantidadeTotem = 0;
+            this.millyEtapaTotem = null;
+            this.millyAguardandoConfirmacao = false;
         }
     }
 
@@ -3441,6 +4353,24 @@ class SistemaCadastro {
         }
     }
 
+    carregarEmpresaArmazenada() {
+        try {
+            return localStorage.getItem('millyEmpresaArmazenada') || null;
+        } catch (error) {
+            console.error('Erro ao carregar empresa armazenada:', error);
+            return null;
+        }
+    }
+
+    salvarEmpresaArmazenada(empresa) {
+        try {
+            localStorage.setItem('millyEmpresaArmazenada', empresa);
+            this.millyEmpresaArmazenada = empresa;
+        } catch (error) {
+            console.error('Erro ao salvar empresa armazenada:', error);
+        }
+    }
+
 
 
     atualizarUnidadeAtualCredenciais() {
@@ -3503,6 +4433,97 @@ class SistemaCadastro {
         }
     }
 
+    limparCacheSistema(opcoes = {}) {
+        try {
+            const limparEmpresa = opcoes.empresa !== false;
+            const limparTipos = opcoes.tipos !== false;
+            const limparTudo = opcoes.tudo === true;
+            
+            let itensRemovidos = [];
+            
+            if (limparTudo) {
+                // Limpar tudo relacionado ao cache do sistema
+                localStorage.removeItem('millyEmpresaArmazenada');
+                localStorage.removeItem('tiposPersonalizados');
+                itensRemovidos.push('Empresa armazenada', 'Tipos personalizados');
+                
+                // Limpar também unidades se solicitado
+                if (opcoes.unidades) {
+                    localStorage.removeItem('unidadeCredenciais');
+                    localStorage.removeItem('unidadeTotem');
+                    itensRemovidos.push('Unidades');
+                }
+            } else {
+                if (limparEmpresa) {
+                    localStorage.removeItem('millyEmpresaArmazenada');
+                    this.millyEmpresaArmazenada = null;
+                    itensRemovidos.push('Empresa armazenada');
+                }
+                
+                if (limparTipos) {
+                    localStorage.removeItem('tiposPersonalizados');
+                    this.tiposPersonalizados = [];
+                    itensRemovidos.push('Tipos personalizados');
+                    // Recarregar tipos no select
+                    this.carregarTiposNoSelect();
+                }
+            }
+            
+            return {
+                sucesso: true,
+                itensRemovidos: itensRemovidos
+            };
+        } catch (error) {
+            console.error('Erro ao limpar cache:', error);
+            return {
+                sucesso: false,
+                erro: error.message
+            };
+        }
+    }
+
+    processarLimparCacheMilly(mensagem) {
+        const msg = mensagem.toLowerCase().trim();
+        
+        // Verificar o que o usuário quer limpar
+        const querLimparTudo = msg.includes('tudo') || msg.includes('todos') || msg.includes('cache');
+        const querLimparEmpresa = msg.includes('empresa');
+        const querLimparTipos = msg.includes('tipo') || msg.includes('tipos');
+        
+        if (querLimparTudo || (!querLimparEmpresa && !querLimparTipos)) {
+            // Limpar tudo
+            this.adicionarMensagemMilly('Vou limpar o cache do sistema (empresa armazenada e tipos personalizados).', 'texto');
+            setTimeout(() => {
+                const resultado = this.limparCacheSistema({ tudo: true });
+                if (resultado.sucesso) {
+                    this.adicionarMensagemMilly(`✅ Cache limpo com sucesso!<br><br>Itens removidos:<br>• ${resultado.itensRemovidos.join('<br>• ')}`, 'html');
+                } else {
+                    this.adicionarMensagemMilly(`❌ Erro ao limpar cache: ${resultado.erro}`, 'texto');
+                }
+            }, 500);
+        } else {
+            // Limpar específico
+            const opcoes = {
+                empresa: querLimparEmpresa,
+                tipos: querLimparTipos
+            };
+            
+            let descricao = [];
+            if (querLimparEmpresa) descricao.push('empresa armazenada');
+            if (querLimparTipos) descricao.push('tipos personalizados');
+            
+            this.adicionarMensagemMilly(`Vou limpar: ${descricao.join(' e ')}.`, 'texto');
+            setTimeout(() => {
+                const resultado = this.limparCacheSistema(opcoes);
+                if (resultado.sucesso) {
+                    this.adicionarMensagemMilly(`✅ Cache limpo com sucesso!<br><br>Itens removidos:<br>• ${resultado.itensRemovidos.join('<br>• ')}`, 'html');
+                } else {
+                    this.adicionarMensagemMilly(`❌ Erro ao limpar cache: ${resultado.erro}`, 'texto');
+                }
+            }, 500);
+        }
+    }
+
     carregarTiposNoSelect() {
         const selectTipo = document.getElementById('tipo');
         const selectTipoInline = document.getElementById('tipoInline');
@@ -3513,8 +4534,8 @@ class SistemaCadastro {
                 { value: '', text: 'Selecione o tipo de usuário' },
                 { value: 'recepcao', text: 'Recepção Médica' },
                 { value: 'recepcao-odonto', text: 'Recepção Odonto' },
-                { value: 'medicina', text: 'Medicina' },
-                { value: 'odonto', text: 'Odontologia' },
+                { value: 'medicina', text: 'Médico(a)' },
+                { value: 'odonto', text: 'Dentista' },
                 { value: 'laboratorio', text: 'Laboratório' },
                 { value: 'pos-consulta', text: 'Pós Consulta' }
             ];
@@ -3694,11 +4715,14 @@ class SistemaCadastro {
             if (temCredenciais) {
                 const workbookCredenciais = this.gerarExcelCredenciais();
                 const nomeArquivoCredenciais = `${unidadeNome}_credenciais_${dataAtual}.xlsx`;
+                // Calcular tamanho corretamente (pode ser Uint8Array ou Array)
+                const tamanhoBytes = workbookCredenciais ? (workbookCredenciais.length || workbookCredenciais.byteLength || 0) : 0;
                 this.arquivosParaEnvio.push({
                     nome: nomeArquivoCredenciais,
                     dados: workbookCredenciais,
                     tipo: 'Planilha de Credenciais',
-                    tamanho: this.formatarTamanhoArquivo(workbookCredenciais.length || 0)
+                    tamanho: this.formatarTamanhoArquivo(tamanhoBytes),
+                    tamanhoBytes: tamanhoBytes
                 });
                 nomeArquivos.push(nomeArquivoCredenciais);
             }
@@ -3706,11 +4730,14 @@ class SistemaCadastro {
             if (temSenhasTotem) {
                 const workbookTotem = this.gerarExcelTotem();
                 const nomeArquivoTotem = `${unidadeNome}_senhas_totem_${dataAtual}.xlsx`;
+                // Calcular tamanho corretamente (pode ser Uint8Array ou Array)
+                const tamanhoBytes = workbookTotem ? (workbookTotem.length || workbookTotem.byteLength || 0) : 0;
                 this.arquivosParaEnvio.push({
                     nome: nomeArquivoTotem,
                     dados: workbookTotem,
                     tipo: 'Planilha de Senhas do Totem',
-                    tamanho: this.formatarTamanhoArquivo(workbookTotem.length || 0)
+                    tamanho: this.formatarTamanhoArquivo(tamanhoBytes),
+                    tamanhoBytes: tamanhoBytes
                 });
                 nomeArquivos.push(nomeArquivoTotem);
             }
@@ -3837,14 +4864,60 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             return;
         }
 
-            const btnEnviar = document.getElementById('btnEnviarEmailModal');
+        const btnEnviar = document.getElementById('btnEnviarEmailModal');
         if (btnEnviar) {
             btnEnviar.classList.add('btn-loading');
             btnEnviar.disabled = true;
         }
 
+        // Verificar se está rodando em file:// antes de tentar enviar (FormSubmit não funciona)
+        const isFileProtocol = window.location.protocol === 'file:';
+        const emailjsConfig = this.obterConfigEmailJS();
+        
+        if (isFileProtocol && (!emailjsConfig || !emailjsConfig.publicKey)) {
+            // Se estiver em file:// e EmailJS não estiver configurado, mostrar erro imediatamente
+            this.mostrarNotificacao('⚠️ FormSubmit não funciona com arquivos locais (file://)', 'error');
+            setTimeout(() => {
+                let mensagem = '💡 <strong>Soluções:</strong><br>';
+                mensagem += '1. <strong>Use um servidor web local:</strong><br>';
+                mensagem += '&nbsp;&nbsp;• VS Code: Instale "Live Server" e clique com botão direito > "Open with Live Server"<br>';
+                mensagem += '&nbsp;&nbsp;• Python: <code>python -m http.server 8000</code> (depois acesse http://localhost:8000)<br>';
+                mensagem += '&nbsp;&nbsp;• Node.js: <code>npx http-server</code><br><br>';
+                mensagem += '2. <strong>Configure EmailJS</strong> (funciona mesmo com file://)<br>';
+                mensagem += '&nbsp;&nbsp;Veja o arquivo <strong>CONFIGURACAO_EMAIL.md</strong> para instruções<br><br>';
+                mensagem += '3. <strong>Use "Exportar Excel"</strong> para baixar os arquivos manualmente';
+                this.mostrarNotificacao(mensagem, 'warning');
+            }, 2000);
+            
+            if (btnEnviar) {
+                btnEnviar.classList.remove('btn-loading');
+                btnEnviar.disabled = false;
+            }
+            return;
+        }
+
         try {
             this.mostrarNotificacao('Preparando e enviando email...', 'info');
+            
+            // Tentar primeiro com EmailJS (mais confiável e funciona mesmo com file://)
+            if (emailjsConfig && emailjsConfig.publicKey) {
+                try {
+                    await this.enviarViaEmailJS(emailRemetente, nomeRemetente, assunto, corpo, emailDestino);
+                    // Sucesso - fechar modal e mostrar mensagem
+                    const modalEmail = document.getElementById('modalEmail');
+                    if (modalEmail) {
+                        this.fecharModal(modalEmail);
+                    }
+                    this.mostrarNotificacao('Email enviado com sucesso via EmailJS! ✅', 'success');
+                    setTimeout(() => {
+                        this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
+                    }, 2000);
+                    return;
+                } catch (emailjsError) {
+                    console.warn('EmailJS falhou, tentando FormSubmit como fallback:', emailjsError);
+                    this.mostrarNotificacao('Tentando método alternativo...', 'info');
+                }
+            }
 
             // Preparar FormData com todos os dados
             const formData = new FormData();
@@ -3866,7 +4939,10 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
                 let totalSize = 0;
                 this.arquivosParaEnvio.forEach((arquivo, index) => {
-                    const tamanhoMB = arquivo.dados.length / (1024 * 1024);
+                    // Calcular tamanho corretamente
+                    const tamanhoBytes = arquivo.tamanhoBytes || 
+                                        (arquivo.dados ? (arquivo.dados.length || arquivo.dados.byteLength || 0) : 0);
+                    const tamanhoMB = tamanhoBytes / (1024 * 1024);
                     totalSize += tamanhoMB;
                     
                     if (tamanhoMB > 5) {
@@ -3877,7 +4953,7 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                     const blob = new Blob([arquivo.dados], {
                         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                     });
-                    
+
                     formData.append(arquivo.nome, blob, arquivo.nome);
                 });
                 
@@ -3889,7 +4965,15 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             // Tentar usar fetch primeiro (pode falhar por CORS, mas vamos tentar)
             // Se falhar, usar formulário HTML como fallback
             try {
-                console.log('Tentando enviar via fetch...');
+                console.log('Tentando enviar via FormSubmit fetch...');
+                console.log('Email destino:', emailDestino);
+                console.log('Dados do formulário:', {
+                    email: emailRemetente,
+                    name: nomeRemetente,
+                    subject: assunto,
+                    arquivos: this.arquivosParaEnvio?.length || 0
+                });
+                
                 const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(emailDestino)}`, {
                     method: 'POST',
                     body: formData,
@@ -3899,19 +4983,66 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                     }
                 });
 
+                console.log('Status da resposta FormSubmit:', response.status, response.statusText);
+                console.log('Headers da resposta:', Object.fromEntries(response.headers.entries()));
+
                 if (response.ok) {
                     const responseText = await response.text();
-                    console.log('Resposta do FormSubmit:', responseText);
+                    console.log('Resposta completa do FormSubmit:', responseText);
                     
                     let emailEnviado = false;
+                    let mensagemErro = '';
+                    
                     try {
                         const resultado = JSON.parse(responseText);
-                        if (resultado.success === true) {
+                        console.log('Resultado parseado:', resultado);
+                        
+                        // Verificar se há mensagem de erro sobre file://
+                        if (resultado.message && resultado.message.includes('web server') && resultado.message.includes('HTML files')) {
+                            throw new Error('FormSubmit não funciona com arquivos locais (file://). Use um servidor web ou configure EmailJS.');
+                        }
+                        
+                        if (resultado.success === true || resultado.success === 'true') {
                             emailEnviado = true;
+                        } else if (resultado.message) {
+                            // Verificar se a mensagem indica erro
+                            const msgLower = resultado.message.toLowerCase();
+                            if (msgLower.includes('web server') || msgLower.includes('html files') || msgLower.includes('file://')) {
+                                throw new Error('FormSubmit requer servidor web. Configure EmailJS ou use um servidor local.');
+                            }
+                            
+                            // FormSubmit pode retornar mensagem mesmo sem success: true
+                            if (msgLower.includes('success') || 
+                                msgLower.includes('enviado') ||
+                                msgLower.includes('sent')) {
+                                emailEnviado = true;
+                            } else {
+                                mensagemErro = resultado.message;
+                            }
+                        } else if (resultado.error) {
+                            mensagemErro = resultado.error;
                         }
                     } catch (e) {
-                        // Se não for JSON, assumir sucesso se response.ok
-                        emailEnviado = true;
+                        // Se for erro sobre file://, relançar
+                        if (e.message && (e.message.includes('web server') || e.message.includes('file://'))) {
+                            throw e;
+                        }
+                        
+                        // Se não for JSON, verificar conteúdo da resposta
+                        console.log('Resposta não é JSON, verificando conteúdo...');
+                        if (responseText.toLowerCase().includes('web server') || responseText.toLowerCase().includes('html files')) {
+                            throw new Error('FormSubmit não funciona com arquivos locais. Use um servidor web ou configure EmailJS.');
+                        }
+                        
+                        if (responseText.toLowerCase().includes('success') || 
+                            responseText.toLowerCase().includes('enviado') ||
+                            responseText.toLowerCase().includes('sent') ||
+                            response.status === 200) {
+                            emailEnviado = true;
+                        } else {
+                            console.warn('Resposta não indica sucesso:', responseText);
+                            mensagemErro = 'Resposta inesperada do servidor';
+                        }
                     }
                     
                     if (emailEnviado) {
@@ -3920,15 +5051,75 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                             this.fecharModal(modalEmail);
                         }
                         
-                        this.mostrarNotificacao('Email enviado com sucesso! ✅', 'success');
+                        this.mostrarNotificacao('Email enviado com sucesso via FormSubmit! ✅', 'success');
                         setTimeout(() => {
                             this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
                         }, 2000);
                         return; // Sucesso, sair da função
+                    } else {
+                        throw new Error(mensagemErro || 'FormSubmit não confirmou o envio do email');
                     }
+                } else {
+                    const errorText = await response.text();
+                    console.error('Erro na resposta FormSubmit:', errorText);
+                    throw new Error(`FormSubmit retornou status ${response.status}: ${response.statusText}`);
                 }
             } catch (fetchError) {
-                console.warn('Fetch falhou (provavelmente CORS), usando formulário HTML como fallback:', fetchError);
+                console.warn('Fetch falhou:', fetchError);
+                console.error('Detalhes do erro fetch:', {
+                    message: fetchError.message,
+                    stack: fetchError.stack
+                });
+                
+                // Verificar se o erro é sobre file://
+                if (fetchError.message && (
+                    fetchError.message.includes('web server') || 
+                    fetchError.message.includes('HTML files') || 
+                    fetchError.message.includes('file://')
+                )) {
+                    this.mostrarNotificacao('⚠️ FormSubmit não funciona com arquivos locais (file://)', 'error');
+                    setTimeout(() => {
+                        const isFileProtocol = window.location.protocol === 'file:';
+                        let mensagem = '💡 <strong>Soluções:</strong><br>';
+                        mensagem += '1. <strong>Use um servidor web local:</strong><br>';
+                        mensagem += '&nbsp;&nbsp;• VS Code: Instale "Live Server" e clique com botão direito > "Open with Live Server"<br>';
+                        mensagem += '• Python: <code>python -m http.server 8000</code><br>';
+                        mensagem += '• Node.js: <code>npx http-server</code><br><br>';
+                        mensagem += '2. <strong>Configure EmailJS</strong> (funciona mesmo com file://)<br>';
+                        mensagem += '&nbsp;&nbsp;Veja o arquivo <strong>CONFIGURACAO_EMAIL.md</strong> para instruções<br><br>';
+                        mensagem += '3. <strong>Use "Exportar Excel"</strong> para baixar os arquivos manualmente';
+                        this.mostrarNotificacao(mensagem, 'warning');
+                    }, 2000);
+                    
+                    // Não tentar fallback se for problema de file://
+                    if (btnEnviar) {
+                        btnEnviar.classList.remove('btn-loading');
+                        btnEnviar.disabled = false;
+                    }
+                    return;
+                }
+                
+                this.mostrarNotificacao('Método alternativo sendo usado...', 'info');
+            }
+
+            // Verificar se está rodando em file:// antes do fallback
+            const isFileProtocol = window.location.protocol === 'file:';
+            if (isFileProtocol) {
+                console.warn('⚠️ Detectado protocolo file:// - FormSubmit não funcionará');
+                this.mostrarNotificacao('⚠️ FormSubmit não funciona com arquivos locais (file://)', 'error');
+                setTimeout(() => {
+                    let mensagem = '💡 <strong>Soluções:</strong><br>';
+                    mensagem += '1. <strong>Use um servidor web local</strong> (Live Server, Python http.server, etc.)<br>';
+                    mensagem += '2. <strong>Configure EmailJS</strong> (veja CONFIGURACAO_EMAIL.md)<br>';
+                    mensagem += '3. <strong>Use "Exportar Excel"</strong> para baixar os arquivos';
+                    this.mostrarNotificacao(mensagem, 'warning');
+                }, 2000);
+                
+                if (btnEnviar) {
+                    btnEnviar.classList.remove('btn-loading');
+                    btnEnviar.disabled = false;
+                }
+                return;
             }
 
             // Fallback: usar formulário HTML para contornar CORS
@@ -4001,20 +5192,20 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                     if (modalEmail) {
                         this.fecharModal(modalEmail);
                     }
-                    
-                    this.mostrarNotificacao('Email enviado com sucesso! ✅', 'success');
+            
+            this.mostrarNotificacao('Email enviado com sucesso via FormSubmit! ✅', 'success');
                     setTimeout(() => {
                         this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
                     }, 2000);
-                    
-                    setTimeout(() => {
+            
+            setTimeout(() => {
                         if (form.parentNode) {
                             form.remove();
                         }
                     }, 5000);
-                }, 2000);
+            }, 2000);
             };
-
+            
             iframe.onload = handleIframeLoad;
             form.submit();
 
@@ -4037,12 +5228,103 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                 stack: error.stack,
                 emailDestino: emailDestino
             });
+            
+            // Mostrar mensagem mais detalhada ao usuário
+            setTimeout(() => {
+                this.mostrarNotificacao('💡 Dica: Verifique o console do navegador (F12) para mais detalhes do erro. O problema pode ser: bloqueio de CORS, servidor de email indisponível, ou configuração incorreta.', 'warning');
+            }, 3000);
         } finally {
             if (btnEnviar) {
-            btnEnviar.classList.remove('btn-loading');
-            btnEnviar.disabled = false;
+                btnEnviar.classList.remove('btn-loading');
+                btnEnviar.disabled = false;
             }
         }
+    }
+
+    obterConfigEmailJS() {
+        // Verificar se EmailJS está disponível e configurado
+        // Você pode configurar isso no localStorage ou como constante
+        try {
+            const config = localStorage.getItem('emailjsConfig');
+            if (config) {
+                return JSON.parse(config);
+            }
+            
+            // Configuração padrão - você precisa substituir pelos seus valores do EmailJS
+            // Para obter: https://www.emailjs.com/
+            // Para configurar, execute no console do navegador:
+            // localStorage.setItem('emailjsConfig', JSON.stringify({
+            //     publicKey: 'SUA_PUBLIC_KEY',
+            //     serviceId: 'SEU_SERVICE_ID',
+            //     templateId: 'SEU_TEMPLATE_ID'
+            // }));
+            return {
+                publicKey: '', // Sua Public Key do EmailJS
+                serviceId: '', // Seu Service ID
+                templateId: '' // Seu Template ID
+            };
+        } catch (error) {
+            console.error('Erro ao obter config EmailJS:', error);
+            return null;
+        }
+    }
+
+    async enviarViaEmailJS(emailRemetente, nomeRemetente, assunto, corpo, emailDestino) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Verificar se EmailJS está carregado
+                if (typeof emailjs === 'undefined') {
+                    throw new Error('EmailJS não está carregado. Verifique a conexão com a internet.');
+                }
+
+                const config = this.obterConfigEmailJS();
+                if (!config || !config.publicKey || !config.serviceId || !config.templateId) {
+                    throw new Error('EmailJS não está configurado. Configure suas credenciais no localStorage.');
+                }
+
+                // Inicializar EmailJS
+                emailjs.init(config.publicKey);
+
+                // Preparar template parameters
+                const templateParams = {
+                    to_email: emailDestino,
+                    from_name: nomeRemetente,
+                    from_email: emailRemetente,
+                    subject: assunto || 'Formulário de Contato - Sistema de Credenciais',
+                    message: corpo || 'Email enviado através do Sistema de Credenciais',
+                    reply_to: emailRemetente
+                };
+
+                // Adicionar informações sobre anexos se houver
+                if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
+                    let infoAnexos = '\n\n=== ARQUIVOS ANEXADOS ===\n';
+                    this.arquivosParaEnvio.forEach((arquivo, index) => {
+                        infoAnexos += `Arquivo ${index + 1}: ${arquivo.nome}\n`;
+                    });
+                    templateParams.message += infoAnexos;
+                }
+
+                console.log('Enviando via EmailJS com parâmetros:', templateParams);
+
+                // Enviar email
+                const response = await emailjs.send(
+                    config.serviceId,
+                    config.templateId,
+                    templateParams
+                );
+
+                console.log('Resposta EmailJS:', response);
+                
+                if (response.status === 200) {
+                    resolve(response);
+                } else {
+                    reject(new Error(`EmailJS retornou status ${response.status}`));
+                }
+            } catch (error) {
+                console.error('Erro ao enviar via EmailJS:', error);
+                reject(error);
+            }
+        });
     }
 
     prepararAnexosParaFormSubmit() {
