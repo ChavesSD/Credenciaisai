@@ -57,7 +57,7 @@ localStorage.setItem('emailjsConfig', JSON.stringify({
 6. **Testar**
    - Recarregue a página
    - Tente enviar um email
-   - O sistema tentará usar EmailJS primeiro, e se não estiver configurado, usará FormSubmit como fallback
+   - O sistema usa apenas EmailJS (obrigatório para envio com anexos)
 
 ## Verificar Configuração Atual
 
@@ -75,14 +75,14 @@ Para limpar a configuração do EmailJS:
 localStorage.removeItem('emailjsConfig');
 ```
 
-## Alternativa: Usar FormSubmit Corretamente
+## Por que apenas EmailJS?
 
-Se preferir continuar usando FormSubmit, verifique:
+O sistema foi simplificado para usar **apenas EmailJS** porque:
 
-1. Se o email de destino está correto
-2. Se não há bloqueio de CORS no navegador
-3. Se o FormSubmit não está bloqueando o domínio
-4. Verifique a pasta de spam do destinatário
+1. **Sempre haverá anexos**: O sistema sempre envia arquivos Excel como anexos
+2. **FormSubmit não suporta anexos**: O FormSubmit não suporta anexos de forma confiável
+3. **EmailJS é mais confiável**: Funciona mesmo com arquivos locais (file://) e suporta anexos nativamente
+4. **Código mais simples**: Remover o FormSubmit simplificou significativamente o código
 
 ## Envio de Anexos
 

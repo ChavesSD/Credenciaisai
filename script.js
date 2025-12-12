@@ -4870,22 +4870,27 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             btnEnviar.disabled = true;
         }
 
-        // Verificar se está rodando em file:// antes de tentar enviar (FormSubmit não funciona)
-        const isFileProtocol = window.location.protocol === 'file:';
+        // Verificar configuração do EmailJS (único método suportado para envio com anexos)
         const emailjsConfig = this.obterConfigEmailJS();
+        const temAnexos = this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0;
         
-        if (isFileProtocol && (!emailjsConfig || !emailjsConfig.publicKey)) {
-            // Se estiver em file:// e EmailJS não estiver configurado, mostrar erro imediatamente
-            this.mostrarNotificacao('⚠️ FormSubmit não funciona com arquivos locais (file://)', 'error');
+        // EmailJS é obrigatório (sempre haverá anexos)
+        if (!emailjsConfig || !emailjsConfig.publicKey || !emailjsConfig.serviceId || !emailjsConfig.templateId) {
+            this.mostrarNotificacao('⚠️ EmailJS não está configurado!', 'error');
             setTimeout(() => {
-                let mensagem = '💡 <strong>Soluções:</strong><br>';
-                mensagem += '1. <strong>Use um servidor web local:</strong><br>';
-                mensagem += '&nbsp;&nbsp;• VS Code: Instale "Live Server" e clique com botão direito > "Open with Live Server"<br>';
-                mensagem += '&nbsp;&nbsp;• Python: <code>python -m http.server 8000</code> (depois acesse http://localhost:8000)<br>';
-                mensagem += '&nbsp;&nbsp;• Node.js: <code>npx http-server</code><br><br>';
-                mensagem += '2. <strong>Configure EmailJS</strong> (funciona mesmo com file://)<br>';
-                mensagem += '&nbsp;&nbsp;Veja o arquivo <strong>CONFIGURACAO_EMAIL.md</strong> para instruções<br><br>';
-                mensagem += '3. <strong>Use "Exportar Excel"</strong> para baixar os arquivos manualmente';
+                let mensagem = '📎 <strong>EmailJS é obrigatório para enviar emails com anexos!</strong><br><br>';
+                mensagem += '💡 <strong>Como configurar EmailJS:</strong><br>';
+                mensagem += '1. Acesse: <a href="https://www.emailjs.com/" target="_blank">https://www.emailjs.com/</a><br>';
+                mensagem += '2. Crie uma conta gratuita (até 200 emails/mês)<br>';
+                mensagem += '3. Configure um Email Service e um Template<br>';
+                mensagem += '4. Abra o console do navegador (F12) e execute:<br>';
+                mensagem += '<code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; display: block; margin: 8px 0; font-size: 12px;">localStorage.setItem(\'emailjsConfig\', JSON.stringify({<br>';
+                mensagem += '&nbsp;&nbsp;publicKey: \'SUA_PUBLIC_KEY\',<br>';
+                mensagem += '&nbsp;&nbsp;serviceId: \'SEU_SERVICE_ID\',<br>';
+                mensagem += '&nbsp;&nbsp;templateId: \'SEU_TEMPLATE_ID\'<br>';
+                mensagem += '}));</code>';
+                mensagem += '5. Veja o arquivo <strong>CONFIGURACAO_EMAIL.md</strong> para instruções detalhadas<br><br>';
+                mensagem += '📥 <strong>Alternativa:</strong> Use "Exportar Excel" para baixar os arquivos manualmente';
                 this.mostrarNotificacao(mensagem, 'warning');
             }, 2000);
             
@@ -4897,346 +4902,45 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
         }
 
         try {
-            this.mostrarNotificacao('Preparando e enviando email...', 'info');
+            this.mostrarNotificacao('Preparando e enviando email com anexos...', 'info');
             
-            // Tentar primeiro com EmailJS (mais confiável e funciona mesmo com file://)
-            if (emailjsConfig && emailjsConfig.publicKey) {
-                try {
-                    await this.enviarViaEmailJS(emailRemetente, nomeRemetente, assunto, corpo, emailDestino);
-                    // Sucesso - fechar modal e mostrar mensagem
-                    const modalEmail = document.getElementById('modalEmail');
-                    if (modalEmail) {
-                        this.fecharModal(modalEmail);
-                    }
-                    this.mostrarNotificacao('Email enviado com sucesso via EmailJS! ✅', 'success');
-                    setTimeout(() => {
-                        this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
-                    }, 2000);
-                    return;
-                } catch (emailjsError) {
-                    console.warn('EmailJS falhou, tentando FormSubmit como fallback:', emailjsError);
-                    this.mostrarNotificacao('Tentando método alternativo...', 'info');
-                }
-            }
-
-            // Preparar FormData com todos os dados
-            const formData = new FormData();
+            // Enviar via EmailJS (único método suportado)
+            await this.enviarViaEmailJS(emailRemetente, nomeRemetente, assunto, corpo, emailDestino);
             
-            // Campos obrigatórios do FormSubmit
-            formData.append('_to', emailDestino);
-            formData.append('_subject', assunto || 'Formulário de Contato - Sistema de Credenciais');
-            formData.append('_template', 'box');
-            formData.append('_captcha', 'false');
-            
-            // Campos do formulário
-            formData.append('email', emailRemetente);
-            formData.append('name', nomeRemetente);
-            
-            // Preparar corpo da mensagem
-            let corpoCompleto = `Nome: ${nomeRemetente}\nEmail: ${emailRemetente}\n\nMensagem:\n${corpo || 'Email enviado através do Sistema de Credenciais'}`;
-            
-            // Adicionar arquivos Excel como anexos
-            if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
-                let totalSize = 0;
-            this.arquivosParaEnvio.forEach((arquivo, index) => {
-                    // Calcular tamanho corretamente
-                    const tamanhoBytes = arquivo.tamanhoBytes || 
-                                        (arquivo.dados ? (arquivo.dados.length || arquivo.dados.byteLength || 0) : 0);
-                    const tamanhoMB = tamanhoBytes / (1024 * 1024);
-                    totalSize += tamanhoMB;
-                    
-                    if (tamanhoMB > 5) {
-                        console.warn(`Arquivo ${arquivo.nome} excede 5MB (${tamanhoMB.toFixed(2)}MB) e pode não ser enviado`);
-                        this.mostrarNotificacao(`Atenção: ${arquivo.nome} excede 5MB e pode não ser enviado`, 'warning');
-                    }
-                    
-                const blob = new Blob([arquivo.dados], {
-                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                });
-
-                    formData.append(arquivo.nome, blob, arquivo.nome);
-                });
-                
-                console.log(`Total de ${this.arquivosParaEnvio.length} arquivo(s) anexado(s), tamanho total: ${totalSize.toFixed(2)}MB`);
-            }
-            
-            formData.append('message', corpoCompleto);
-
-            // Tentar usar fetch primeiro (pode falhar por CORS, mas vamos tentar)
-            // Se falhar, usar formulário HTML como fallback
-            try {
-                console.log('Tentando enviar via FormSubmit fetch...');
-                console.log('Email destino:', emailDestino);
-                console.log('Dados do formulário:', {
-                    email: emailRemetente,
-                    name: nomeRemetente,
-                    subject: assunto,
-                    arquivos: this.arquivosParaEnvio?.length || 0
-                });
-                
-                const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(emailDestino)}`, {
-                    method: 'POST',
-                    body: formData,
-                    mode: 'cors',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
-
-                console.log('Status da resposta FormSubmit:', response.status, response.statusText);
-                console.log('Headers da resposta:', Object.fromEntries(response.headers.entries()));
-
-                if (response.ok) {
-                    const responseText = await response.text();
-                    console.log('Resposta completa do FormSubmit:', responseText);
-                    
-                    let emailEnviado = false;
-                    let mensagemErro = '';
-                    
-                    try {
-                        const resultado = JSON.parse(responseText);
-                        console.log('Resultado parseado:', resultado);
-                        
-                        // Verificar se há mensagem de erro sobre file://
-                        if (resultado.message && resultado.message.includes('web server') && resultado.message.includes('HTML files')) {
-                            throw new Error('FormSubmit não funciona com arquivos locais (file://). Use um servidor web ou configure EmailJS.');
-                        }
-                        
-                        if (resultado.success === true || resultado.success === 'true') {
-                            emailEnviado = true;
-                        } else if (resultado.message) {
-                            // Verificar se a mensagem indica erro
-                            const msgLower = resultado.message.toLowerCase();
-                            if (msgLower.includes('web server') || msgLower.includes('html files') || msgLower.includes('file://')) {
-                                throw new Error('FormSubmit requer servidor web. Configure EmailJS ou use um servidor local.');
-                            }
-                            
-                            // FormSubmit pode retornar mensagem mesmo sem success: true
-                            if (msgLower.includes('success') || 
-                                msgLower.includes('enviado') ||
-                                msgLower.includes('sent')) {
-                                emailEnviado = true;
-                            } else {
-                                mensagemErro = resultado.message;
-                            }
-                        } else if (resultado.error) {
-                            mensagemErro = resultado.error;
-                        }
-                    } catch (e) {
-                        // Se for erro sobre file://, relançar
-                        if (e.message && (e.message.includes('web server') || e.message.includes('file://'))) {
-                            throw e;
-                        }
-                        
-                        // Se não for JSON, verificar conteúdo da resposta
-                        console.log('Resposta não é JSON, verificando conteúdo...');
-                        if (responseText.toLowerCase().includes('web server') || responseText.toLowerCase().includes('html files')) {
-                            throw new Error('FormSubmit não funciona com arquivos locais. Use um servidor web ou configure EmailJS.');
-                        }
-                        
-                        if (responseText.toLowerCase().includes('success') || 
-                            responseText.toLowerCase().includes('enviado') ||
-                            responseText.toLowerCase().includes('sent') ||
-                            response.status === 200) {
-                        emailEnviado = true;
-                        } else {
-                            console.warn('Resposta não indica sucesso:', responseText);
-                            mensagemErro = 'Resposta inesperada do servidor';
-                        }
-                    }
-                    
-                    if (emailEnviado) {
+            // Sucesso - fechar modal e mostrar mensagem
                         const modalEmail = document.getElementById('modalEmail');
                         if (modalEmail) {
                             this.fecharModal(modalEmail);
                         }
-                        
-                        this.mostrarNotificacao('Email enviado com sucesso via FormSubmit! ✅', 'success');
+            this.mostrarNotificacao('Email enviado com sucesso via EmailJS! ✅', 'success');
             setTimeout(() => {
-                            this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
-                        }, 2000);
-                        return; // Sucesso, sair da função
-                    } else {
-                        throw new Error(mensagemErro || 'FormSubmit não confirmou o envio do email');
-                    }
-                } else {
-                    const errorText = await response.text();
-                    console.error('Erro na resposta FormSubmit:', errorText);
-                    throw new Error(`FormSubmit retornou status ${response.status}: ${response.statusText}`);
+                const numAnexos = this.arquivosParaEnvio?.length || 0;
+                let mensagem = `O email foi enviado para ${emailDestino}`;
+                if (numAnexos > 0) {
+                    mensagem += ` com ${numAnexos} anexo(s)`;
                 }
-            } catch (fetchError) {
-                console.warn('Fetch falhou:', fetchError);
-                console.error('Detalhes do erro fetch:', {
-                    message: fetchError.message,
-                    stack: fetchError.stack
-                });
-                
-                // Verificar se o erro é sobre file://
-                if (fetchError.message && (
-                    fetchError.message.includes('web server') || 
-                    fetchError.message.includes('HTML files') || 
-                    fetchError.message.includes('file://')
-                )) {
-                    this.mostrarNotificacao('⚠️ FormSubmit não funciona com arquivos locais (file://)', 'error');
-                    setTimeout(() => {
-                        const isFileProtocol = window.location.protocol === 'file:';
-                        let mensagem = '💡 <strong>Soluções:</strong><br>';
-                        mensagem += '1. <strong>Use um servidor web local:</strong><br>';
-                        mensagem += '&nbsp;&nbsp;• VS Code: Instale "Live Server" e clique com botão direito > "Open with Live Server"<br>';
-                        mensagem += '• Python: <code>python -m http.server 8000</code><br>';
-                        mensagem += '• Node.js: <code>npx http-server</code><br><br>';
-                        mensagem += '2. <strong>Configure EmailJS</strong> (funciona mesmo com file://)<br>';
-                        mensagem += '&nbsp;&nbsp;Veja o arquivo <strong>CONFIGURACAO_EMAIL.md</strong> para instruções<br><br>';
-                        mensagem += '3. <strong>Use "Exportar Excel"</strong> para baixar os arquivos manualmente';
-                        this.mostrarNotificacao(mensagem, 'warning');
-                    }, 2000);
-                    
-                    // Não tentar fallback se for problema de file://
-                    if (btnEnviar) {
-                        btnEnviar.classList.remove('btn-loading');
-                        btnEnviar.disabled = false;
-                    }
-                    return;
-                }
-                
-                this.mostrarNotificacao('Método alternativo sendo usado...', 'info');
-            }
-
-            // Verificar se está rodando em file:// antes do fallback
-            const isFileProtocol = window.location.protocol === 'file:';
-            if (isFileProtocol) {
-                console.warn('⚠️ Detectado protocolo file:// - FormSubmit não funcionará');
-                this.mostrarNotificacao('⚠️ FormSubmit não funciona com arquivos locais (file://)', 'error');
-                setTimeout(() => {
-                    let mensagem = '💡 <strong>Soluções:</strong><br>';
-                    mensagem += '1. <strong>Use um servidor web local</strong> (Live Server, Python http.server, etc.)<br>';
-                    mensagem += '2. <strong>Configure EmailJS</strong> (veja CONFIGURACAO_EMAIL.md)<br>';
-                    mensagem += '3. <strong>Use "Exportar Excel"</strong> para baixar os arquivos';
-                    this.mostrarNotificacao(mensagem, 'warning');
-                }, 2000);
-                
-                if (btnEnviar) {
-                    btnEnviar.classList.remove('btn-loading');
-                    btnEnviar.disabled = false;
-                }
-                return;
-            }
-
-            // Fallback: usar formulário HTML para contornar CORS
-            console.log('Usando formulário HTML como fallback...');
-            
-            // Remover formulário anterior se existir
-            const formAntigo = document.getElementById('formSubmitOculto');
-            if (formAntigo) {
-                formAntigo.remove();
-            }
-
-            const form = document.createElement('form');
-            form.id = 'formSubmitOculto';
-            form.method = 'POST';
-            form.action = `https://formsubmit.co/${encodeURIComponent(emailDestino)}`;
-            form.enctype = 'multipart/form-data';
-            form.style.display = 'none';
-            form.target = 'iframeFormSubmit';
-
-            // Criar iframe oculto
-            let iframe = document.getElementById('iframeFormSubmit');
-            if (!iframe) {
-                iframe = document.createElement('iframe');
-                iframe.id = 'iframeFormSubmit';
-                iframe.name = 'iframeFormSubmit';
-                iframe.style.display = 'none';
-                document.body.appendChild(iframe);
-            }
-
-            // Adicionar campos ao formulário
-            const campos = {
-                '_subject': assunto || 'Formulário de Contato - Sistema de Credenciais',
-                '_template': 'box',
-                '_captcha': 'false',
-                'email': emailRemetente,
-                'name': nomeRemetente,
-                'message': corpoCompleto
-            };
-
-            Object.keys(campos).forEach(key => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = campos[key];
-                form.appendChild(input);
-            });
-
-            // Para anexos no formulário HTML, vamos incluir informações no corpo
-            // pois não podemos adicionar arquivos programaticamente de forma confiável
-            if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
-                let infoAnexos = '\n\n=== INFORMAÇÕES DOS ARQUIVOS ===\n';
-                this.arquivosParaEnvio.forEach((arquivo, index) => {
-                    infoAnexos += `Arquivo ${index + 1}: ${arquivo.nome} (${arquivo.tamanho || 'N/A'})\n`;
-                });
-                infoAnexos += '\nNota: Os arquivos Excel foram gerados mas não puderam ser anexados automaticamente devido a limitações técnicas.\n';
-                infoAnexos += 'Por favor, use a função "Exportar Excel" para baixar os arquivos manualmente se necessário.\n';
-                
-                const messageInput = form.querySelector('input[name="message"]');
-                if (messageInput) {
-                    messageInput.value += infoAnexos;
-                }
-            }
-
-            document.body.appendChild(form);
-
-            // Handler para resposta do iframe
-            const handleIframeLoad = () => {
-                setTimeout(() => {
-                    const modalEmail = document.getElementById('modalEmail');
-                    if (modalEmail) {
-                        this.fecharModal(modalEmail);
-                    }
-            
-            this.mostrarNotificacao('Email enviado com sucesso via FormSubmit! ✅', 'success');
-                    setTimeout(() => {
-                        this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
-                    }, 2000);
-            
-            setTimeout(() => {
-                        if (form.parentNode) {
-                            form.remove();
-                        }
-                    }, 5000);
+                mensagem += '. Verifique também a pasta de spam.';
+                this.mostrarNotificacao(mensagem, 'info');
             }, 2000);
-            };
             
-            iframe.onload = handleIframeLoad;
-            form.submit();
-
-            // Timeout de segurança
-            setTimeout(() => {
-                if (form.parentNode) {
-                    handleIframeLoad();
-                }
-            }, 10000);
-
         } catch (error) {
-            console.error('Erro completo ao enviar email:', error);
-            let mensagemErro = error.message || 'Erro ao enviar email. Tente novamente.';
+            console.error('Erro ao enviar email via EmailJS:', error);
             
-            this.mostrarNotificacao(mensagemErro, 'error');
-            
-            // Mostrar informações de debug no console
-            console.error('Detalhes do erro:', {
-                message: error.message,
-                stack: error.stack,
-                emailDestino: emailDestino
-            });
-            
-            // Mostrar mensagem mais detalhada ao usuário
+            this.mostrarNotificacao('❌ Erro ao enviar email com anexos', 'error');
             setTimeout(() => {
-                this.mostrarNotificacao('💡 Dica: Verifique o console do navegador (F12) para mais detalhes do erro. O problema pode ser: bloqueio de CORS, servidor de email indisponível, ou configuração incorreta.', 'warning');
-            }, 3000);
+                let mensagem = '💡 <strong>O EmailJS falhou ao enviar os anexos.</strong><br><br>';
+                mensagem += 'Verifique:<br>';
+                mensagem += '1. Se o EmailJS está configurado corretamente<br>';
+                mensagem += '2. Se o template do EmailJS está configurado para aceitar anexos<br>';
+                mensagem += '3. Se o tamanho dos arquivos não excede 50MB (limite do plano gratuito)<br>';
+                mensagem += '4. Os logs no console (F12) para mais detalhes<br><br>';
+                mensagem += '📥 <strong>Alternativa:</strong> Use "Exportar Excel" para baixar os arquivos manualmente';
+                this.mostrarNotificacao(mensagem, 'warning');
+                        }, 2000);
         } finally {
             if (btnEnviar) {
-            btnEnviar.classList.remove('btn-loading');
-            btnEnviar.disabled = false;
+                btnEnviar.classList.remove('btn-loading');
+                btnEnviar.disabled = false;
             }
         }
     }
@@ -5302,25 +5006,25 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                 };
 
                 Object.keys(camposTexto).forEach(key => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
                     input.value = camposTexto[key];
                     formTemp.appendChild(input);
-                });
+            });
 
                 // Adicionar informações sobre anexos no corpo se houver
-                if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
+            if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
                     let infoAnexos = '\n\n=== ARQUIVOS ANEXADOS ===\n';
-                    this.arquivosParaEnvio.forEach((arquivo, index) => {
+                this.arquivosParaEnvio.forEach((arquivo, index) => {
                         infoAnexos += `Arquivo ${index + 1}: ${arquivo.nome}\n`;
-                    });
-                    
+                });
+                
                     // Atualizar campo message com informações dos anexos
                     const messageInput = formTemp.querySelector('input[name="message"]');
-                    if (messageInput) {
-                        messageInput.value += infoAnexos;
-                    }
+                if (messageInput) {
+                    messageInput.value += infoAnexos;
+                }
 
                     // Converter arquivos Excel (Uint8Array) para File objects e adicionar ao formulário
                     let anexosPreparados = 0;
@@ -5377,7 +5081,7 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                             anexosPreparados++;
                             
                             console.log(`✅ Anexo ${index + 1} preparado: ${arquivo.nome} (${this.formatarTamanhoArquivo(arquivo.tamanhoBytes || file.size)})`);
-                        } catch (error) {
+        } catch (error) {
                             console.error(`❌ Erro ao preparar anexo ${index + 1} (${arquivo.nome}):`, error);
                         }
                     });
