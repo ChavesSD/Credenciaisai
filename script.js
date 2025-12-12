@@ -4864,154 +4864,173 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             return;
         }
 
-            const btnEnviar = document.getElementById('btnEnviarEmailModal');
+        const btnEnviar = document.getElementById('btnEnviarEmailModal');
         if (btnEnviar) {
             btnEnviar.classList.add('btn-loading');
             btnEnviar.disabled = true;
         }
 
+        // Verificar se está rodando em file:// (FormSubmit não funciona com arquivos locais)
+        const isFileProtocol = window.location.protocol === 'file:';
+        if (isFileProtocol) {
+            this.mostrarNotificacao('⚠️ FormSubmit não funciona com arquivos locais (file://)', 'error');
+            setTimeout(() => {
+                let mensagem = '💡 <strong>FormSubmit requer servidor web!</strong><br><br>';
+                mensagem += 'Para testar localmente, use um servidor web:<br>';
+                mensagem += '• VS Code: Instale "Live Server" e abra com "Open with Live Server"<br>';
+                mensagem += '• Python: <code>python -m http.server 8000</code><br>';
+                mensagem += '• Node.js: <code>npx http-server</code><br><br>';
+                mensagem += 'Ou teste diretamente no servidor após o deploy.';
+                this.mostrarNotificacao(mensagem, 'warning');
+            }, 2000);
+            
+            if (btnEnviar) {
+                btnEnviar.classList.remove('btn-loading');
+                btnEnviar.disabled = false;
+            }
+            return;
+        }
+
         try {
-            this.mostrarNotificacao('Preparando e enviando email com anexos via Netlify Forms...', 'info');
+            this.mostrarNotificacao('Preparando e enviando email com anexos via FormSubmit...', 'info');
             
-            const form = document.getElementById('formEmail');
-            if (!form) {
-                throw new Error('Formulário não encontrado');
-            }
-
-            // Adicionar arquivos Excel como inputs de arquivo no formulário
-            const camposArquivos = document.getElementById('camposArquivos');
-            if (camposArquivos) {
-                // Limpar campos anteriores
-                camposArquivos.innerHTML = '';
+            // Preparar FormData para FormSubmit
+            const formData = new FormData();
+            
+            // Campos obrigatórios do FormSubmit
+            formData.append('_to', emailDestino);
+            formData.append('_subject', assunto || 'Planilhas de Credenciais');
+            formData.append('_template', 'box');
+            formData.append('_captcha', 'false');
+            
+            // Campos do formulário
+            formData.append('email', emailRemetente);
+            formData.append('name', nomeRemetente);
+            
+            // Preparar corpo da mensagem
+            let corpoCompleto = `Nome: ${nomeRemetente}\nEmail: ${emailRemetente}\n\nMensagem:\n${corpo || 'Email enviado através do Sistema de Credenciais'}`;
+            
+            // Adicionar arquivos Excel como anexos
+            if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
+                console.log(`Preparando ${this.arquivosParaEnvio.length} anexo(s) para envio via FormSubmit...`);
+                let totalSize = 0;
                 
-                if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
-                    console.log(`Preparando ${this.arquivosParaEnvio.length} anexo(s) para envio...`);
-                    
-                    this.arquivosParaEnvio.forEach((arquivo, index) => {
-                        try {
-                            // Converter Uint8Array para Blob
-                            const blob = new Blob([arquivo.dados], {
-                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                            });
-
-                            // Converter Blob para File
-                            const file = new File([blob], arquivo.nome, {
-                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                                lastModified: Date.now()
-                            });
-
-                            // Criar input file e adicionar ao formulário
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.name = `anexo_${index + 1}`;
-                            input.style.display = 'none';
-                            
-                            // Criar DataTransfer para adicionar o arquivo ao input
-                            const dataTransfer = new DataTransfer();
-                            dataTransfer.items.add(file);
-                            input.files = dataTransfer.files;
-                            
-                            camposArquivos.appendChild(input);
-                            
-                            console.log(`✅ Anexo ${index + 1} preparado: ${arquivo.nome} (${this.formatarTamanhoArquivo(arquivo.tamanhoBytes || file.size)})`);
-                        } catch (error) {
-                            console.error(`❌ Erro ao preparar anexo ${index + 1} (${arquivo.nome}):`, error);
+                this.arquivosParaEnvio.forEach((arquivo, index) => {
+                    try {
+                        // Converter Uint8Array para Blob
+                        const blob = new Blob([arquivo.dados], {
+                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        });
+                        
+                        // Calcular tamanho
+                        const tamanhoBytes = arquivo.tamanhoBytes || blob.size;
+                        const tamanhoMB = tamanhoBytes / (1024 * 1024);
+                        totalSize += tamanhoMB;
+                        
+                        if (tamanhoMB > 5) {
+                            console.warn(`Arquivo ${arquivo.nome} excede 5MB (${tamanhoMB.toFixed(2)}MB) e pode não ser enviado`);
                         }
-                    });
-                }
+                        
+                        // Adicionar ao FormData
+                        formData.append(arquivo.nome, blob, arquivo.nome);
+                        
+                        console.log(`✅ Anexo ${index + 1} preparado: ${arquivo.nome} (${this.formatarTamanhoArquivo(tamanhoBytes)})`);
+                    } catch (error) {
+                        console.error(`❌ Erro ao preparar anexo ${index + 1} (${arquivo.nome}):`, error);
+                    }
+                });
+                
+                console.log(`Total de ${this.arquivosParaEnvio.length} arquivo(s) anexado(s), tamanho total: ${totalSize.toFixed(2)}MB`);
             }
+            
+            formData.append('message', corpoCompleto);
 
-            // Preparar FormData com todos os campos (incluindo os arquivos adicionados)
-            const formData = new FormData(form);
+            // Enviar via FormSubmit
+            console.log('Enviando via FormSubmit...');
+            console.log('Email destino:', emailDestino);
             
-            // Garantir que form-name está presente (obrigatório para Netlify Forms)
-            if (!formData.has('form-name')) {
-                formData.append('form-name', 'credenciais-email');
-            }
-            
-            console.log('FormData preparado:', {
-                formName: formData.get('form-name'),
-                email: formData.get('email'),
-                nome: formData.get('nome'),
-                subject: formData.get('subject'),
-                numAnexos: this.arquivosParaEnvio?.length || 0
-            });
-
-            // Enviar via Netlify Forms usando fetch
-            // Nota: Netlify Forms funciona melhor com submit tradicional, mas fetch também funciona
-            // se o formulário estiver no HTML estático
-            console.log('Enviando formulário para Netlify Forms...');
-            console.log('URL:', window.location.origin + '/');
-            
-            const response = await fetch('/', {
+            const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(emailDestino)}`, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                mode: 'cors',
+                headers: {
+                    'Accept': 'application/json'
+                }
             });
 
-            console.log('Resposta Netlify Forms:', response.status, response.statusText);
-            console.log('Headers:', Object.fromEntries(response.headers.entries()));
+            console.log('Status da resposta FormSubmit:', response.status, response.statusText);
 
             if (response.ok) {
-                // Sucesso - fechar modal e mostrar mensagem
-                const modalEmail = document.getElementById('modalEmail');
-                if (modalEmail) {
-                    this.fecharModal(modalEmail);
-                }
-            
-                this.mostrarNotificacao('Email enviado com sucesso via Netlify Forms! ✅', 'success');
-                setTimeout(() => {
-                    const numAnexos = this.arquivosParaEnvio?.length || 0;
-                    let mensagem = `O email foi enviado para ${emailDestino}`;
-                    if (numAnexos > 0) {
-                        mensagem += ` com ${numAnexos} anexo(s)`;
+                const responseText = await response.text();
+                console.log('Resposta completa do FormSubmit:', responseText);
+                
+                let emailEnviado = false;
+                
+                try {
+                    const resultado = JSON.parse(responseText);
+                    console.log('Resultado parseado:', resultado);
+                    
+                    if (resultado.success === true || resultado.success === 'true') {
+                        emailEnviado = true;
+                    } else if (resultado.message) {
+                        const msgLower = resultado.message.toLowerCase();
+                        if (msgLower.includes('success') || msgLower.includes('enviado') || msgLower.includes('sent')) {
+                            emailEnviado = true;
+                        }
                     }
-                    mensagem += '. Verifique também a pasta de spam.';
-                    this.mostrarNotificacao(mensagem, 'info');
-                }, 2000);
+                } catch (e) {
+                    // Se não for JSON, verificar se contém indicadores de sucesso
+                    if (responseText.toLowerCase().includes('success') || 
+                        responseText.toLowerCase().includes('enviado') ||
+                        response.status === 200) {
+                        emailEnviado = true;
+                    }
+                }
+                
+                if (emailEnviado) {
+                    // Sucesso - fechar modal e mostrar mensagem
+                    const modalEmail = document.getElementById('modalEmail');
+                    if (modalEmail) {
+                        this.fecharModal(modalEmail);
+                    }
+                    
+                    this.mostrarNotificacao('Email enviado com sucesso via FormSubmit! ✅', 'success');
+                    setTimeout(() => {
+                        const numAnexos = this.arquivosParaEnvio?.length || 0;
+                        let mensagem = `O email foi enviado para ${emailDestino}`;
+                        if (numAnexos > 0) {
+                            mensagem += ` com ${numAnexos} anexo(s)`;
+                        }
+                        mensagem += '. Verifique também a pasta de spam.';
+                        this.mostrarNotificacao(mensagem, 'info');
+                    }, 2000);
+                } else {
+                    throw new Error('FormSubmit não confirmou o envio do email');
+                }
             } else {
                 const errorText = await response.text();
-                console.error('Erro na resposta Netlify:', errorText);
-                
-                // Erro 404 geralmente significa que o formulário não foi detectado pelo Netlify
-                if (response.status === 404) {
-                    throw new Error('Formulário não encontrado pelo Netlify. O formulário precisa estar no HTML estático e o site precisa ser feito deploy no Netlify para que o formulário seja detectado.');
-                }
-                
-                throw new Error(`Netlify Forms retornou status ${response.status}: ${response.statusText}`);
+                console.error('Erro na resposta FormSubmit:', errorText);
+                throw new Error(`FormSubmit retornou status ${response.status}: ${response.statusText}`);
             }
 
         } catch (error) {
-            console.error('Erro ao enviar email via Netlify Forms:', error);
+            console.error('Erro ao enviar email via FormSubmit:', error);
             
             this.mostrarNotificacao('❌ Erro ao enviar email com anexos', 'error');
             setTimeout(() => {
-                let mensagem = '💡 <strong>O envio via Netlify Forms falhou.</strong><br><br>';
-                
-                if (error.message && error.message.includes('404')) {
-                    mensagem += '⚠️ <strong>Erro 404 - Formulário não encontrado:</strong><br>';
-                    mensagem += 'O Netlify não detectou o formulário. Isso pode acontecer se:<br>';
-                    mensagem += '1. O site não foi feito deploy no Netlify após adicionar o formulário<br>';
-                    mensagem += '2. O formulário não está presente no HTML estático<br>';
-                    mensagem += '3. O Netlify ainda não processou o formulário<br><br>';
-                    mensagem += '💡 <strong>Solução:</strong><br>';
-                    mensagem += '1. Faça um novo deploy no Netlify (push para o GitHub ou deploy manual)<br>';
-                    mensagem += '2. Aguarde alguns minutos após o deploy<br>';
-                    mensagem += '3. Verifique no dashboard do Netlify se o formulário aparece em "Forms"<br><br>';
-                } else {
-                    mensagem += 'Verifique:<br>';
-                    mensagem += '1. Se o site está hospedado no Netlify<br>';
-                    mensagem += '2. Se o formulário está configurado corretamente no Netlify<br>';
-                    mensagem += '3. Se o tamanho dos arquivos não excede os limites do Netlify (10MB por arquivo)<br>';
-                    mensagem += '4. Os logs no console (F12) para mais detalhes<br><br>';
-                }
-                
+                let mensagem = '💡 <strong>O envio via FormSubmit falhou.</strong><br><br>';
+                mensagem += 'Verifique:<br>';
+                mensagem += '1. Se está usando um servidor web (não funciona com file://)<br>';
+                mensagem += '2. Se o tamanho dos arquivos não excede os limites (5MB por arquivo recomendado)<br>';
+                mensagem += '3. Se há bloqueio de CORS no navegador<br>';
+                mensagem += '4. Os logs no console (F12) para mais detalhes<br><br>';
                 mensagem += '📥 <strong>Alternativa:</strong> Use "Exportar Excel" para baixar os arquivos manualmente';
                 this.mostrarNotificacao(mensagem, 'warning');
             }, 2000);
         } finally {
             if (btnEnviar) {
-            btnEnviar.classList.remove('btn-loading');
-            btnEnviar.disabled = false;
+                btnEnviar.classList.remove('btn-loading');
+                btnEnviar.disabled = false;
             }
         }
     }
