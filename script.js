@@ -315,7 +315,7 @@ class SistemaCadastro {
                             // Executar senhas coletadas
                             this.executarSenhasTotemColetadasMilly();
                         } else {
-                            this.executarCadastroTotemMilly(this.millyDadosColetados);
+                        this.executarCadastroTotemMilly(this.millyDadosColetados);
                         }
                     }
                     this.millyAguardandoConfirmacao = false;
@@ -597,12 +597,12 @@ class SistemaCadastro {
         if (this.millyEmpresaArmazenada) {
             this.millyDadosColetados.empresa = this.millyEmpresaArmazenada;
             this.millyEtapaCadastro = 'tipo';
-            this.adicionarMensagemMilly('Vou te ajudar a cadastrar credenciais! 📝', 'texto');
-            setTimeout(() => {
+        this.adicionarMensagemMilly('Vou te ajudar a cadastrar credenciais! 📝', 'texto');
+        setTimeout(() => {
                 this.adicionarMensagemMilly(`✅ Empresa armazenada: <strong>${this.millyEmpresaArmazenada}</strong><br><br>Qual o <strong>Tipo de Cadastro</strong> você deseja fazer?`, 'html');
                 setTimeout(() => {
                     this.mostrarTiposDisponiveisMilly();
-                }, 500);
+        }, 500);
             }, 500);
         } else {
             this.millyEtapaCadastro = 'empresa';
@@ -757,7 +757,7 @@ class SistemaCadastro {
                 this.adicionarMensagemMilly('Qual o <strong>Tipo de Cadastro</strong> você deseja fazer?', 'html');
                 setTimeout(() => {
                     this.mostrarTiposDisponiveisMilly();
-                }, 500);
+            }, 500);
             }, 500);
         } else {
             this.adicionarMensagemMilly('Por favor, informe um nome de empresa válido (mínimo 3 caracteres).', 'texto');
@@ -771,9 +771,9 @@ class SistemaCadastro {
         if (nomeTipo && nomeTipo.length > 2) {
             // Verificar se já existe um tipo com esse nome
             const tipoVerificado = this.verificarTipoExiste(nomeTipo);
-            if (tipoVerificado.existe) {
+                if (tipoVerificado.existe) {
                 // Tipo já existe - usar ele
-                this.millyDadosColetados.tipo = tipoVerificado.valor;
+                    this.millyDadosColetados.tipo = tipoVerificado.valor;
                 this.millyEtapaCadastro = 'quantidade';
                 
                 // Obter nome do tipo para exibição
@@ -800,8 +800,8 @@ class SistemaCadastro {
                 }, 500);
             } else {
                 // Tipo não existe - criar novo tipo
-                this.millyDadosColetados.tipo = this.criarTipoPersonalizado(nomeTipo);
-                this.millyDadosColetados.tipoNovo = true;
+                    this.millyDadosColetados.tipo = this.criarTipoPersonalizado(nomeTipo);
+                    this.millyDadosColetados.tipoNovo = true;
                 this.millyEtapaCadastro = 'quantidade';
                 
                 this.adicionarMensagemMilly(`✅ Novo tipo "<strong>${nomeTipo}</strong>" criado com sucesso! 🆕`, 'html');
@@ -828,7 +828,7 @@ class SistemaCadastro {
         this.millyEtapaCadastro = 'dados';
         
         this.adicionarMensagemMilly(`✅ Vou cadastrar <strong>${quantidade}</strong> cadastro(s)! 📝`, 'html');
-        setTimeout(() => {
+                setTimeout(() => {
             this.explicarPadraoCadastro();
         }, 500);
     }
@@ -1068,8 +1068,8 @@ class SistemaCadastro {
             
             let tipoDisplay = cadastro.tipo;
             const tipoPersonalizado = this.tiposPersonalizados.find(t => t.valor === cadastro.tipo);
-            if (tipoPersonalizado) {
-                tipoDisplay = tipoPersonalizado.nome;
+                    if (tipoPersonalizado) {
+                        tipoDisplay = tipoPersonalizado.nome;
             } else {
                 const tiposDisplay = {
                     'recepcao': 'Recepção Médica',
@@ -1100,7 +1100,7 @@ class SistemaCadastro {
         
         this.adicionarMensagemMilly(mensagem, 'html');
         this.millyEtapaCadastro = 'confirmacao';
-        this.millyAguardandoConfirmacao = true;
+                    this.millyAguardandoConfirmacao = true;
     }
 
     processarDadosCadastroMilly(mensagem) {
@@ -1143,7 +1143,7 @@ class SistemaCadastro {
         let empresa = mensagem.trim();
         
         // Tentar extrair empresa da mensagem
-        const dados = this.extrairDadosTotem(mensagem);
+            const dados = this.extrairDadosTotem(mensagem);
         if (dados.empresa) {
             empresa = dados.empresa;
         }
@@ -1154,10 +1154,10 @@ class SistemaCadastro {
             this.millyEtapaTotem = 'quantidade';
             
             this.adicionarMensagemMilly(`✅ Empresa <strong>${empresa}</strong> armazenada com sucesso! 💾`, 'html');
-            setTimeout(() => {
+                setTimeout(() => {
                 this.adicionarMensagemMilly('Quantas senhas você deseja cadastrar?', 'texto');
-            }, 500);
-        } else {
+                }, 500);
+            } else {
             this.adicionarMensagemMilly('Por favor, informe um nome de empresa válido (mínimo 3 caracteres).', 'texto');
         }
     }
@@ -1953,10 +1953,10 @@ class SistemaCadastro {
     }
 
     limparEstadoCadastroMilly() {
-        this.millyCadastroEmAndamento = null;
-        this.millyDadosColetados = {};
-        this.millyCadastrosMultiplos = [];
-        this.millyAguardandoConfirmacao = false;
+            this.millyCadastroEmAndamento = null;
+            this.millyDadosColetados = {};
+            this.millyCadastrosMultiplos = [];
+            this.millyAguardandoConfirmacao = false;
         this.millyEtapaCadastro = null;
         this.millyQuantidadeCadastros = 0;
         this.millyCadastrosAtuais = [];
@@ -4864,7 +4864,7 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             return;
         }
 
-        const btnEnviar = document.getElementById('btnEnviarEmailModal');
+            const btnEnviar = document.getElementById('btnEnviarEmailModal');
         if (btnEnviar) {
             btnEnviar.classList.add('btn-loading');
             btnEnviar.disabled = true;
@@ -4938,7 +4938,7 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             // Adicionar arquivos Excel como anexos
             if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
                 let totalSize = 0;
-                this.arquivosParaEnvio.forEach((arquivo, index) => {
+            this.arquivosParaEnvio.forEach((arquivo, index) => {
                     // Calcular tamanho corretamente
                     const tamanhoBytes = arquivo.tamanhoBytes || 
                                         (arquivo.dados ? (arquivo.dados.length || arquivo.dados.byteLength || 0) : 0);
@@ -4950,9 +4950,9 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                         this.mostrarNotificacao(`Atenção: ${arquivo.nome} excede 5MB e pode não ser enviado`, 'warning');
                     }
                     
-                    const blob = new Blob([arquivo.dados], {
-                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                    });
+                const blob = new Blob([arquivo.dados], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                });
 
                     formData.append(arquivo.nome, blob, arquivo.nome);
                 });
@@ -5038,7 +5038,7 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                             responseText.toLowerCase().includes('enviado') ||
                             responseText.toLowerCase().includes('sent') ||
                             response.status === 200) {
-                            emailEnviado = true;
+                        emailEnviado = true;
                         } else {
                             console.warn('Resposta não indica sucesso:', responseText);
                             mensagemErro = 'Resposta inesperada do servidor';
@@ -5052,7 +5052,7 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                         }
                         
                         this.mostrarNotificacao('Email enviado com sucesso via FormSubmit! ✅', 'success');
-                        setTimeout(() => {
+            setTimeout(() => {
                             this.mostrarNotificacao(`O email foi enviado para ${emailDestino}. Verifique também a pasta de spam.`, 'info');
                         }, 2000);
                         return; // Sucesso, sair da função
@@ -5235,8 +5235,8 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
             }, 3000);
         } finally {
             if (btnEnviar) {
-                btnEnviar.classList.remove('btn-loading');
-                btnEnviar.disabled = false;
+            btnEnviar.classList.remove('btn-loading');
+            btnEnviar.disabled = false;
             }
         }
     }
@@ -5271,6 +5271,7 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
 
     async enviarViaEmailJS(emailRemetente, nomeRemetente, assunto, corpo, emailDestino) {
         return new Promise(async (resolve, reject) => {
+            let formTemp = null;
             try {
                 // Verificar se EmailJS está carregado
                 if (typeof emailjs === 'undefined') {
@@ -5285,35 +5286,124 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                 // Inicializar EmailJS
                 emailjs.init(config.publicKey);
 
-                // Preparar template parameters
-                const templateParams = {
-                    to_email: emailDestino,
-                    from_name: nomeRemetente,
-                    from_email: emailRemetente,
-                    subject: assunto || 'Formulário de Contato - Sistema de Credenciais',
-                    message: corpo || 'Email enviado através do Sistema de Credenciais',
-                    reply_to: emailRemetente
+                // Criar formulário temporário para envio com anexos
+                formTemp = document.createElement('form');
+                formTemp.style.display = 'none';
+                document.body.appendChild(formTemp);
+
+                // Adicionar campos de texto para os parâmetros do template
+                const camposTexto = {
+                    'to_email': emailDestino,
+                    'from_name': nomeRemetente,
+                    'from_email': emailRemetente,
+                    'subject': assunto || 'Formulário de Contato - Sistema de Credenciais',
+                    'message': corpo || 'Email enviado através do Sistema de Credenciais',
+                    'reply_to': emailRemetente
                 };
 
-                // Adicionar informações sobre anexos se houver
+                Object.keys(camposTexto).forEach(key => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = camposTexto[key];
+                    formTemp.appendChild(input);
+                });
+
+                // Adicionar informações sobre anexos no corpo se houver
                 if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
                     let infoAnexos = '\n\n=== ARQUIVOS ANEXADOS ===\n';
                     this.arquivosParaEnvio.forEach((arquivo, index) => {
                         infoAnexos += `Arquivo ${index + 1}: ${arquivo.nome}\n`;
                     });
-                    templateParams.message += infoAnexos;
+                    
+                    // Atualizar campo message com informações dos anexos
+                    const messageInput = formTemp.querySelector('input[name="message"]');
+                    if (messageInput) {
+                        messageInput.value += infoAnexos;
+                    }
+
+                    // Converter arquivos Excel (Uint8Array) para File objects e adicionar ao formulário
+                    let anexosPreparados = 0;
+                    this.arquivosParaEnvio.forEach((arquivo, index) => {
+                        try {
+                            // Verificar se os dados do arquivo existem
+                            if (!arquivo.dados || !arquivo.nome) {
+                                console.warn(`Arquivo ${index + 1} inválido: dados ou nome ausentes`);
+                                return;
+                            }
+
+                            // Converter Uint8Array para Blob
+                            const blob = new Blob([arquivo.dados], {
+                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                            });
+                            
+                            // Verificar se o Blob foi criado corretamente
+                            if (blob.size === 0) {
+                                console.warn(`Arquivo ${index + 1} (${arquivo.nome}) está vazio`);
+                                return;
+                            }
+                            
+                            // Converter Blob para File
+                            const file = new File([blob], arquivo.nome, {
+                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                lastModified: Date.now()
+                            });
+
+                            // Verificar se o File foi criado corretamente
+                            if (!file || file.size === 0) {
+                                console.warn(`Falha ao criar File object para ${arquivo.nome}`);
+                                return;
+                            }
+
+                            // Criar input de arquivo
+                            const fileInput = document.createElement('input');
+                            fileInput.type = 'file';
+                            // EmailJS aceita anexos com nomes como 'attachment', 'attachment_1', 'file', etc.
+                            // Usaremos um nome simples que o EmailJS reconhece
+                            fileInput.name = index === 0 ? 'attachment' : `attachment_${index + 1}`;
+                            
+                            // Criar DataTransfer para adicionar o arquivo
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            fileInput.files = dataTransfer.files;
+                            
+                            // Verificar se o arquivo foi adicionado ao input
+                            if (fileInput.files.length === 0) {
+                                console.warn(`Falha ao adicionar arquivo ${arquivo.nome} ao input`);
+                                return;
+                            }
+                            
+                            formTemp.appendChild(fileInput);
+                            anexosPreparados++;
+                            
+                            console.log(`✅ Anexo ${index + 1} preparado: ${arquivo.nome} (${this.formatarTamanhoArquivo(arquivo.tamanhoBytes || file.size)})`);
+                        } catch (error) {
+                            console.error(`❌ Erro ao preparar anexo ${index + 1} (${arquivo.nome}):`, error);
+                        }
+                    });
+                    
+                    if (anexosPreparados === 0) {
+                        console.warn('⚠️ Nenhum anexo foi preparado com sucesso. O email será enviado sem anexos.');
+                    } else {
+                        console.log(`📎 Total de ${anexosPreparados} anexo(s) preparado(s) para envio`);
+                    }
                 }
 
-                console.log('Enviando via EmailJS com parâmetros:', templateParams);
+                console.log('Enviando via EmailJS com formulário (incluindo anexos)...');
 
-                // Enviar email
-                const response = await emailjs.send(
+                // Enviar email usando sendForm (suporta anexos)
+                const response = await emailjs.sendForm(
                     config.serviceId,
                     config.templateId,
-                    templateParams
+                    formTemp
                 );
 
                 console.log('Resposta EmailJS:', response);
+                
+                // Limpar formulário temporário
+                if (formTemp && formTemp.parentNode) {
+                    formTemp.parentNode.removeChild(formTemp);
+                }
                 
                 if (response.status === 200) {
                     resolve(response);
@@ -5322,6 +5412,12 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                 }
             } catch (error) {
                 console.error('Erro ao enviar via EmailJS:', error);
+                
+                // Limpar formulário temporário em caso de erro
+                if (formTemp && formTemp.parentNode) {
+                    formTemp.parentNode.removeChild(formTemp);
+                }
+                
                 reject(error);
             }
         });

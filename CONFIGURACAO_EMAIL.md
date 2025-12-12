@@ -28,6 +28,14 @@ EmailJS é mais confiável e permite envio de emails diretamente do navegador se
      - `{{from_email}}` - Email do remetente
      - `{{subject}}` - Assunto
      - `{{message}}` - Mensagem
+   - **IMPORTANTE para anexos**: 
+     - O EmailJS envia anexos automaticamente quando você usa `sendForm()` com inputs de arquivo
+     - Os anexos são enviados automaticamente - não é necessário configurar nada no template
+     - **Verifique se o serviço de email suporta anexos**: Alguns serviços (como Gmail) podem ter limitações
+     - Se os anexos não chegarem, verifique:
+       1. Se o tamanho total dos arquivos não excede 50MB (plano gratuito)
+       2. Se o serviço de email configurado suporta anexos
+       3. Se há algum erro no console do navegador
    - Anote o **Template ID**
 
 4. **Obter Public Key**
@@ -76,10 +84,24 @@ Se preferir continuar usando FormSubmit, verifique:
 3. Se o FormSubmit não está bloqueando o domínio
 4. Verifique a pasta de spam do destinatário
 
+## Envio de Anexos
+
+O sistema agora suporta envio de anexos (arquivos Excel) via EmailJS:
+
+- Os arquivos Excel são automaticamente convertidos e anexados ao email
+- O EmailJS usa `sendForm()` para enviar os anexos
+- Os anexos são nomeados como `attachment_1`, `attachment_2`, etc.
+- **Limitações**: 
+  - Plano gratuito: até 50MB por email
+  - Verifique o tamanho total dos arquivos antes de enviar
+  - Se os anexos não chegarem, verifique se o tamanho não excede o limite
+
 ## Debug
 
 Para ver logs detalhados do envio:
 1. Abra o console do navegador (F12)
 2. Tente enviar um email
 3. Verifique os logs no console para identificar o problema
+4. Os logs mostrarão informações sobre os anexos preparados
+
 
