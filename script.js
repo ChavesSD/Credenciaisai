@@ -4878,7 +4878,50 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                 throw new Error('Formulário não encontrado');
             }
 
-            // Preparar FormData com todos os campos
+            // Adicionar arquivos Excel como inputs de arquivo no formulário
+            const camposArquivos = document.getElementById('camposArquivos');
+            if (camposArquivos) {
+                // Limpar campos anteriores
+                camposArquivos.innerHTML = '';
+                
+                if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
+                    console.log(`Preparando ${this.arquivosParaEnvio.length} anexo(s) para envio...`);
+                    
+                    this.arquivosParaEnvio.forEach((arquivo, index) => {
+                        try {
+                            // Converter Uint8Array para Blob
+                            const blob = new Blob([arquivo.dados], {
+                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                            });
+
+                            // Converter Blob para File
+                            const file = new File([blob], arquivo.nome, {
+                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                lastModified: Date.now()
+                            });
+
+                            // Criar input file e adicionar ao formulário
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.name = `anexo_${index + 1}`;
+                            input.style.display = 'none';
+                            
+                            // Criar DataTransfer para adicionar o arquivo ao input
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            input.files = dataTransfer.files;
+                            
+                            camposArquivos.appendChild(input);
+                            
+                            console.log(`✅ Anexo ${index + 1} preparado: ${arquivo.nome} (${this.formatarTamanhoArquivo(arquivo.tamanhoBytes || file.size)})`);
+                        } catch (error) {
+                            console.error(`❌ Erro ao preparar anexo ${index + 1} (${arquivo.nome}):`, error);
+                        }
+                    });
+                }
+            }
+
+            // Preparar FormData com todos os campos (incluindo os arquivos adicionados)
             const formData = new FormData(form);
             
             // Garantir que form-name está presente (obrigatório para Netlify Forms)
@@ -4893,44 +4936,16 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                 subject: formData.get('subject'),
                 numAnexos: this.arquivosParaEnvio?.length || 0
             });
-            
-            // Adicionar arquivos Excel como anexos
-            if (this.arquivosParaEnvio && this.arquivosParaEnvio.length > 0) {
-                console.log(`Preparando ${this.arquivosParaEnvio.length} anexo(s) para envio...`);
-                
-                this.arquivosParaEnvio.forEach((arquivo, index) => {
-                    try {
-                        // Converter Uint8Array para Blob
-                const blob = new Blob([arquivo.dados], {
-                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                });
 
-                        // Converter Blob para File
-                        const file = new File([blob], arquivo.nome, {
-                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                            lastModified: Date.now()
-                        });
-                        
-                        // Adicionar ao FormData
-                        formData.append(`anexo_${index + 1}`, file);
-                        
-                        console.log(`✅ Anexo ${index + 1} preparado: ${arquivo.nome} (${this.formatarTamanhoArquivo(arquivo.tamanhoBytes || file.size)})`);
-                    } catch (error) {
-                        console.error(`❌ Erro ao preparar anexo ${index + 1} (${arquivo.nome}):`, error);
-                    }
-                });
-            }
-
-            // Enviar via Netlify Forms
+            // Enviar via Netlify Forms usando fetch
+            // Nota: Netlify Forms funciona melhor com submit tradicional, mas fetch também funciona
+            // se o formulário estiver no HTML estático
             console.log('Enviando formulário para Netlify Forms...');
             console.log('URL:', window.location.origin + '/');
             
             const response = await fetch('/', {
                 method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
+                body: formData
             });
 
             console.log('Resposta Netlify Forms:', response.status, response.statusText);
@@ -4938,13 +4953,13 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
 
             if (response.ok) {
                 // Sucesso - fechar modal e mostrar mensagem
-                    const modalEmail = document.getElementById('modalEmail');
-                    if (modalEmail) {
-                        this.fecharModal(modalEmail);
-                    }
+                const modalEmail = document.getElementById('modalEmail');
+                if (modalEmail) {
+                    this.fecharModal(modalEmail);
+                }
             
                 this.mostrarNotificacao('Email enviado com sucesso via Netlify Forms! ✅', 'success');
-                    setTimeout(() => {
+                setTimeout(() => {
                     const numAnexos = this.arquivosParaEnvio?.length || 0;
                     let mensagem = `O email foi enviado para ${emailDestino}`;
                     if (numAnexos > 0) {
@@ -4952,7 +4967,7 @@ Total de senhas do totem: ${this.senhasTotem.length}`;
                     }
                     mensagem += '. Verifique também a pasta de spam.';
                     this.mostrarNotificacao(mensagem, 'info');
-            }, 2000);
+                }, 2000);
             } else {
                 const errorText = await response.text();
                 console.error('Erro na resposta Netlify:', errorText);
