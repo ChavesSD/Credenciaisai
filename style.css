@@ -3666,19 +3666,19 @@ input:checked + .slider:before {
 
 /* Distribuição de colunas - Tabela de Senhas do Totem */
 #tabelaSenhasTotem th:nth-child(1),
-#tabelaSenhasTotem td:nth-child(1) { width: 8%; }
+#tabelaSenhasTotem td:nth-child(1) { width: 7%; }
 #tabelaSenhasTotem th:nth-child(2),
-#tabelaSenhasTotem td:nth-child(2) { width: 24%; }
+#tabelaSenhasTotem td:nth-child(2) { width: 22%; }
 #tabelaSenhasTotem th:nth-child(3),
-#tabelaSenhasTotem td:nth-child(3) { width: 12%; }
+#tabelaSenhasTotem td:nth-child(3) { width: 11%; }
 #tabelaSenhasTotem th:nth-child(4),
-#tabelaSenhasTotem td:nth-child(4) { width: 26%; }
+#tabelaSenhasTotem td:nth-child(4) { width: 24%; }
 #tabelaSenhasTotem th:nth-child(5),
-#tabelaSenhasTotem td:nth-child(5) { width: 10%; }
+#tabelaSenhasTotem td:nth-child(5) { width: 9%; }
 #tabelaSenhasTotem th:nth-child(6),
-#tabelaSenhasTotem td:nth-child(6) { width: 12%; }
+#tabelaSenhasTotem td:nth-child(6) { width: 11%; }
 #tabelaSenhasTotem th:nth-child(7),
-#tabelaSenhasTotem td:nth-child(7) { width: 8%; }
+#tabelaSenhasTotem td:nth-child(7) { width: 16%; }
 
 /* Altura de linha e padding consistente */
 .table-container td { 
