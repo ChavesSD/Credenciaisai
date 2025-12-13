@@ -2302,13 +2302,8 @@ class SistemaCadastro {
         if (secao === 'credenciais') {
             document.getElementById('btnCredenciais').classList.add('active');
             document.getElementById('headerTitle').textContent = 'Cadastro de Credenciais';
-            // Atualizar subtítulo com contagem de credenciais individuais
-            const totalCredenciaisIndividuais = this.contarCredenciaisIndividuais();
-            if (totalCredenciaisIndividuais > 0) {
-                document.getElementById('headerSubtitle').textContent = `Gerencie credenciais de funcionários e senhas do totem - ${totalCredenciaisIndividuais} credenciais cadastradas`;
-            } else {
-                document.getElementById('headerSubtitle').textContent = 'Gerencie credenciais de funcionários e senhas do totem';
-            }
+            // Atualizar subtítulo
+            document.getElementById('headerSubtitle').textContent = 'Gerencie credenciais de funcionários e senhas do totem';
             document.getElementById('btnNovoCadastro').innerHTML = `
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -2320,6 +2315,8 @@ class SistemaCadastro {
             `;
             // Atualizar unidade no formulário inline
             this.atualizarUnidadeAtualCredenciaisInline();
+            // Atualizar contador de credenciais
+            this.atualizarContadorCredenciais();
         } else {
             document.getElementById('btnSenhasTotem').classList.add('active');
             document.getElementById('headerTitle').textContent = 'Senhas do Totem';
@@ -3089,6 +3086,31 @@ class SistemaCadastro {
         }
     }
 
+    atualizarContadorCredenciais() {
+        if (this.secaoAtual !== 'credenciais') {
+            return;
+        }
+
+        const totalCredenciaisIndividuais = this.contarCredenciaisIndividuais();
+        const existingCounter = document.querySelector('#secaoCredenciais .credenciais-contador');
+        
+        if (existingCounter) {
+            existingCounter.remove();
+        }
+
+        if (totalCredenciaisIndividuais > 0) {
+            const contadorHtml = `
+                <div class="credenciais-contador">
+                    <strong>${totalCredenciaisIndividuais}</strong> credenciais cadastradas
+                </div>
+            `;
+            const searchBar = document.querySelector('#secaoCredenciais .search-bar');
+            if (searchBar) {
+                searchBar.insertAdjacentHTML('afterend', contadorHtml);
+            }
+        }
+    }
+
     atualizarTabela() {
         const tbody = document.getElementById('corpoTabela');
         const mensagemVazia = document.getElementById('mensagemVazia');
@@ -3100,6 +3122,11 @@ class SistemaCadastro {
             // Atualizar subtítulo quando não há credenciais
             if (this.secaoAtual === 'credenciais') {
                 document.getElementById('headerSubtitle').textContent = 'Gerencie credenciais de funcionários e senhas do totem';
+                // Remover contador se existir
+                const existingCounter = document.querySelector('#secaoCredenciais .credenciais-contador');
+                if (existingCounter) {
+                    existingCounter.remove();
+                }
             }
             return;
         }
@@ -3107,10 +3134,11 @@ class SistemaCadastro {
         tableContainer.style.display = 'block';
         mensagemVazia.style.display = 'none';
         
-        // Atualizar subtítulo com contagem de credenciais individuais
+        // Atualizar subtítulo
         if (this.secaoAtual === 'credenciais') {
-            const totalCredenciaisIndividuais = this.contarCredenciaisIndividuais();
-            document.getElementById('headerSubtitle').textContent = `Gerencie credenciais de funcionários e senhas do totem - ${totalCredenciaisIndividuais} credenciais cadastradas`;
+            document.getElementById('headerSubtitle').textContent = 'Gerencie credenciais de funcionários e senhas do totem';
+            // Atualizar contador de credenciais
+            this.atualizarContadorCredenciais();
         }
 
         tbody.innerHTML = this.credenciais.map(credencial => {

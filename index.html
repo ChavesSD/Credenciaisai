@@ -95,7 +95,9 @@
                     <!-- Nome da Empresa Atual (aparece quando já definida) -->
                     <div id="unidadeAtualCredenciaisInline" class="unidade-atual-container" style="display: none;">
                         <div class="unidade-atual">
-                            <strong>Empresa:</strong> <span id="unidadeAtualTextoCredenciaisInline"></span>
+                            <div class="unidade-atual-texto">
+                                <strong>Empresa:</strong> <span id="unidadeAtualTextoCredenciaisInline"></span>
+                            </div>
                             <button type="button" class="btn btn-sm btn-secondary" onclick="sistema.permitirAlterarUnidadeCredenciaisInline()">
                                 Alterar
                             </button>
@@ -219,7 +221,9 @@
                 <div class="lista-container">
                     <div id="unidadeAtualContainer" class="unidade-atual-container" style="display: none;">
                         <div class="unidade-atual">
-                            <strong>Empresa:</strong> <span id="unidadeAtualTexto"></span>
+                            <div class="unidade-atual-texto">
+                                <strong>Empresa:</strong> <span id="unidadeAtualTexto"></span>
+                            </div>
                             <button type="button" class="btn btn-sm btn-secondary" id="btnAlterarUnidade">Alterar</button>
                         </div>
                     </div>
@@ -326,9 +330,8 @@
                 <!-- Nome da Empresa Atual (aparece quando já definida) -->
                 <div id="unidadeAtualCredenciais" class="unidade-atual-container" style="display: none;">
                     <div class="unidade-atual">
-                        <div>
-                            <strong>Empresa:</strong>
-                            <span id="unidadeAtualTextoCredenciais"></span>
+                        <div class="unidade-atual-texto">
+                            <strong>Empresa:</strong> <span id="unidadeAtualTextoCredenciais"></span>
                         </div>
                         <button type="button" class="btn btn-sm btn-secondary" onclick="sistema.permitirAlterarUnidadeCredenciais()">
                             Alterar

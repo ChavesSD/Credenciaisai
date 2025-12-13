@@ -397,14 +397,22 @@ header {
     background: linear-gradient(135deg, var(--intelite-blue-500) 0%, var(--intelite-blue-600) 100%);
     color: var(--white);
     padding: var(--space-4) var(--space-6);
-    padding-right: 120px; /* Espaço para o botão "Alterar" não sobrepor o texto */
     border-radius: var(--radius-xl);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: var(--space-4);
+    gap: var(--space-3);
     box-shadow: var(--shadow-md);
     position: relative;
+    text-align: center;
+}
+
+/* Container do texto para manter "Empresa:" e o nome na mesma linha */
+.unidade-atual-texto {
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .unidade-atual strong {
@@ -415,6 +423,7 @@ header {
 .unidade-atual span {
     font-size: 1rem;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .unidade-atual button {
@@ -422,8 +431,8 @@ header {
     color: var(--white);
     border: 1px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(10px);
-    position: absolute;
-    right: var(--space-4);
+    position: relative;
+    right: auto;
     padding: var(--space-2) var(--space-3);
     font-size: 0.75rem;
     min-height: auto;
@@ -489,6 +498,23 @@ header {
 
 .limite-atingido strong {
     color: var(--danger-600);
+}
+
+/* Contador de Credenciais */
+.credenciais-contador {
+    text-align: center;
+    margin-bottom: var(--space-6);
+    padding: var(--space-4);
+    background: var(--intelite-blue-50);
+    border-radius: var(--radius-lg);
+    color: var(--gray-700);
+    font-size: 0.875rem;
+    border: 1px solid var(--intelite-blue-200);
+}
+
+.credenciais-contador strong {
+    color: var(--intelite-blue-600);
+    font-weight: 600;
 }
 
 /* Tabelas */
@@ -1284,11 +1310,18 @@ form {
     .unidade-atual {
         flex-direction: column;
         gap: var(--space-3);
-        align-items: flex-start;
+        align-items: center;
+        padding: var(--space-3) var(--space-4);
+    }
+    
+    .unidade-atual span {
+        text-align: center;
     }
     
     .unidade-atual button {
-        align-self: flex-end;
+        position: relative;
+        right: auto;
+        align-self: center;
     }
     
     .totem-welcome h1 {
@@ -2175,8 +2208,10 @@ form {
     }
     
     th, td {
-        padding: var(--space-3) var(--space-3);
+        padding: var(--space-2) var(--space-2);
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     /* Botões de ação da tabela */
@@ -2209,11 +2244,12 @@ form {
         font-size: 0.9375rem;
     }
     
-    /* Unidade atual - mantém layout horizontal */
+    /* Unidade atual - layout vertical com nome centralizado */
     .unidade-atual {
         padding: var(--space-3) var(--space-4);
         gap: var(--space-3);
-        padding-right: 100px; /* Espaço para o botão não sobrepor o texto */
+        flex-direction: column;
+        align-items: center;
     }
     
     .unidade-atual strong {
@@ -2222,11 +2258,13 @@ form {
     
     .unidade-atual span {
         font-size: 0.9375rem;
+        text-align: center;
+        width: 100%;
     }
     
     .unidade-atual button {
-        position: absolute;
-        right: var(--space-3);
+        position: relative;
+        right: auto;
         padding: var(--space-1) var(--space-2);
         font-size: 0.7rem;
         min-height: 28px;
@@ -2503,12 +2541,17 @@ form {
     
     th, td {
         padding: var(--space-2) var(--space-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
-    /* Unidade atual - mantém layout horizontal */
+    /* Unidade atual - layout vertical com nome centralizado */
     .unidade-atual {
         padding: var(--space-3) var(--space-3);
         gap: var(--space-2);
+        flex-direction: column;
+        align-items: center;
     }
     
     .unidade-atual strong {
@@ -2517,14 +2560,13 @@ form {
     
     .unidade-atual span {
         font-size: 0.875rem;
-    }
-    
-    .unidade-atual {
-        padding-right: 90px; /* Espaço para o botão não sobrepor o texto */
+        text-align: center;
+        width: 100%;
     }
     
     .unidade-atual button {
-        right: var(--space-2);
+        position: relative;
+        right: auto;
         padding: var(--space-1) var(--space-2);
         font-size: 0.65rem;
         min-height: 26px;
@@ -2894,13 +2936,17 @@ form {
 
 .modal-milly-chat {
     z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
 }
 
 .modal-milly-chat-content {
     max-width: 500px;
     width: 90%;
     max-height: 85vh;
-    margin: 5% auto;
+    margin: auto;
     border-radius: 20px;
     overflow: hidden;
     background: var(--white);
@@ -2908,6 +2954,7 @@ form {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .milly-chat-header {
@@ -3179,34 +3226,33 @@ form {
         height: 120px;
     }
 
-    /* Modal da Milly em mobile - não cobre toda a tela */
+    /* Modal da Milly em mobile - centralizado na tela */
     .modal-milly-chat {
         background: rgba(0, 0, 0, 0.3);
         backdrop-filter: blur(2px);
-        align-items: flex-end;
+        align-items: center;
         justify-content: center;
-        padding: 0;
+        padding: var(--space-4);
     }
 
     .modal-milly-chat-content {
-        width: 100%;
-        max-width: 100%;
-        max-height: 70vh;
+        width: 90%;
+        max-width: 500px;
+        max-height: 85vh;
         margin: 0;
-        border-radius: 20px 20px 0 0;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        animation: slideUp 0.3s ease-out;
+        border-radius: 20px;
+        position: relative;
+        animation: fadeInScale 0.3s ease-out;
     }
 
-    @keyframes slideUp {
+    @keyframes fadeInScale {
         from {
-            transform: translateY(100%);
+            opacity: 0;
+            transform: scale(0.9);
         }
         to {
-            transform: translateY(0);
+            opacity: 1;
+            transform: scale(1);
         }
     }
 
@@ -3387,10 +3433,10 @@ form {
     .modal-milly-chat.modal-aberto,
     .modal-milly-chat[style*="display: block"]:not([style*="display: none"]) {
         display: flex !important;
-        align-items: flex-end !important;
+        align-items: center !important;
         justify-content: center !important;
         visibility: visible !important;
-        padding: 0 !important;
+        padding: var(--space-4) !important;
     }
     
     /* Garantir que modais com display: none permaneçam fechados */
@@ -3582,12 +3628,22 @@ input:checked + .slider:before {
         line-height: 1.5;
     }
     
-/* --- Tabelas: centralização, layout fixo e elipses --- */
+/* --- Tabelas: centralização, layout fixo sem quebra de texto --- */
 .table-container table { table-layout: fixed; width: 100%; }
 .table-container th, .table-container td { text-align: center; vertical-align: middle; }
 
-/* Evitar quebra e cortar com reticências quando necessário */
-.table-container td, .table-container th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Sem quebra de texto - conteúdo completo visível via scroll horizontal */
+.table-container td { 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+}
+
+.table-container th { 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+}
 
 /* Distribuição de colunas - Tabela de Credenciais */
 #tabelaCredenciais th:nth-child(1),
@@ -3618,8 +3674,14 @@ input:checked + .slider:before {
 #tabelaSenhasTotem td:nth-child(7) { width: 8%; }
 
 /* Altura de linha e padding consistente */
-.table-container td { padding: 10px 12px; height: 52px; }
-.table-container th { padding: 12px; }
+.table-container td { 
+    padding: 12px 8px; 
+    height: 52px; 
+}
+.table-container th { 
+    padding: 12px 8px; 
+    height: 44px;
+}
 
 /* Ações centralizadas com espaçamento uniforme */
 .table-container .acoes-btn { justify-content: center; gap: 8px; }
