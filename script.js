@@ -169,12 +169,18 @@ class SistemaCadastro {
                 e.stopPropagation();
             }
             if (modalChat) {
+                // Remover foco do textarea antes de fechar para evitar aviso de acessibilidade
+                if (inputChat && document.activeElement === inputChat) {
+                    inputChat.blur();
+                }
+                
                 // Remover classe de aberto e adicionar classe de fechado
                 modalChat.classList.remove('modal-aberto');
                 modalChat.classList.add('modal-fechado');
                 // Forçar display none com !important via style
                 modalChat.style.setProperty('display', 'none', 'important');
-                modalChat.setAttribute('aria-hidden', 'true');
+                // Remover aria-hidden quando fechado (não é necessário se o elemento não está visível)
+                modalChat.removeAttribute('aria-hidden');
                 console.log('Modal da Milly fechado');
                 // Verificar se realmente fechou
                 setTimeout(() => {

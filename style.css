@@ -560,7 +560,11 @@ tr:last-child td {
 
 .acoes-btn {
     display: flex;
+    flex-direction: row;
     gap: var(--space-2);
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Badges */
@@ -1289,7 +1293,8 @@ form {
     }
     
     .acoes-btn {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: nowrap;
     }
     
     table {
@@ -2219,7 +2224,9 @@ form {
         display: flex;
         flex-direction: row;
         gap: var(--space-2);
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: center;
     }
     
     .acoes-btn .btn-sm {
